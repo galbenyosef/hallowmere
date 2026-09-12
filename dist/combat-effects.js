@@ -1,0 +1,172 @@
+import * as T from './vendor/three.core.js';
+
+// Combat-only additive layers stay bright without washing out the moonlit world.
+// Two persistent lights avoid recompiling scene materials for every cast / hit.
+export function createCombatEffects(scene, glowTexture, {reducedMotion = false} = {}) {
+ const bursts = [], bolts = new Set(), lights = [];
+ const luminous = {transparent:true, blending:T.AdditiveBlending, depthWrite:false, toneMapped:false, fog:false};
+ for (let i=0;i<2;i++) {const light=new T.PointLight(0xff7626,0,7,2);scene.add(light);lights.push(light);}
+
+ function glow(parent, color, size, opacity=1) {
+  const sprite=new T.Sprite(new T.SpriteMaterial({...luminous,map:glowTexture,color,opacity}));
+  sprite.scale.set(size,size,1);parent.add(sprite);return sprite;
+ }
+ function dispose(root) {
+  root.removeFromParent();
+  root.traverse(node=>{if(!node.isSprite)node.geometry?.dispose();node.material?.dispose();});
+ }
+ function addBurst(root, life, animate, light=null) {
+  scene.add(root);bursts.push({root,life,age:0,animate,light});animate(0,0);return root;
+ }
+ function flash(pos, color, size, life) {
+  const root=new T.Group();root.position.copy(pos);
+  const halo=glow(root,color,size,.75),core=glow(root,0xfff3ce,size*.4,1);
+  return addBurst(root,life,p=>{
+   halo.scale.setScalar(size*(.65+p*.65));halo.material.opacity=.8*(1-p)**2;
+   core.scale.setScalar(size*(.15+.3*p));core.material.opacity=(1-p)**3;
+  },{color,intensity:size*24});
+ }
+ function shockwave(pos, color, radius, life) {
+  const mesh=new T.Mesh(new T.RingGeometry(.91,1,64),new T.MeshBasicMaterial({...luminous,color,side:T.DoubleSide}));
+  mesh.rotation.x=-Math.PI/2;mesh.position.set(pos.x,.14,pos.z);
+  addBurst(mesh,life,p=>{mesh.scale.setScalar(.15+radius*(1-(1-p)**3));mesh.material.opacity=.65*(1-p)**2;});
+ }
+ function sparks(pos, color, count, speed, life, direction=null) {
+  if(reducedMotion)count=Math.ceil(count*.5);
+  const positions=new Float32Array(count*6),velocity=new Float32Array(count*3);
+  for(let i=0;i<count;i++) {
+   const a=Math.random()*Math.PI*2,spread=speed*(.35+Math.random()*.65);
+   velocity.set([Math.sin(a)*spread+(direction?.x||0)*speed*.3, .8+Math.random()*speed, Math.cos(a)*spread+(direction?.z||0)*speed*.3],i*3);
+  }
+  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));
+  const streaks=new T.LineSegments(geometry,new T.LineBasicMaterial({...luminous,color}));
+  streaks.position.copy(pos);streaks.frustumCulled=false;
+  addBurst(streaks,life,(p,age)=>{
+   for(let i=0;i<count;i++)for(let axis=0;axis<3;axis++) {
+    const v=velocity[i*3+axis],tail=Math.max(0,age-.035*(1-p));
+    positions[i*6+axis]=v*age-(axis===1?4*age*age:0);
+    positions[i*6+3+axis]=v*tail-(axis===1?4*tail*tail:0);
+   }
+   geometry.attributes.position.needsUpdate=true;streaks.material.opacity=(1-p)**1.3;
+  });
+ }
+
+ function emberbolt(pos, direction) {
+  const mesh=new T.Group();mesh.position.copy(pos);mesh.rotation.y=Math.atan2(direction.x,direction.z);
+  const core=new T.Mesh(new T.SphereGeometry(1,16,12),new T.MeshBasicMaterial({color:0xffefba,toneMapped:false,fog:false}));
+  core.scale.set(.23,.23,.4);mesh.add(core);
+  const shell=new T.Mesh(new T.SphereGeometry(1,16,12),new T.MeshBasicMaterial({...luminous,color:0xff861f,opacity:.4}));
+  shell.scale.set(.36,.36,.55);mesh.add(shell);
+  const halo=glow(mesh,0xff5414,3.5,.85),hot=glow(mesh,0xffca63,1.55,1);
+  const tailGeometry=new T.BufferGeometry();
+  tailGeometry.setAttribute('position',new T.Float32BufferAttribute([-.65,0,-3,.65,0,-3,-.65,0,.08,.65,0,.08],3));
+  tailGeometry.setAttribute('uv',new T.Float32BufferAttribute([0,0,0,1,1,0,1,1],2));tailGeometry.setIndex([0,2,1,1,2,3]);
+  const tailMaterial=new T.ShaderMaterial({
+   ...luminous,side:T.DoubleSide,uniforms:{time:{value:0},opacity:{value:1}},
+   vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+   fragmentShader:`varying vec2 vUv; uniform float time; uniform float opacity;
+    void main(){
+     float x=vUv.x;
+     float center=(vUv.y-.5)*2.0;
+     float ripple=sin(x*26.0-time*19.0)*.065+sin(x*43.0-time*27.0)*.025;
+     float width=(.025+pow(x,1.2)*.48)*(1.0+ripple*2.0);
+     float edge=abs(center+ripple*(1.0-x));
+     float flame=1.0-smoothstep(width*.18,width,edge);
+     float heat=pow(max(0.0,1.0-edge/width),3.0)*pow(x,.7);
+     vec3 color=mix(vec3(1.0,.12,.015),vec3(1.0,.82,.32),heat);
+     gl_FragColor=vec4(color,flame*smoothstep(0.0,.24,x)*opacity*.9);
+    }`
+  });
+  const tail=new T.Mesh(tailGeometry,tailMaterial);mesh.add(tail);
+  const crossedTail=new T.Mesh(tailGeometry.clone(),tailMaterial.clone());crossedTail.rotation.z=Math.PI/2;mesh.add(crossedTail);
+  const count=reducedMotion?12:24,emberPositions=new Float32Array(count*3);
+  const emberGeometry=new T.BufferGeometry();emberGeometry.setAttribute('position',new T.BufferAttribute(emberPositions,3));
+  // PointsMaterial sizes are pixels with this game's orthographic camera.
+  const embers=new T.Points(emberGeometry,new T.PointsMaterial({...luminous,map:glowTexture,color:0xffb849,size:6,sizeAttenuation:false,opacity:.95}));
+  embers.frustumCulled=false;mesh.add(embers);
+  const ground=new T.Mesh(new T.PlaneGeometry(3.7,3.7),new T.MeshBasicMaterial({...luminous,map:glowTexture,color:0xff661b,opacity:.35}));
+  ground.rotation.x=-Math.PI/2;ground.position.y=.14-pos.y;mesh.add(ground);
+  scene.add(mesh);
+  const bolt={mesh,age:0,update(dt){
+   bolt.age+=dt;
+   const pulse=reducedMotion?1:1+Math.sin(bolt.age*24)*.045;
+   core.scale.set(.23*pulse,.23*pulse,.4);halo.scale.setScalar(3.5*pulse);hot.material.opacity=.9;
+   shell.rotation.z=bolt.age*3;
+   tailMaterial.uniforms.time.value=bolt.age;crossedTail.material.uniforms.time.value=bolt.age+.15;
+   // Grow the trail behind the distance actually travelled, including on the first frame.
+   const growth=Math.min(1,bolt.age*14/3);tail.scale.z=crossedTail.scale.z=growth;
+   for(let i=0;i<count;i++) {
+    const phase=(i/count+bolt.age*(.8+(i%3)*.12))%1,spread=.08+phase*.42;
+    emberPositions.set([Math.sin(i*13.7+phase*4)*spread,Math.cos(i*7.3)*spread+phase*.18,-phase*3.4*growth],i*3);
+   }
+   emberGeometry.attributes.position.needsUpdate=true;
+  },dispose(){if(!bolts.delete(bolt))return;dispose(mesh);}};
+  bolts.add(bolt);bolt.update(0);return bolt;
+ }
+ function cast(pos, direction) {flash(pos,0xff902e,2.2,reducedMotion?.28:.22);sparks(pos,0xffd284,12,2.3,.3,direction);}
+ function emberImpact(pos, direction) {
+  flash(pos,0xff711c,3.6,.4);shockwave(pos,0xffa348,1.65,.42);sparks(pos,0xffd99c,26,4.6,.55,direction);
+ }
+ function steelImpact(pos) {flash(pos,0xafdfff,1.45,.18);sparks(pos,0xffe0a6,16,4.2,.34);}
+
+ function cleave(player, angle) {
+  const root=new T.Group();root.position.copy(player.position);root.rotation.y=angle;
+  function arc(inner,outer,color,opacity) {
+   const positions=[],uvs=[],indices=[],segments=56;
+   for(let i=0;i<=segments;i++) {
+    const u=i/segments,a=-1.05+u*2.1;
+    for(const r of [inner,outer]){positions.push(Math.sin(a)*r,1.02+(u-.5)*-.2,Math.cos(a)*r);uvs.push(u,r===inner?0:1);}
+    if(i<segments){const n=i*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}
+   }
+   const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));geometry.setIndex(indices);
+   const material=new T.ShaderMaterial({...luminous,side:T.DoubleSide,uniforms:{color:{value:new T.Color(color)},opacity:{value:opacity},progress:{value:0}},
+    vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader:`varying vec2 vUv;uniform vec3 color;uniform float opacity;uniform float progress;
+     void main(){
+      float across=smoothstep(0.0,.2,vUv.y)*(1.0-smoothstep(.8,1.0,vUv.y));
+      float ends=pow(max(0.0,sin(vUv.x*3.141593)),.45);
+      float head=1.0-smoothstep(progress-.12,progress,vUv.x);
+      gl_FragColor=vec4(color,across*ends*head*opacity);
+     }`});
+   const mesh=new T.Mesh(geometry,material);root.add(mesh);return {mesh,opacity};
+  }
+  const layers=[arc(1.65,2.86,0x428dcd,.3),arc(2.27,2.78,0x9bddff,.75),arc(2.69,2.8,0xedfaff,1)];
+  addBurst(root,reducedMotion?.3:.28,p=>{
+   root.position.copy(player.position);
+   for(const layer of layers){layer.mesh.material.uniforms.progress.value=Math.min(1.14,.2+p*3.2);layer.mesh.material.uniforms.opacity.value=layer.opacity*(1-p)**.8;}
+  });
+ }
+ function update(dt) {
+  for(let i=bursts.length-1;i>=0;i--) {
+   const burst=bursts[i];burst.age+=dt;
+   if(burst.age>=burst.life){dispose(burst.root);bursts.splice(i,1);}else burst.animate(burst.age/burst.life,burst.age);
+  }
+  const sources=[...bolts].map(b=>({position:b.mesh.position,color:0xff7424,intensity:34}));
+  for(const b of bursts)if(b.light)sources.push({position:b.root.position,color:b.light.color,intensity:b.light.intensity*(1-b.age/b.life)**2});
+  sources.sort((a,b)=>b.intensity-a.intensity);
+  lights.forEach((light,i)=>{const source=sources[i];light.intensity=source?.intensity||0;if(source){light.position.copy(source.position);light.color.setHex(source.color);}});
+ }
+ return {emberbolt,cast,emberImpact,steelImpact,cleave,update,dispose(){for(const b of [...bolts])b.dispose();for(const b of bursts)dispose(b.root);bursts.length=0;for(const light of lights){light.removeFromParent();light.dispose();}}};
+}
+
+// Separate cast and sword poses keep the release readable at the existing hit time.
+export function animateHeroAttack(rig, dt) {
+ rig.attack=Math.max(0,(rig.attack||0)-dt);
+ const arm=rig.arms.find(a=>a.name==='armR'),shield=rig.arms.find(a=>a.name==='armL');
+ rig.body.rotation.y=0;rig.body.position.z=0;
+ for(const a of rig.arms){a.rotation.y=0;a.rotation.z=0;}
+ if(!rig.attack||!arm)return;
+ const duration=rig.attackKind==='bolt'?.36:.42,p=1-rig.attack/duration;
+ if(rig.attackKind==='bolt') {
+  const release=Math.sin(p*Math.PI);
+  arm.rotation.set(-.55-release*.3,-.15,-.16);rig.body.rotation.x=-release*.14;rig.body.position.z=-release*.1;
+  if(shield)shield.rotation.x=-.3-release*.2;
+ } else {
+  const windup=.11/.42,strike=.22/.42;
+  const swing=p<windup?-p/windup:p<strike?-1+2*(1-(1-(p-windup)/(strike-windup))**3):1-((p-strike)/(1-strike));
+  const force=Math.sin(p*Math.PI);
+  arm.rotation.set(-.25-force*.45,swing*1.25,-.16-force*.3);
+  rig.body.rotation.y=swing*.4;rig.body.rotation.x=force*.14;rig.body.rotation.z=-swing*.07;rig.body.position.z=force*.12;
+  if(shield){shield.rotation.x=-.45-force*.2;shield.rotation.y=-swing*.25;}
+ }
+}

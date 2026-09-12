@@ -4,14 +4,54 @@ export const ABILITIES={attack:{cooldown:.48,cost:0},bolt:{cooldown:1.2,cost:18}
 export const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 export const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function withinArc(origin,target,angle,range,arc){const dx=target.x-origin.x,dz=target.z-origin.z,d=Math.hypot(dx,dz);if(d>range)return false;if(d<.3)return true;return(dx*Math.sin(angle)+dz*Math.cos(angle))/d>=Math.cos(arc*.5);}
-export function resolveMove(position,dx,dz,obstacles,radius=.4,boundary=25){let x=clamp(position.x+dx,-boundary,boundary),z=position.z;const blocked=(px,pz)=>obstacles.some(o=>px>o.x-o.w/2-radius&&px<o.x+o.w/2+radius&&pz>o.z-o.d/2-radius&&pz<o.z+o.d/2+radius);if(blocked(x,z))x=position.x;const next=clamp(z+dz,-boundary,boundary);if(!blocked(x,next))z=next;return{x,z};}
+function obstacleLocal(o,p){const c=o.cos??Math.cos(o.rotation||0),s=o.sin??Math.sin(o.rotation||0),x=p.x-o.x,z=p.z-o.z;return{x:c*x-s*z,z:s*x+c*z};}
+export function pointBlocked(position,obstacles,radius=.42){return obstacles.some(o=>{if(o.disabled)return false;const p=obstacleLocal(o,position);return Math.abs(p.x)<o.w/2+radius-1e-8&&Math.abs(p.z)<o.d/2+radius-1e-8;});}
+export function resolveMove(position,dx,dz,obstacles,radius=.4,boundary=25){
+ const bounds=typeof boundary==='number'?{minX:-boundary,maxX:boundary,minZ:-boundary,maxZ:boundary}:boundary;
+ let p={x:position.x,z:position.z};const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/Math.min(.16,Math.max(.03,radius*.5))));dx/=steps;dz/=steps;
+ const bounded=(x,z)=>({x:clamp(x,bounds.minX,bounds.maxX),z:clamp(z,bounds.minZ,bounds.maxZ)});
+ for(let i=0;i<steps;i++){
+  const next=bounded(p.x+dx,p.z+dz);
+  if(!pointBlocked(next,obstacles,radius)){p=next;continue;}
+  // Project onto a rotated wall's tangent so joystick movement slides naturally.
+  let vx=dx,vz=dz;
+  for(const o of obstacles){if(o.disabled||!pointBlocked(next,[o],radius))continue;const q=obstacleLocal(o,p),c=o.cos??Math.cos(o.rotation||0),s=o.sin??Math.sin(o.rotation||0);let nx,nz;if(o.w/2+radius-Math.abs(q.x)<o.d/2+radius-Math.abs(q.z)){nx=Math.sign(q.x)*c;nz=-Math.sign(q.x)*s;}else{nx=Math.sign(q.z)*s;nz=Math.sign(q.z)*c;}const inward=Math.min(0,vx*nx+vz*nz);vx-=inward*nx;vz-=inward*nz;}
+  const slide=bounded(p.x+vx,p.z+vz);
+  if(!pointBlocked(slide,obstacles,radius)){p=slide;continue;}
+  const horizontal=bounded(p.x+dx,p.z);if(!pointBlocked(horizontal,obstacles,radius))p=horizontal;
+  const vertical=bounded(p.x,p.z+dz);if(!pointBlocked(vertical,obstacles,radius))p=vertical;
+ }
+ return p;
+}
 export function segmentHitsCircle(a,b,c,radius){const dx=b.x-a.x,dz=b.z-a.z,length=dx*dx+dz*dz,t=length?clamp(((c.x-a.x)*dx+(c.z-a.z)*dz)/length,0,1):0;return Math.hypot(a.x+t*dx-c.x,a.z+t*dz-c.z)<=radius;}
 export function canUse(state,ability){const a=ABILITIES[ability];return!!a&&state.hp>0&&!state.ended&&state.cooldowns[ability]<=0&&state.mana>=a.cost&&(ability!=='heal'||state.potions>0&&state.hp<state.maxHp);}
 export function useAbility(state,ability){if(!canUse(state,ability))return false;const a=ABILITIES[ability];state.cooldowns[ability]=a.cooldown;state.mana-=a.cost;if(ability==='heal'){state.potions--;state.hp=Math.min(state.maxHp,state.hp+65);}return true;}
 export function createState(){return{hp:140,maxHp:140,mana:100,maxMana:100,potions:3,kills:0,souls:0,level:1,time:0,ended:false,victory:false,bossSpawned:false,cooldowns:Object.fromEntries(Object.keys(ABILITIES).map(k=>[k,0])),invulnerable:0};}
 export function advanceState(state,dt){if(state.ended)return;state.time+=dt;state.invulnerable=Math.max(0,state.invulnerable-dt);state.mana=Math.min(state.maxMana,state.mana+dt*7);for(const key in state.cooldowns)state.cooldowns[key]=Math.max(0,state.cooldowns[key]-dt);}
 export function hurtPlayer(state,damage){if(state.ended||state.invulnerable>0)return 0;const dealt=Math.min(state.hp,damage);state.hp-=dealt;state.invulnerable=.32;if(state.hp===0)state.ended=true;return dealt;}
-export function awardKill(state,type){const reward=ENEMY_TYPES[type].reward;state.kills++;state.souls+=reward;const newLevel=1+Math.floor(state.souls/100);if(newLevel>state.level){state.maxHp=140+(newLevel-1)*15;state.hp=Math.min(state.maxHp,state.hp+35);state.level=newLevel;}if(type==='boss'){state.victory=true;state.ended=true;}return reward;}
-// A* over a half-meter grid lets click movement navigate narrow village lanes.
-export function findPath(start,goal,obstacles){const step=.5,bound=50,cell=p=>({x:Math.round(p.x/step),z:Math.round(p.z/step)}),from=cell(start),to=cell(goal),key=(x,z)=>`${x},${z}`;const blocked=(x,z)=>Math.abs(x)>bound||Math.abs(z)>bound||obstacles.some(o=>x*step>o.x-o.w/2-.42&&x*step<o.x+o.w/2+.42&&z*step>o.z-o.d/2-.42&&z*step<o.z+o.d/2+.42);if(blocked(to.x,to.z))return[];if(from.x===to.x&&from.z===to.z)return[{x:goal.x,z:goal.z}];const heuristic=(x,z)=>Math.hypot(x-to.x,z-to.z);const open=[{...from,g:0,f:heuristic(from.x,from.z)}],scores=new Map([[key(from.x,from.z),0]]),parents=new Map(),closed=new Set();let found=null;for(let iteration=0;iteration<12000&&open.length;iteration++){let best=0;for(let i=1;i<open.length;i++)if(open[i].f<open[best].f)best=i;const current=open.splice(best,1)[0],k=key(current.x,current.z);if(closed.has(k))continue;if(current.x===to.x&&current.z===to.z){found=k;break;}closed.add(k);for(const[dx,dz]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){const x=current.x+dx,z=current.z+dz,n=key(x,z);if(closed.has(n)||blocked(x,z)||(dx&&dz&&(blocked(current.x+dx,current.z)||blocked(current.x,current.z+dz))))continue;const g=current.g+Math.hypot(dx,dz);if(g>=(scores.get(n)??Infinity))continue;scores.set(n,g);parents.set(n,k);open.push({x,z,g,f:g+heuristic(x,z)});}}if(!found)return[];const path=[];while(parents.has(found)){const[x,z]=found.split(',').map(Number);path.unshift({x:x*step,z:z*step});found=parents.get(found);}if(path.length)path[path.length-1]={x:goal.x,z:goal.z};return path;}
-export function hasLineOfSight(a,b,obstacles,padding=.1){return !obstacles.some(o=>{let enter=0,leave=1;for(const axis of ['x','z']){const center=o[axis],half=(axis==='x'?o.w:o.d)/2+padding,min=center-half,max=center+half,d=b[axis]-a[axis];if(Math.abs(d)<1e-8){if(a[axis]<min||a[axis]>max)return false;continue;}let t0=(min-a[axis])/d,t1=(max-a[axis])/d;if(t0>t1)[t0,t1]=[t1,t0];enter=Math.max(enter,t0);leave=Math.min(leave,t1);if(enter>leave)return false;}return leave>=0&&enter<=1;});}
+export function awardKill(state,type){const reward=ENEMY_TYPES[type].reward;state.kills++;state.souls+=reward;const newLevel=1+Math.floor(state.souls/100);if(newLevel>state.level){state.maxHp=140+(newLevel-1)*15+(state.healthBonus??0);state.hp=Math.min(state.maxHp,state.hp+35);state.level=newLevel;}if(type==='boss'){state.victory=true;}return reward;}
+// A* checks the same oriented walls as walking, dodging, and projectiles.
+export function findPath(start,goal,obstacles,bounds={minX:-25,maxX:25,minZ:-25,maxZ:25}){
+ const step=.5,key=(x,z)=>`${x},${z}`,cache=new Map();
+ const outside=p=>p.x<bounds.minX||p.x>bounds.maxX||p.z<bounds.minZ||p.z>bounds.maxZ;
+ if(outside(goal)||pointBlocked(goal,obstacles))return[];
+ const blocked=(x,z)=>{const k=key(x,z);if(!cache.has(k)){const p={x:x*step,z:z*step};cache.set(k,outside(p)||pointBlocked(p,obstacles));}return cache.get(k);};
+ const cell=p=>{const x=Math.round(p.x/step),z=Math.round(p.z/step),candidates=[];for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){const q={x:x+dx,z:z+dz},world={x:q.x*step,z:q.z*step};if(!blocked(q.x,q.z)&&hasLineOfSight(p,world,obstacles,.42))candidates.push({...q,d:distance(p,world)});}return candidates.sort((a,b)=>a.d-b.d)[0];};
+ const from=cell(start),to=cell(goal);if(!from||!to)return[];
+ if(from.x===to.x&&from.z===to.z&&hasLineOfSight(start,goal,obstacles,.42))return[{x:goal.x,z:goal.z}];
+ const heuristic=(x,z)=>Math.hypot(x-to.x,z-to.z),open=[{...from,g:0,f:heuristic(from.x,from.z)}],scores=new Map([[key(from.x,from.z),0]]),parents=new Map(),closed=new Set();let found=null;
+ for(let iteration=0;iteration<16000&&open.length;iteration++){
+  let best=0;for(let i=1;i<open.length;i++)if(open[i].f<open[best].f)best=i;
+  const current=open.splice(best,1)[0],k=key(current.x,current.z);if(closed.has(k))continue;if(current.x===to.x&&current.z===to.z){found=k;break;}closed.add(k);
+  for(const[dx,dz]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){
+   const x=current.x+dx,z=current.z+dz,n=key(x,z);if(closed.has(n)||blocked(x,z)||(dx&&dz&&(blocked(current.x+dx,current.z)||blocked(current.x,current.z+dz))))continue;
+   if(!hasLineOfSight({x:current.x*step,z:current.z*step},{x:x*step,z:z*step},obstacles,.42))continue;
+   const g=current.g+Math.hypot(dx,dz);if(g>=(scores.get(n)??Infinity))continue;scores.set(n,g);parents.set(n,k);open.push({x,z,g,f:g+heuristic(x,z)});
+  }
+ }
+ if(!found)return[];const path=[{x:goal.x,z:goal.z}];while(found){const[x,z]=found.split(',').map(Number);path.unshift({x:x*step,z:z*step});found=parents.get(found);}return path;
+}
+export function hasLineOfSight(a,b,obstacles,padding=.1){return !obstacles.some(o=>{
+ if(o.disabled)return false;const start=obstacleLocal(o,a),end=obstacleLocal(o,b);let enter=0,leave=1;
+ for(const axis of ['x','z']){const half=(axis==='x'?o.w:o.d)/2+padding,d=end[axis]-start[axis];if(Math.abs(d)<1e-8){if(start[axis]<-half||start[axis]>half)return false;continue;}let t0=(-half-start[axis])/d,t1=(half-start[axis])/d;if(t0>t1)[t0,t1]=[t1,t0];enter=Math.max(enter,t0);leave=Math.min(leave,t1);if(enter>leave)return false;}return leave>=0&&enter<=1;
+ });}
