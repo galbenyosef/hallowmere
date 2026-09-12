@@ -1,0 +1,9 @@
+@import url('./geralt-character-study.css');
+
+.viewer{background:radial-gradient(ellipse at 50% 43%,#2b3b43 0,#202b33 42%,#121b23 84%)}
+.view-controls{gap:3px}
+.view-controls button{padding:7px 10px}
+.equipment-button{min-height:88px}
+.equipment-caption{min-height:70px}
+.viewer-bottomline{gap:20px}
+@media(max-width:760px){.equipment-list{grid-template-columns:1fr}.equipment-button{grid-template-columns:27px 1fr 13px;min-height:77px}.weapon-number{display:block}.equipment-caption{min-height:0}.view-controls button{padding:7px 10px}.viewer-bottomline{font-size:.75rem;align-items:center}.viewer-bottomline>span:first-child{max-width:52%}.scale-indicator{text-align:right}}

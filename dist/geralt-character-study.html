@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101719">
+  <title>Geralt — Hallowmere Character Study</title>
+  <meta name="description" content="An interactive Geralt character study with two swords, a dagger, and views for reviewing the design before game integration.">
+  <link rel="icon" href="./assets/icons/favicon-32.png">
+  <link rel="stylesheet" href="./geralt-character-study.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="./character-studies.html">Hallowmere</a>
+    <span class="edition">Character study <span class="edition-number">/ 03</span></span>
+  </header>
+  <main>
+    <div class="page-title">
+      <div><p class="eyebrow">The White Wolf</p><h1>Geralt of Rivia</h1></div>
+      <span class="review-note">Design review · Not yet playable</span>
+    </div>
+    <div class="study-layout">
+      <section class="viewer" aria-label="Geralt 3D design sheet">
+        <div class="viewer-topline"><span id="view-label">Three-quarter view</span><span id="pose-label">All weapons sheathed</span></div>
+        <div class="model-stage" id="model-stage" tabindex="0" role="region" aria-label="Interactive Geralt model. Drag horizontally or use left and right arrow keys to rotate." aria-describedby="rotation-hint">
+          <canvas id="character-canvas" aria-label="Geralt, with white tied-back hair, dark leather and mail armor, two swords on his back, and a hip dagger"></canvas>
+          <div class="viewer-message" id="viewer-message" role="status">Preparing the character…</div>
+        </div>
+        <div class="viewer-bottomline"><span>Two swords. One dagger.</span><span class="scale-indicator" id="scale-indicator">Character detail</span></div>
+        <div class="view-controls" aria-label="Camera views">
+          <button type="button" data-view="three-quarter" aria-pressed="true">¾ view</button>
+          <button type="button" data-view="front" aria-pressed="false">Front</button>
+          <button type="button" data-view="side" aria-pressed="false">Side</button>
+          <button type="button" data-view="back" aria-pressed="false">Back</button>
+          <button type="button" data-view="face" aria-pressed="false">Face</button>
+          <button type="button" data-view="game" aria-pressed="false">Game scale</button>
+        </div>
+        <div class="rotation-row">
+          <button type="button" id="rotate-left" aria-label="Rotate character left">↶</button>
+          <p id="rotation-hint">Drag to turn <span>·</span> Arrow keys rotate</p>
+          <button type="button" id="rotate-right" aria-label="Rotate character right">↷</button>
+          <button type="button" id="reset-view">Reset</button>
+        </div>
+      </section>
+      <aside class="design-notes" aria-label="Appearance and equipment">
+        <section class="equipment-section">
+          <div class="section-heading"><h2>Equipment</h2><span>03 pieces</span></div>
+          <div class="equipment-list" aria-label="Equipment poses">
+            <button type="button" class="equipment-button" data-pose="sheathed" aria-pressed="true"><span class="weapon-number">—</span><span><strong>All sheathed</strong><small>Travel stance · inspect the full silhouette</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+            <button type="button" class="equipment-button" data-pose="steel" aria-pressed="false"><span class="weapon-number">01</span><span><strong>Steel sword</strong><small>Straight crossguard · brown leather grip</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+            <button type="button" class="equipment-button" data-pose="silver" aria-pressed="false"><span class="weapon-number">02</span><span><strong>Silver sword</strong><small>Angled crossguard · ring pommel</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+            <button type="button" class="equipment-button" data-pose="dagger" aria-pressed="false"><span class="weapon-number">03</span><span><strong>Hip dagger</strong><small>Short blade · fitted leather sheath</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+          </div>
+          <p class="equipment-caption" id="equipment-caption" aria-live="polite">Both swords rest on the back. The dagger sits at the hip.</p>
+        </section>
+        <section class="appearance-section">
+          <div class="section-heading"><h2>Character details</h2></div>
+          <dl class="appearance-list">
+            <div><dt>Face & hair</dt><dd>Scar across the left eye, amber eyes, a short gray beard, and tied-back white hair.</dd></div>
+            <div><dt>Armor</dt><dd>Weathered leather over chainmail, crossed sword straps, and restrained shoulder guards.</dd></div>
+            <div><dt>Signature</dt><dd>A wolf medallion, two distinct sword hilts, and a lean monster-hunter silhouette.</dd></div>
+          </dl>
+          <div class="palette" aria-label="Material palette: white hair, dark leather, brown leather, chainmail, and silver">
+            <span style="--swatch:#c7c9bd" title="White hair"></span><span style="--swatch:#303938" title="Dark leather"></span><span style="--swatch:#5d4537" title="Brown leather"></span><span style="--swatch:#889595" title="Chainmail"></span><span style="--swatch:#c6d1cc" title="Silver"></span>
+            <span class="palette-label">Leather / mail / silver</span>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <footer class="sheet-footer"><span>Hallowmere <span aria-hidden="true">/</span> Geralt study</span><p>Appearance and equipment preview. Skills follow design approval.</p><a href="./hunt-king-study.html">View king boss study ↗</a></footer>
+    <noscript><p class="noscript-note">Enable JavaScript to view and rotate the 3D character. The equipment and appearance notes remain available above.</p></noscript>
+  </main>
+  <script type="module" src="./geralt-character-study.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101719">
+  <title>Wild Hunt King — Hallowmere Boss Study</title>
+  <meta name="description" content="An interactive enemy king study: crowned skull armor, a greatsword, and an outstretched casting gauntlet.">
+  <link rel="icon" href="./assets/icons/favicon-32.png">
+  <link rel="stylesheet" href="./hunt-king-study.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="./character-studies.html">Hallowmere</a>
+    <span class="edition">Boss study <span class="edition-number">/ 04</span></span>
+  </header>
+  <main>
+    <div class="page-title">
+      <div><p class="eyebrow">Enemy / King boss</p><h1>Wild Hunt King</h1></div>
+      <span class="review-note">Design review · Not yet in encounters</span>
+    </div>
+    <div class="study-layout">
+      <section class="viewer" aria-label="Wild Hunt King 3D design sheet">
+        <div class="viewer-topline"><span id="view-label">Three-quarter view</span><span id="pose-label">Commanding reach</span></div>
+        <div class="model-stage" id="model-stage" tabindex="0" role="region" aria-label="Interactive Wild Hunt King model. Drag horizontally or use left and right arrow keys to rotate." aria-describedby="rotation-hint">
+          <canvas id="character-canvas" aria-label="A towering armored king with a spiked crown, hollow skull mask, ribbed breastplate, greatsword, and outstretched gauntlet"></canvas>
+          <div class="viewer-message" id="viewer-message" role="status">Preparing the character…</div>
+        </div>
+        <div class="viewer-bottomline"><span>Crowned in iron. Clad in bone.</span><span class="scale-indicator" id="scale-indicator">Character detail</span></div>
+        <div class="view-controls" aria-label="Camera views">
+          <button type="button" data-view="three-quarter" aria-pressed="true">¾ view</button>
+          <button type="button" data-view="front" aria-pressed="false">Front</button>
+          <button type="button" data-view="side" aria-pressed="false">Side</button>
+          <button type="button" data-view="back" aria-pressed="false">Back</button>
+          <button type="button" data-view="face" aria-pressed="false">Helmet</button>
+          <button type="button" data-view="game" aria-pressed="false">Game scale</button>
+          <button type="button" data-view="compare" aria-pressed="false">Beside Geralt</button>
+        </div>
+        <div class="rotation-row">
+          <button type="button" id="rotate-left" aria-label="Rotate character left">↶</button>
+          <p id="rotation-hint">Drag to turn <span>·</span> Arrow keys rotate</p>
+          <button type="button" id="rotate-right" aria-label="Rotate character right">↷</button>
+          <button type="button" id="reset-view">Reset</button>
+        </div>
+      </section>
+      <aside class="design-notes" aria-label="Appearance and equipment">
+        <section class="equipment-section">
+          <div class="section-heading"><h2>Boss poses</h2><span>03 studies</span></div>
+          <div class="equipment-list" aria-label="Boss poses">
+            <button type="button" class="equipment-button" data-pose="guard" aria-pressed="false"><span class="weapon-number">01</span><span><strong>Armored stance</strong><small>Greatsword lowered · full armor silhouette</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+            <button type="button" class="equipment-button" data-pose="reach" aria-pressed="true"><span class="weapon-number">02</span><span><strong>Commanding reach</strong><small>Open gauntlet · reference pose</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+            <button type="button" class="equipment-button" data-pose="conjure" aria-pressed="false"><span class="weapon-number">03</span><span><strong>Conjured fire</strong><small>Ember light gathered in the palm</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+          </div>
+          <p class="equipment-caption" id="equipment-caption" aria-live="polite">An open, clawed gauntlet reaches forward. The greatsword rests in the other hand.</p>
+        </section>
+        <section class="appearance-section">
+          <div class="section-heading"><h2>Character details</h2></div>
+          <dl class="appearance-list">
+            <div><dt>Crown & mask</dt><dd>Seven tall iron points frame a metallic skull, hollow eyes, and exposed teeth.</dd></div>
+            <div><dt>Armor & cloak</dt><dd>Curved rib plates over burgundy leather, spiked shoulders, and a long, torn cloak.</dd></div>
+            <div><dt>Boss silhouette</dt><dd>Broad armor and an elevated crown distinguish the king from Geralt. Compare them side by side.</dd></div>
+          </dl>
+          <div class="palette" aria-label="Material palette: dark iron, worn steel, burgundy leather, charcoal cloth, and ember light">
+            <span style="--swatch:#343f43" title="Dark iron"></span><span style="--swatch:#838883" title="Worn steel"></span><span style="--swatch:#492e31" title="Burgundy leather"></span><span style="--swatch:#222b2d" title="Charcoal cloth"></span><span style="--swatch:#f56e37" title="Ember light"></span>
+            <span class="palette-label">Iron / leather / embers</span>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <footer class="sheet-footer"><span>Hallowmere <span aria-hidden="true">/</span> King boss study</span><p>Appearance and pose preview. Encounter design follows approval.</p><a href="./geralt-character-study.html">View Geralt study ↗</a></footer>
+    <noscript><p class="noscript-note">Enable JavaScript to view and rotate the 3D character. The pose and appearance notes remain available above.</p></noscript>
+  </main>
+  <script type="module" src="./hunt-king-study.js"></script>
+</body>
+</html>
