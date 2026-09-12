@@ -1,0 +1,249 @@
+{
+  "sources": [
+    {
+      "file": "knifeSlice.wav",
+      "original": "knifeSlice.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "knifeSlice2.wav",
+      "original": "knifeSlice2.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "drawKnife1.wav",
+      "original": "drawKnife1.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "drawKnife2.wav",
+      "original": "drawKnife2.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "chop.wav",
+      "original": "chop.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "creak1.wav",
+      "original": "creak1.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "creak2.wav",
+      "original": "creak2.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "creak3.wav",
+      "original": "creak3.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "cloth1.wav",
+      "original": "cloth1.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "cloth2.wav",
+      "original": "cloth2.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "handleCoins.wav",
+      "original": "handleCoins.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "handleCoins2.wav",
+      "original": "handleCoins2.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "handleSmallLeather.wav",
+      "original": "handleSmallLeather.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "metalLatch.wav",
+      "original": "metalLatch.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "doorOpen_1.wav",
+      "original": "doorOpen_1.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "doorOpen_2.wav",
+      "original": "doorOpen_2.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "doorClose_1.wav",
+      "original": "doorClose_1.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "bookOpen.wav",
+      "original": "bookOpen.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "bookClose.wav",
+      "original": "bookClose.ogg",
+      "pack": "rpg",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_concrete_000.wav",
+      "original": "footstep_concrete_000.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_concrete_001.wav",
+      "original": "footstep_concrete_001.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_concrete_002.wav",
+      "original": "footstep_concrete_002.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_concrete_003.wav",
+      "original": "footstep_concrete_003.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_grass_000.wav",
+      "original": "footstep_grass_000.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_grass_001.wav",
+      "original": "footstep_grass_001.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_grass_002.wav",
+      "original": "footstep_grass_002.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_grass_003.wav",
+      "original": "footstep_grass_003.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_wood_000.wav",
+      "original": "footstep_wood_000.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_wood_001.wav",
+      "original": "footstep_wood_001.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_wood_002.wav",
+      "original": "footstep_wood_002.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "footstep_wood_003.wav",
+      "original": "footstep_wood_003.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactPunch_heavy_000.wav",
+      "original": "impactPunch_heavy_000.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactPunch_heavy_001.wav",
+      "original": "impactPunch_heavy_001.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactPunch_heavy_002.wav",
+      "original": "impactPunch_heavy_002.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactMetal_heavy_000.wav",
+      "original": "impactMetal_heavy_000.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactMetal_heavy_001.wav",
+      "original": "impactMetal_heavy_001.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactBell_heavy_000.wav",
+      "original": "impactBell_heavy_000.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactGlass_light_000.wav",
+      "original": "impactGlass_light_000.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactWood_heavy_000.wav",
+      "original": "impactWood_heavy_000.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    },
+    {
+      "file": "impactWood_heavy_001.wav",
+      "original": "impactWood_heavy_001.ogg",
+      "pack": "impact",
+      "license": "CC0-1.0"
+    }
+  ],
+  "pages": {
+    "rpg": "https://kenney.nl/assets/rpg-audio",
+    "impact": "https://kenney.nl/assets/impact-sounds"
+  },
+  "processing": "Decoded from publisher OGG to mono 48 kHz PCM16 with FFmpeg; no new detail is implied by resampling."
+}

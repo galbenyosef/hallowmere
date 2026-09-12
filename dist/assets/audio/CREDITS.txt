@@ -1,0 +1,12 @@
+Hallowmere — The Ashen Vigil: audio palette v2
+
+Sound design and synthesis: original Hallowmere workshop.
+Recorded source material: Kenney, Impact Sounds (2019) and RPG Audio (2014).
+License: Creative Commons Zero (CC0 1.0).
+https://kenney.nl/assets/impact-sounds
+https://kenney.nl/assets/rpg-audio
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Sources were edited, layered, filtered, pitch shifted, and granulated.
+Detailed provenance and publisher license text: scripts/audio-sources/.
+Rebuild with npm run generate:audio.
