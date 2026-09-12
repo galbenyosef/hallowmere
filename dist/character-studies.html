@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101719">
+  <title>Hallowmere — Character Studies</title>
+  <link rel="icon" href="./assets/icons/favicon-32.png">
+  <link rel="stylesheet" href="./character-studies.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="./index.html">Hallowmere<span>The Ashen Vigil</span></a>
+    <div class="edition">Character studies <span>02 / The chosen roster</span></div>
+  </header>
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">Your chosen few</p><h1>The next keepers of the vigil</h1></div>
+      <p>Six selected classes. Three Sorcerer appearance directions.<br> Inspect your picks, compare their equipment, and explore their skills.</p>
+    </section>
+    <nav class="tabs" aria-label="Character collections">
+      <button data-collection="chosen" aria-pressed="true">Chosen roster <span>9</span></button>
+      <button data-collection="wizards" aria-pressed="false">Wizard directions <span>10</span></button>
+      <button data-collection="classes" aria-pressed="false">Character classes <span>10</span></button>
+      <button data-collection="shortlist" aria-pressed="false">Your shortlist <span id="shortlist-count">0</span></button>
+    </nav>
+    <section class="collection-heading"><div><h2 id="collection-title">The chosen roster</h2><p id="collection-description">Six classes, with Mire Witch, Bone Oracle, and Storm Hermit as Sorcerer appearance directions.</p></div><span class="study-note">3D concept studies · proposed skills</span></section>
+    <div id="loading" role="status">Summoning the roster…</div>
+    <div class="gallery" id="gallery" aria-label="Character concepts"></div>
+    <p id="empty" hidden>Your shortlist is empty. Save a few characters from either collection to compare them here.</p>
+  </main>
+  <footer class="selection-bar"><div><span class="eyebrow">Your chosen few</span><span id="selection-summary">No characters saved yet</span></div><button class="primary" id="copy-picks" disabled>Copy picks</button></footer>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <dialog id="inspector" aria-labelledby="detail-name">
+    <button class="close" id="close-inspector" aria-label="Close character details">×</button>
+    <div class="inspection-layout">
+      <div class="model-panel">
+        <div class="model-topline"><span id="detail-id" class="eyebrow"></span><span id="scale-label">Character detail</span></div>
+        <div id="model-stage" role="img" aria-label="Interactive 3D character preview"></div>
+        <span class="model-nameplate" id="model-nameplate"></span>
+        <div class="camera-controls" aria-label="Preview controls"><button id="turn-left" aria-label="Rotate character left">↶</button><button id="view-angle">Front view</button><button id="turn-right" aria-label="Rotate character right">↷</button><button id="game-scale" aria-pressed="false">Game scale</button></div>
+        <p class="drag-hint">Drag to turn · arrow buttons also rotate</p>
+      </div>
+      <section class="detail-copy">
+        <p class="eyebrow" id="detail-role"></p><h2 id="detail-name"></h2><p id="detail-story"></p>
+        <dl class="loadout"><div><dt>Weapon</dt><dd id="detail-weapon"></dd></div><div><dt>Off hand</dt><dd id="detail-focus"></dd></div><div><dt>Playstyle</dt><dd id="detail-style"></dd></div></dl>
+        <h3>Proposed skill kit</h3><div id="skills"></div>
+        <p class="effect-note" id="effect-note">Select a skill to preview its visual effect. Combat values are not implemented in this study.</p>
+        <button class="primary save-detail" id="save-detail">Add to shortlist</button>
+      </section>
+    </div>
+  </dialog>
+  <script type="module" src="./character-studies.js"></script>
+</body>
+</html>
