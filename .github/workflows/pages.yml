@@ -26,12 +26,19 @@ jobs:
           node-version: '22'
           package-manager-cache: false
 
-      # The static game and its dependencies are checked in; no install is needed.
+      - name: Install server dependencies
+        run: npm ci
       - name: Run tests
         run: npm test
 
       - name: Validate static game
         run: npm run build
+
+      - name: Configure live multiplayer
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          MULTIPLAYER_SERVER_URL: ${{ vars.MULTIPLAYER_SERVER_URL }}
+        run: npm run configure:multiplayer
 
       - name: Upload game
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

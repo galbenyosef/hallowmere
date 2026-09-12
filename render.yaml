@@ -1,0 +1,19 @@
+# One shared in-memory world. Scaling beyond one instance would split the party.
+services:
+  - type: web
+    name: hallowmere-multiplayer
+    runtime: node
+    plan: 0.5c-512mb
+    region: oregon
+    numInstances: 1
+    buildCommand: npm ci && npm test && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: ALLOWED_ORIGINS
+        value: https://miguelsolorio.github.io

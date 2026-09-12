@@ -1,0 +1,64 @@
+# Chosen character concepts
+
+Selections submitted by the user on September 12, 2026. The source of these
+choices is the Hallowmere character study gallery.
+
+## Wizard directions
+
+| ID | Direction | Weapon | Off-hand focus |
+| --- | --- | --- | --- |
+| W06 | Mire Witch | Gnarled root staff | Marsh lantern |
+| W07 | Bone Oracle | Skull-topped staff | Spirit skull |
+| W10 | Storm Hermit | Lightning fork staff | Storm orb |
+
+## Character classes
+
+| ID | Class | Weapon | Off-hand equipment |
+| --- | --- | --- | --- |
+| C01 | Sorcerer | Crystal-tipped staff | Spellbook |
+| C02 | Ranger | Yew longbow | Quiver of barbed arrows |
+| C03 | Reaver | Two-handed war axe | Fury talisman |
+| C04 | Nightblade | Paired hooked daggers | Throwing knives |
+| C05 | Oathkeeper | Lantern mace | Kite shield |
+| C09 | Plague Alchemist | Hand crossbow | Alchemical flask |
+
+## Study organization
+
+The gallery opens on these nine concepts, with the six classes together and the
+three wizard directions in a separate Sorcerer appearance group. Treating the
+wizard directions as Sorcerer appearances is the current working interpretation;
+the user selected all three without choosing one default or defining subclasses.
+The Sorcerer's original C01 study remains available as its class reference.
+
+The recorded choices live in `dist/character-study-selection.js`. The editable
+browser shortlist begins with these choices and can change independently.
+All 20 original concepts remain available in the other gallery collections.
+
+## Playable roster
+
+The six classes are now integrated into the live game. The initial character
+screen shows their weapons, off-hand equipment, stats, and abilities. Sorcerer
+includes the original crystal-staff / spellbook appearance plus Mire Witch,
+Bone Oracle, and Storm Hermit. These appearances share the Sorcerer combat kit. Fireball restores the
+large fireball, fiery trail, cast flash, and impact burst on right mouse
+(18 essence, 1.2-second cooldown), replacing Frostbind.
+
+| Class | Primary attack | Right mouse | 1 · Evade | 2 · Class skill |
+| --- | --- | --- | --- | --- |
+| Sorcerer | Arcane Bolt | Fireball | Miststep | Elemental Storm |
+| Ranger | Quickshot | Piercing Shot | Hunter’s Roll | Arrow Rain |
+| Reaver | Rend | War Cry | Rush | Blood Whirl |
+| Nightblade | Twin Cut | Knife Fan | Shadowstep | Smoke Veil |
+| Oathkeeper | Consecrated Strike | Aegis | Pilgrim’s Step | Sanctuary |
+| Plague Alchemist | Virulent Bolt | Bitter Remedy | Quickstep | Miasma |
+
+Press **C**, click the character name, or choose **Change class** from the game
+menu while in a sanctuary. Switching retains quest progress, crowns, equipment
+IDs, upgrades, and health/essence percentages. Weapons adapt to the chosen class;
+cooldowns cannot be reset by switching. A per-tab reconnect retains the class,
+and group world resets retain the class choice while resetting campaign progress.
+
+The authoritative server owns damage, projectiles, poison and bleed ticks,
+roots, slows, shields, concealment, and cooperative healing. Class definitions
+and live ability descriptions are in `dist/classes.js`; the gallery remains a
+separate archive of the original concepts and their proposed skills.

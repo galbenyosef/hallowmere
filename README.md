@@ -1,10 +1,10 @@
 <div align="center">
 
-  <h1>Hallowmere — The Ashen Vigil</h1>
+  <h1>Hallowmere</h1>
 
   <img src="dist/assets/icons/app-icon.png" alt="Rounded Hallowmere app icon with the title below the shadowed Warden in cold steel, a dark cloak, and blue-green fog" width="160" height="160">
 
-  <p>A complete original dark fantasy action RPG built with Three.js. Travel between two villages, speak to four characters, fight randomized wilderness packs, collect and equip loot, and silence the Bellkeeper in the haunted village of Hallowmere.</p>
+  <p>A dark fantasy action RPG built with Three.js. Travel between two villages, speak to four characters, fight randomized wilderness packs, collect and equip loot, and silence the Bellkeeper in the haunted village of Hallowmere.</p>
 
   <img src="screenshots/gameplay.jpg" alt="Hallowmere gameplay in Ashwick, with the Warden, torchlit village, quest tracker, minimap, and combat abilities">
 
@@ -14,19 +14,23 @@
 
 ## Run
 
-Requires Node.js 20 or newer. No installation or build service is needed: the pinned Three.js 0.180.0 runtime is included locally.
+Requires Node.js 22 or newer. Run `npm ci` once to install the multiplayer server dependency. The pinned Three.js 0.180.0 runtime is included locally.
 
 ```sh
 npm run dev
 ```
 
-Open **http://127.0.0.1:5182**. To play from another device on the same network, run `npm run dev:network` and open the printed Network URL. The static game is in `dist/` and can be served by any static web server. A WebGL2-capable browser is required. Sound begins after the first interaction.
+Open **http://127.0.0.1:5182**. To play from another device on the same network, run `npm run dev:network` and open the printed Network URL. The frontend is in `dist/`. Gameplay requires the shared WebSocket backend, included in the development server; a static host must point to a deployed backend. A WebGL2-capable browser is required. Sound begins after the first interaction.
+
+Development mode restarts the server when its code or imported gameplay modules change. A restart creates a new vigil, and open game tabs reconnect automatically. Use `npm start` to run without watching files.
+
+If the game stays on the connection screen with a WebSocket error, check **http://localhost:5182/health**. It should return JSON with `ok: true` and `version: 1`. A 404 means an older or static-only server is still using port 5182: stop that process and restart with `npm run dev` (or `npm run dev:network`). Reloading the browser alone cannot update a running server.
 
 ## GitHub Pages
 
 The [Pages workflow](.github/workflows/pages.yml) tests and validates the game on pull requests to `main`. Pushes to `main` also deploy the checked-in `dist/` directory. You can redeploy from **Actions → Deploy game to GitHub Pages → Run workflow** on `main`.
 
-For the first deployment, select **GitHub Actions** under **Settings → Pages → Build and deployment → Source**, then push `main`. The game will be available at **https://miguelsolorio.github.io/hallowmere/** after the workflow succeeds. No repository secrets or package installation are required; deployment uses the workflow's built-in GitHub token.
+For the first deployment, select **GitHub Actions** under **Settings → Pages → Build and deployment → Source**, then push `main`. The game will be available at **https://miguelsolorio.github.io/hallowmere/** after the workflow succeeds. Set the repository variable `MULTIPLAYER_SERVER_URL` to the deployed backend’s `wss://<host>/multiplayer` URL. The workflow checks backend health and protocol compatibility before uploading the frontend. It refuses to publish without that URL, leaving the existing public game in place. Deployment uses the workflow’s built-in GitHub token.
 
 Keep local asset URLs relative so the game works both at a domain root and under a repository path such as `/hallowmere/`. `npm run build` checks these URLs before deployment. The workflow uses GitHub's [custom Pages deployment actions](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
@@ -36,17 +40,32 @@ Keep local asset URLs relative so the game works both at a domain root and under
 | --- | --- |
 | Move | WASD / arrow keys / click ground |
 | Target and cleave | Click a creature; hold to chase and attack |
-| Stand and cleave | Shift + left click |
-| Emberbolt | Right click |
+| Stand and use primary attack | Shift + left click |
+| Secondary class ability | Right click |
 | Evade | 1 |
-| Cinder nova | 2 |
+| Class skill | 2 |
 | Healing draught | 3 |
 | Speak to a villager / collect nearby loot | F or click its label |
 | Equipment inventory | I |
+| Choose class (in a sanctuary) | C or click your character name |
 | Reveal loot labels during combat | Hold Alt |
 | Journal / map / pause | J / M / Escape |
 
-Touch devices have a movement stick and ability buttons with automatic enemy aiming. Red ground indicators show enemy attacks before they resolve. Evade grants brief invulnerability. Essence regenerates. Every defeated monster drops crowns; draughts and equipment can also drop. Walk over crowns, or use F/click a label to collect loot. Equip weapons and charms in the inventory for real damage and vitality bonuses. Brief browser focus changes do not open a pause menu. Switching away from the game suspends it silently, and returning resumes it automatically; a manually opened pause menu, map, or conversation stays open. Interrupted touch gestures reset the movement stick.
+Touch devices have a movement stick and ability buttons with automatic enemy aiming. Red ground indicators show enemy attacks before they resolve. Evade grants brief invulnerability. Essence regenerates. Every defeated monster drops crowns; draughts and equipment can also drop. Walk over crowns, or use F/click a label to collect loot. Equip weapons and charms in the inventory for real damage and vitality bonuses. Brief browser focus changes do not open a menu. Menus and background tabs release movement input, but the shared world continues. Enemies can still attack an idle character outside a sanctuary. A manually opened menu, map, or conversation stays open on return. Interrupted touch gestures reset the movement stick.
+
+## Chosen roster
+
+Choose Sorcerer, Ranger, Reaver, Nightblade, Oathkeeper, or Plague Alchemist before
+entering the vigil. Each has a distinct model, weapon, combat kit, vitality,
+essence, and movement speed. Sorcerer offers its crystal staff and spellbook,
+plus the chosen Mire Witch, Bone Oracle, and Storm Hermit appearances.
+
+The selection screen explains every skill. Press **C** in a sanctuary to change
+class while preserving progress and upgrades. Health and essence percentages
+and existing cooldowns carry across. Models, abilities, and support effects are
+shared with other players; healing and protection can help nearby allies.
+The [roster notes](docs/character-selection.md) list the live skills. The original
+[character studies](dist/character-studies.html) remain available separately.
 
 ## Buildings
 
@@ -54,13 +73,33 @@ All twelve buildings have walkable rooms. Approach a front door with the movemen
 
 ## Campaign
 
-Start in the safe village of **Ashwick**. Elder Rowan offers *The Last Toll*. Sister Edda restores vitality, essence, and a minimum of three draughts for free. Brann sells draughts and hones any equipped blade for crowns.
+Start in the safe village of **Ashwick**. Elder Rowan offers *The Last Toll*. Sister Edda restores vitality, essence, and a minimum of three draughts for free. Brann sells draughts and hones any equipped weapon for crowns.
 
 Follow the cobbled **Mourning Road** east through three randomized packs (six to nine monsters). A new run creates a fresh seed, which changes the creatures, positions, and loot. Watchman Rook waits in a protected lantern ward at Hallowmere’s gate and shares supplies once.
 
-Defeat the twelve afflicted in **Hallowmere** to summon **the Bellkeeper**, a 720-vitality boss with telegraphed ground attacks and radial projectiles. Road kills do not count toward the village objective. The boss always drops 60 crowns, two draughts, and **Bellkeeper’s Requiem**, a legendary blade with +18 cleave damage. Collect the relic, equip it, and return to Rowan for an 80-crown quest reward. Exploration and trading continue after victory.
+Defeat the twelve afflicted in **Hallowmere** to summon **the Bellkeeper**, a 720-vitality boss with telegraphed ground attacks and radial projectiles. Road kills do not count toward the village objective. The boss always drops 60 crowns, two draughts, and **Bellkeeper’s Requiem**, a legendary class weapon with +18 primary attack damage. Collect the relic, equip it, and return to Rowan for an 80-crown quest reward. Exploration and trading continue after victory.
 
-Each vigil is a single-session adventure. “Begin a new vigil” resets progress and rerolls the road.
+Each vigil is a shared session. “Vote for a new vigil” resets progress and rerolls the road only when all connected players agree. Votes expire after 30 seconds and cancel when membership changes. An empty world resets after ten minutes.
+
+## Cooperative multiplayer
+
+The public link automatically joins one world with up to eight adventurers. Ground rings, numbered labels, and map markers identify each character. Movement and travel are independent: a player can enter the Mourning Road, Hallowmere, or an unlocked building while teammates remain elsewhere. This release retains the existing World I campaign; it does not add new maps or require party gathering at any boundary.
+
+Enemies, quest acceptance, objectives, the boss, relic recovery, and chapel access are shared. Each connected player gets personal enemy loot and experience, while health, mana, currency, equipment, services, and reward claims remain individual. Late joiners inherit the world’s current quest state without historical enemy drops. There is no friendly fire or player collision. Death offers a return to Ashwick with health and mana restored, retaining gear and currency.
+
+The Node server owns all gameplay outcomes. It simulates at 20 Hz and broadcasts at 10 Hz; the browser predicts walking, reconciles acknowledgments, and interpolates other actors. Messages carry a protocol version, world ID, and sequence number. The server enforces collisions, costs, cooldowns, line of sight, ownership, and interaction distances. `/health` reports protocol and connected-player count. Allowed origins, 4 KiB messages, per-connection rate limits, a join timeout, heartbeat checks, and bounded outbound buffers protect the connection layer.
+
+A per-tab resume token restores the same character within 60 seconds of disconnection. Disconnected characters stop participating in combat and return safely to Ashwick when resumed. Connection loss blocks controls until a fresh snapshot arrives. World and character state are held in memory: deployment or server restart starts a new vigil, with an explicit in-game notice. There are no accounts or durable saves.
+
+### Public backend deployment
+
+1. Create a Render Blueprint from this repository using [render.yaml](render.yaml). The configured single always-on Node instance is a paid service; review the current cost before creating it. Keep the service at one instance, since multiple instances would create separate worlds. The declaration follows the [Render Blueprint reference](https://render.com/docs/blueprint-spec).
+2. `ALLOWED_ORIGINS` defaults to `https://miguelsolorio.github.io`. Add any Sites frontend origin as a comma-separated value when serving the game there. Origins contain no paths. Keep automatic backend deployment off so a frontend push cannot unexpectedly reset an active adventure.
+3. Deploy the backend and verify `https://<backend-host>/health`. Its response must include `ok: true` and `version: 1`. Render provides secure [WebSocket connections](https://render.com/docs/websocket).
+4. Set the GitHub repository variable `MULTIPLAYER_SERVER_URL` to `wss://<backend-host>/multiplayer`, then run the Pages workflow. The workflow installs dependencies, tests, validates, checks the backend, and writes the public endpoint into the deployment artifact.
+5. For another static host, run `MULTIPLAYER_SERVER_URL=wss://<backend-host>/multiplayer npm run configure:multiplayer` before uploading `dist/`. An empty endpoint uses the current origin, which is suitable for the included local server. Do not publish an empty endpoint to a static-only host.
+
+No backend has been provisioned by adding this configuration. For rollout, deploy a compatible backend first and the frontend second. Retain the previous frontend artifact for rollback; a protocol-incompatible backend requires restoring its matching server revision too. Expect a new vigil whenever the backend restarts. Monitor `/health` and logs for connection counts, simulation delays, and server errors; resume tokens are never logged.
 
 ## Generated assets
 
@@ -79,7 +118,7 @@ npm test
 npm run build
 ```
 
-The checks cover combat geometry, cooldown and resource rules, health and death, collision and pathfinding, progression, seeded encounters and safe zones, loot collection and equipment, NPC services and quest rewards, GLB structure and numeric buffers, audio integrity, seamless loops, variation, spatial mixing, voice budgets, mute/pause behavior, failed-download recovery, script syntax, and asset/DOM references.
+The checks cover combat geometry, cooldown and resource rules, health and death, collision and pathfinding, progression, seeded encounters and safe zones, loot collection and equipment, NPC services and quest rewards, GLB structure and numeric buffers, audio integrity, seamless loops, variation, spatial mixing, voice budgets, mute/pause behavior, failed-download recovery, script syntax, and asset/DOM references. Multiplayer tests additionally cover eight live WebSocket clients, private state, capacity, reconnects, simultaneous damage, quest completion, personal loot, independent travel, respawning, restart votes, stale input, and malformed connections.
 
 Optional browser WebMCP integration exposes `get_vigil_state` and `control_warden` through the same game rules and controls. Browsers without it run the game normally.
 
