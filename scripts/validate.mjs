@@ -44,3 +44,9 @@ for (const match of main.matchAll(/\$\('([^']+)'\)/g)) {
 const hosting = JSON.parse(await readFile('.openai/hosting.json', 'utf8'));
 if (hosting.static.directory !== 'dist') throw Error('Unexpected static directory');
 console.log('Game scripts, DOM references, local assets, and project-site URLs validated.');
+
+for (const directory of ['server','scripts']) {
+ for (const file of await readdir(directory)) if(file.endsWith('.mjs')) execFileSync(process.execPath,['--check',resolve(directory,file)]);
+}
+const multiplayer=JSON.parse(await readFile('dist/multiplayer-config.json','utf8'));
+if(typeof multiplayer.serverUrl!=='string'||multiplayer.serverUrl&&!multiplayer.serverUrl.startsWith('wss://')) throw Error('Invalid public multiplayer endpoint');

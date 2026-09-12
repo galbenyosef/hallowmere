@@ -1,0 +1,12 @@
+import {writeFile} from 'node:fs/promises';
+const endpoint=process.env.MULTIPLAYER_SERVER_URL;
+if(!endpoint)throw Error('Set MULTIPLAYER_SERVER_URL to the deployed backend wss:// URL before publishing the game.');
+const url=new URL(endpoint);
+if(url.protocol!=='wss:'||url.username||url.password||url.search||url.hash||url.pathname!=='/multiplayer')throw Error('MULTIPLAYER_SERVER_URL must be wss://<backend-host>/multiplayer without credentials or query parameters.');
+const health=new URL('/health',url);health.protocol='https:';
+const response=await fetch(health,{signal:AbortSignal.timeout(15000)});
+if(!response.ok)throw Error(`Multiplayer health check failed (${response.status}).`);
+const status=await response.json();
+if(!status.ok||status.version!==1)throw Error('Backend protocol is not compatible with this game.');
+await writeFile(new URL('../dist/multiplayer-config.json',import.meta.url),JSON.stringify({serverUrl:url.href})+'\n');
+console.log('Multiplayer endpoint configured and backend health verified.');

@@ -1,14 +1,12 @@
-import http from 'node:http';
 import {networkInterfaces} from 'node:os';
-import {readFile, stat} from 'node:fs/promises';
-import {resolve, extname, sep} from 'node:path';
-const root=resolve('dist');
-const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.glb':'model/gltf-binary','.wav':'audio/wav','.svg':'image/svg+xml','.png':'image/png'};
-const server=http.createServer(async(req,res)=>{
- try {const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);let file=resolve(root,'.'+pathname);if(file!==root&&!file.startsWith(root+sep)){res.writeHead(403);res.end();return;}if((await stat(file)).isDirectory())file=resolve(file,'index.html');const body=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Cache-Control':'no-cache'});res.end(body);}catch{res.writeHead(404);res.end('Not found');}
+import {createGameServer} from '../server/server.mjs';
+const network=process.argv.includes('--network'),production=process.env.NODE_ENV==='production';
+const origins=(process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
+if(production&&!origins.length)throw Error('Set ALLOWED_ORIGINS to the public game origin before starting production.');
+const port=Number(process.env.PORT||5182),host=network||production?'0.0.0.0':'127.0.0.1';
+const game=createGameServer({origins});
+game.server.listen(port,host,()=>{
+ console.log(`Local: http://127.0.0.1:${port}`);
+ if(network)for(const addresses of Object.values(networkInterfaces()))for(const a of addresses||[])if(a.family==='IPv4'&&!a.internal)console.log(`Network: http://${a.address}:${port}`);
 });
-const network=process.argv.includes('--network');
-server.listen(5182,network?'0.0.0.0':'127.0.0.1',()=>{
- console.log('Local: http://127.0.0.1:5182');
- if(network)for(const addresses of Object.values(networkInterfaces()))for(const address of addresses||[])if(address.family==='IPv4'&&!address.internal)console.log(`Network: http://${address.address}:5182`);
-});
+for(const signal of ['SIGTERM','SIGINT'])process.once(signal,async()=>{await game.close();process.exit(0);});
