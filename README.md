@@ -22,6 +22,14 @@ npm run dev
 
 Open **http://127.0.0.1:5182**. To play from another device on the same network, run `npm run dev:network` and open the printed Network URL. The static game is in `dist/` and can be served by any static web server. A WebGL2-capable browser is required. Sound begins after the first interaction.
 
+## GitHub Pages
+
+The [Pages workflow](.github/workflows/pages.yml) tests and validates the game on pull requests to `main`. Pushes to `main` also deploy the checked-in `dist/` directory. You can redeploy from **Actions → Deploy game to GitHub Pages → Run workflow** on `main`.
+
+For the first deployment, select **GitHub Actions** under **Settings → Pages → Build and deployment → Source**, then push `main`. The game will be available at **https://miguelsolorio.github.io/hallowmere/** after the workflow succeeds. No repository secrets or package installation are required; deployment uses the workflow's built-in GitHub token.
+
+Keep local asset URLs relative so the game works both at a domain root and under a repository path such as `/hallowmere/`. `npm run build` checks these URLs before deployment. The workflow uses GitHub's [custom Pages deployment actions](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+
 ## Controls
 
 | Action | Control |

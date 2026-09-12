@@ -1,4 +1,46 @@
-import {readFile,readdir,stat} from 'node:fs/promises';import {execFileSync} from 'node:child_process';import {resolve} from 'node:path';
-for(const file of ['main.js','combat-effects.js','resource-orbs.js','inventory.js','buildings.js','page-activity.js','environment.js','combat.js','audio.js','audio-palette.js','campaign.js','world-actors.js']){execFileSync(process.execPath,['--check',resolve('dist',file)]);}
-const html=await readFile('dist/index.html','utf8');for(const match of html.matchAll(/(?:src|href)="(\/[^"#?]+)"/g))await stat(resolve('dist',`.${match[1]}`));for(const file of ['vendor/three.module.js','vendor/three.core.js','vendor/loaders/GLTFLoader.js','vendor/utils/BufferGeometryUtils.js'])await stat(resolve('dist',file));
-const main=await readFile('dist/main.js','utf8');const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));for(const m of main.matchAll(/\$\('([^']+)'\)/g))if(!ids.has(m[1]))throw Error(`Missing UI element: ${m[1]}`);const hosting=JSON.parse(await readFile('.openai/hosting.json','utf8'));if(hosting.static.directory!=='dist')throw Error('Unexpected static directory');console.log('Game scripts, DOM references, local assets, and static entrypoint validated.');
+import {readFile, readdir, stat} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {resolve} from 'node:path';
+
+const root = resolve('dist');
+// Resolve URLs as a project site so root-relative paths cannot pass validation.
+const siteURL = new URL('https://example.test/hallowmere/');
+async function validateReference(reference, source = 'index.html') {
+  if (/^(?:[a-z][a-z\d+.-]*:|#)/i.test(reference)) return;
+  const url = new URL(reference, new URL(source, siteURL));
+  if (url.origin !== siteURL.origin || !url.pathname.startsWith(siteURL.pathname)) {
+    throw Error(`Asset escapes the site directory: ${reference} in ${source}`);
+  }
+  await stat(resolve(root, decodeURIComponent(url.pathname.slice(siteURL.pathname.length))));
+}
+
+const scripts = (await readdir(root)).filter(file => file.endsWith('.js'));
+for (const file of scripts) {
+  execFileSync(process.execPath, ['--check', resolve(root, file)]);
+  const source = await readFile(resolve(root, file), 'utf8');
+  if (/["'`]\/(?:assets|vendor)\//.test(source)) {
+    throw Error(`Root-relative asset URL in ${file}; use a relative URL for project hosting.`);
+  }
+  for (const match of source.matchAll(/\bfrom\s*['"]([^'"]+)['"]/g)) {
+    if (match[1].startsWith('.')) await validateReference(match[1], file);
+  }
+}
+
+const html = await readFile(resolve(root, 'index.html'), 'utf8');
+for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
+  await validateReference(match[1]);
+}
+const importMap = JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]);
+for (const reference of Object.values(importMap.imports)) await validateReference(reference);
+for (const file of ['vendor/three.core.js', 'vendor/loaders/GLTFLoader.js', 'vendor/utils/BufferGeometryUtils.js']) {
+  await stat(resolve(root, file));
+}
+
+const main = await readFile(resolve(root, 'main.js'), 'utf8');
+const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
+for (const match of main.matchAll(/\$\('([^']+)'\)/g)) {
+  if (!ids.has(match[1])) throw Error(`Missing UI element: ${match[1]}`);
+}
+const hosting = JSON.parse(await readFile('.openai/hosting.json', 'utf8'));
+if (hosting.static.directory !== 'dist') throw Error('Unexpected static directory');
+console.log('Game scripts, DOM references, local assets, and project-site URLs validated.');
