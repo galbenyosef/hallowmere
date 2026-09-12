@@ -1,0 +1,5 @@
+{
+  "name": "hollowmere", "version": "1.0.0", "private": true, "type": "module",
+  "description": "A playable Three.js dark fantasy action RPG with generated GLB creatures and WAV sound effects.",
+  "scripts": {"dev": "node scripts/serve.mjs", "start": "node scripts/serve.mjs", "build": "node scripts/validate.mjs", "generate": "node scripts/generate-assets.mjs", "test": "node --test tests/*.test.mjs"}
+}

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111819"><meta name="description" content="Enter Hollowmere, a haunted village in an original dark fantasy action RPG. Fight the afflicted, master fire and steel, and silence the Bellkeeper."><title>Hollowmere — The Ashen Vigil</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23111819'/%3E%3Cpath d='M16 3v26M8 11h16M11 25l5 4 5-4' stroke='%23c4ad78' stroke-width='2' fill='none'/%3E%3C/svg%3E"><link rel="stylesheet" href="/style.css"><script type="importmap">{"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/"}}</script></head>
+<body>
+<main id="game" aria-label="Hollowmere dark fantasy game">
+ <canvas id="world" tabindex="0" aria-label="Village play area. Use W A S D to move, mouse to aim and attack, E for fire nova, Space to dodge, and Q to heal."></canvas>
+ <div class="vignette" aria-hidden="true"></div><div id="damage-vignette" aria-hidden="true"></div>
+ <header class="brand"><div class="sigil" aria-hidden="true">♜</div><div><h1>Hollowmere</h1><span>THE ASHEN VIGIL</span></div></header>
+ <div class="location"><span class="eyebrow">THE FORSAKEN REACH</span><div>Hollowmere Village</div><span class="location-rule">◆</span></div>
+ <aside class="quest" id="quest"><div class="eyebrow quest-label"><span>◇</span> MAIN QUEST</div><h2>A village left to rot</h2><div class="quest-line"><span class="quest-marker" id="quest-marker"></span><div><span id="objective">Slay the afflicted</span><span id="quest-count">0 / 12</span></div></div><p id="quest-hint">Something stirs beneath the old chapel.</p><button id="journal-button" class="text-button">Open journal <kbd>J</kbd></button></aside>
+ <aside class="map-panel"><div class="map-frame"><span class="north">N</span><canvas id="minimap" width="220" height="220" aria-label="Minimap: gold is your position, red dots are enemies"></canvas><span class="map-corner tl"></span><span class="map-corner tr"></span><span class="map-corner bl"></span><span class="map-corner br"></span></div><div class="map-caption"><span class="moon">☾</span> WORLD I <span>·</span> DUSK <button id="map-button" title="Expand map (M)" aria-label="Expand map"><span data-icon="expand"></span></button></div><div class="utility"><button id="sound-button" title="Toggle sound" aria-label="Enable sound"><span data-icon="volume"></span></button><button id="help-button" title="Controls (H)" aria-label="Show controls"><span data-icon="help"></span></button><button id="pause-button" title="Pause (Escape)" aria-label="Pause game"><span data-icon="pause"></span></button></div></aside>
+ <div id="enemy-target" class="enemy-target" hidden><div id="target-name"></div><div class="target-track"><i id="target-fill"></i></div><span id="target-type"></span></div>
+ <div id="boss-bar" class="boss-bar" hidden><span>THE LAST TOLL</span><h2>The Bellkeeper</h2><div class="boss-track"><i id="boss-fill"></i></div></div>
+ <div id="float-layer" aria-hidden="true"></div>
+ <div id="toast" role="status" aria-live="polite"></div>
+ <div class="arrival" id="arrival"><span>YOU HAVE ENTERED</span><h2>Hollowmere</h2><p>The bells have not stopped in thirteen years.</p></div>
+ <div class="combat-guide" id="combat-guide"><span>W A S D <em>Move</em></span><i></i><span>CLICK <em>Move / attack</em></span><i></i><span>SPACE <em>Evade</em></span></div>
+ <footer class="hud">
+  <div class="character-meta"><span class="rank">01</span><div><strong>The Warden</strong><span id="level-label">OATHBOUND · LEVEL 1</span></div></div>
+  <div class="combat-dock">
+   <div class="orb-group health-group"><div class="orb-frame"><div class="orb health"><div class="liquid" id="health-liquid"></div><div class="orb-glass"></div><div class="orb-value" id="health-value">140<span>/ 140</span></div></div><span class="orb-cap">◆</span></div><span class="orb-label">VITALITY</span></div>
+   <div class="abilities-wrap"><div class="ability-caption"><span>STEEL & ASH</span><i></i><span id="souls-counter">0 SOULS</span></div><div class="abilities">
+    <button class="ability" id="attack-button" data-action="attack" title="Cleave · Hold left mouse to attack"><kbd>LMB</kbd><span class="ability-icon steel" data-icon="sword"></span><span class="ability-name">Cleave</span><span class="cooldown"></span></button>
+    <button class="ability" id="bolt-button" data-action="bolt" title="Emberbolt · Right mouse · 18 essence"><kbd>RMB</kbd><span class="ability-icon ember" data-icon="flame"></span><span class="ability-name">Emberbolt</span><span class="cooldown"></span></button>
+    <button class="ability" id="dodge-button" data-action="dodge" title="Evade · Space · brief invulnerability"><kbd>SPACE</kbd><span class="ability-icon pale" data-icon="wind"></span><span class="ability-name">Evade</span><span class="cooldown"></span></button>
+    <button class="ability" id="nova-button" data-action="nova" title="Cinder nova · E · 35 essence"><kbd>E</kbd><span class="ability-icon ember" data-icon="sun"></span><span class="ability-name">Cinder nova</span><span class="cooldown"></span></button>
+    <span class="slot-divider"></span><button class="ability potion" id="heal-button" data-action="heal" title="Healing draught · Q · restores 65 vitality"><kbd>Q</kbd><span class="ability-icon ruby" data-icon="potion"></span><span class="potion-count" id="potion-count">3</span><span class="ability-name">Draught</span><span class="cooldown"></span></button>
+   </div><div class="experience-track"><i id="experience-fill"></i><span>◆</span></div></div>
+   <div class="orb-group mana-group"><div class="orb-frame"><div class="orb mana"><div class="liquid" id="mana-liquid"></div><div class="orb-glass"></div><div class="orb-value" id="mana-value">100<span>/ 100</span></div></div><span class="orb-cap">◆</span></div><span class="orb-label">ESSENCE</span></div>
+  </div><div class="footer-right"><span class="save-mark">◇</span><span>THE VEIL IS THIN</span><button id="fullscreen-button" aria-label="Toggle fullscreen" title="Fullscreen"><span data-icon="expand"></span></button></div>
+ </footer>
+ <div id="touch-controls"><div id="joystick" aria-label="Movement joystick"><i id="joystick-thumb"></i></div></div>
+ <div class="modal-shade" id="modal-shade" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><span class="eyebrow" id="modal-eyebrow">HOLLOWMERE</span><h2 id="modal-title">The vigil continues</h2><div id="modal-content"></div><button id="modal-primary" class="primary-button">Return to the village</button><button id="modal-secondary" class="text-button" hidden>Restart vigil</button></section></div>
+ <div id="loading"><div class="load-sigil">♜</div><h2>Hollowmere</h2><span id="loading-message">The village awaits…</span><div class="load-track"><i id="load-fill"></i></div></div>
+ <div id="audio-prompt"><span data-icon="volume"></span> Click to awaken the sound</div>
+</main><script type="module" src="/main.js"></script>
+</body></html>
