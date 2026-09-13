@@ -8,7 +8,7 @@
 .roster-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:40px;align-items:center;margin-top:12px}
 .roster-wheel{position:relative;isolation:isolate;aspect-ratio:1;width:100%;max-width:520px;margin:auto}
 .roster-ring{position:absolute;inset:17%;border:1px solid #c6b58c40;border-radius:50%;box-shadow:0 0 0 24px #c6b58c05,0 0 0 25px #c6b58c14;pointer-events:none}
-.roster-portrait{position:absolute;inset:18% 17%;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.roster-portrait{position:absolute;inset:18% 17%;transform:translateY(-8%);display:flex;align-items:center;justify-content:center;pointer-events:none}
 .roster-portrait img{width:115%;max-width:none;height:100%;object-fit:contain;filter:drop-shadow(0 15px 18px #0007);user-select:none}
 .roster-appearance-name{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#b6b99a}
 .roster-classes{position:absolute;inset:0;pointer-events:none}
@@ -20,10 +20,10 @@
 .roster-classes button[aria-pressed=true] .roster-medallion{border-color:#e8d49f;box-shadow:0 0 0 4px #c6b58c15,0 0 22px #d2b57325;background:#294239}
 .roster-classes button:hover .roster-medallion{border-color:#e8d49f;background:#294239}
 .roster-classes button:focus-visible{outline-offset:5px;border-radius:4px;z-index:3}
-.roster-step{position:absolute;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:44px;height:44px;padding:11px;border:1px solid #c6b58c40;border-radius:50%;color:#d9c799;background:#0d191cde;z-index:2;transition:border-color .2s,background .2s}
+.roster-step{position:absolute;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:44px;height:44px;padding:11px;border:0;color:#d9c799;background:none;z-index:2;transition:color .2s}
 .roster-previous{left:20%}.roster-next{right:20%}
 .roster-step svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
-.roster-step:hover{border-color:#d9c799;background:#293b35}.roster-step:active{background:#3a4b3d}.roster-step:disabled{opacity:.4}
+.roster-step:hover{color:#f0dfb7}.roster-step:active{color:#fff1cc}.roster-step:disabled{opacity:.4}
 .roster-position{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:9px;letter-spacing:2px;color:#8b998b;pointer-events:none}
 .roster-description{min-width:0;padding:16px 0}
 .roster-description .eyebrow{font-size:9px;letter-spacing:1.3px;text-transform:uppercase;line-height:1.7;margin:0}
