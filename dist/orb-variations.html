@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vitality & Essence — Hallowmere studies</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1012;--panel:#10171a;--line:#293033;--ink:#e8e6dc;--muted:#929d9e;--gold:#d6bd84}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#27312e 0,transparent 50%),var(--bg);color:var(--ink);font:14px/1.5 system-ui,sans-serif}button,input{font:inherit}button{color:inherit;cursor:pointer;border:1px solid #414847;background:#192124;border-radius:5px;padding:9px 14px;min-height:42px}button:hover{background:#283132;border-color:#78817d}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:4px}button[aria-pressed=true]{background:#39352a;border-color:var(--gold);color:#f6dfae}a{color:var(--gold)}header,main,footer{max-width:1280px;margin:auto;padding:0 40px}header{padding-top:46px;padding-bottom:28px}.eyebrow{text-transform:uppercase;letter-spacing:.22em;font-size:11px;color:var(--gold)}.topline{display:flex;align-items:center;justify-content:space-between;gap:20px}.topline a{text-decoration:none;color:var(--muted);font-size:12px}h1{font:normal clamp(32px,4vw,52px)/1.15 Georgia,serif;letter-spacing:-.035em;margin:22px 0 12px}header p{color:var(--muted);margin:0;max-width:660px;font-size:15px}.toolbar{position:sticky;top:0;z-index:5;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#101719f2;backdrop-filter:blur(16px)}.controls{max-width:1280px;margin:auto;padding:16px 40px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}.sliders{display:flex;gap:28px;flex:1}.slider{min-width:155px;flex:1;max-width:260px}.slider label{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.04em;margin-bottom:7px}.slider output{font-variant-numeric:tabular-nums;color:var(--muted)}input[type=range]{width:100%;cursor:pointer;accent-color:#d05a70;display:block;margin:0;height:18px}#essence{accent-color:#56afd8}.buttons{display:flex;gap:7px}.buttons button{font-size:12px;padding:8px 12px}.section-intro{display:flex;justify-content:space-between;align-items:center;padding:24px 0 18px;color:var(--muted);font-size:12px}.section-intro span:first-child{color:var(--gold);letter-spacing:.16em;text-transform:uppercase}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.card{overflow:hidden;background:linear-gradient(130deg,#141b1e,#0e1518);border:1px solid var(--line);border-radius:9px;transition:border-color .2s;scroll-margin-top:130px}.card.chosen{border-color:var(--gold);box-shadow:0 0 0 1px #d6bd8425}.card-heading{padding:24px 25px 0;display:flex;gap:14px;align-items:start}.number{font:24px Georgia,serif;color:#a99975;min-width:32px;padding-top:2px}h2{font:normal 23px/1.2 Georgia,serif;margin:0 0 6px}.effect{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}.stage{margin:0;position:relative}canvas{display:block;width:100%;aspect-ratio:600/260}.orb-labels{display:flex;justify-content:space-around;position:absolute;bottom:4px;left:0;right:0;font-size:10px;letter-spacing:.18em;color:#a2aaa8;text-transform:uppercase}.orb-labels span{width:50%;text-align:center}.card-footer{padding:20px 25px 23px;border-top:1px solid #27303380;display:flex;gap:20px;align-items:center;justify-content:space-between}.card-footer p{margin:0;color:var(--muted);font-size:12px;max-width:290px}.choose{font-size:12px;white-space:nowrap;background:transparent;min-width:99px}.selection{display:flex;align-items:center;justify-content:space-between;gap:20px;background:#1c211e;border:1px solid #5b5844;border-radius:7px;margin:25px 0 0;padding:18px 22px}.selection p{margin:0}.selection small{display:block;color:var(--muted);margin-top:4px}.selection[hidden]{display:none}footer{padding-top:30px;padding-bottom:40px;display:flex;justify-content:space-between;gap:20px;color:#7d898b;font-size:11px}.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:7px}noscript{display:block;margin:30px;padding:20px;border:1px solid var(--gold)}@media(max-width:850px){header,main,footer{padding-left:22px;padding-right:22px}.controls{padding:13px 22px;gap:12px}.sliders{min-width:100%}.buttons{width:100%;justify-content:space-between}.buttons button{flex:1}.grid{gap:15px}.card-heading{padding:19px 18px 0}.card-footer{padding:17px;display:block}.choose{margin-top:15px;width:100%}.card-footer p{min-height:36px}h2{font-size:21px}}@media(max-width:600px){.grid{grid-template-columns:1fr}.section-intro{gap:15px}.section-intro span:last-child{max-width:170px;text-align:right}.topline{font-size:10px}.topline a{font-size:11px}header{padding-top:28px}.controls{gap:9px}.sliders{gap:20px}.slider{min-width:0}.buttons button{padding:7px 5px;font-size:11px}.selection{align-items:start}footer{flex-direction:column;gap:5px}.card-footer{display:flex}.card-footer p{min-height:0}.choose{width:auto;margin:0}.card{scroll-margin-top:175px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="topline"><span class="eyebrow">Hallowmere / Visual studies</span><a href="./index.html">Back to the game ↗</a></div><h1>Vitality &amp; Essence</h1><p>Ten ways to bring the orbs to life. Compare the motion, drain the resources, and choose the effect that belongs in Hallowmere.</p></header>
+<section class="toolbar" aria-label="Preview controls"><div class="controls"><div class="sliders"><div class="slider"><label for="vitality">Vitality <output id="vitality-value">72%</output></label><input id="vitality" type="range" min="0" max="100" value="72"></div><div class="slider"><label for="essence">Essence <output id="essence-value">58%</output></label><input id="essence" type="range" min="0" max="100" value="58"></div></div><div class="buttons"><button id="drain">Take a hit</button><button id="refill">Refill</button><button id="cycle" aria-pressed="false">Auto cycle</button><button id="pause" aria-pressed="false">Pause motion</button></div></div></section>
+<main><div class="section-intro"><span>01 — 10 / Effect directions</span><span>Same colors. Same levels. Different energy.</span></div><div id="gallery" class="grid"></div><div id="selection" class="selection" role="status" hidden><p id="selection-text"></p><button id="clear">Clear choice</button></div></main>
+<footer><span><i class="dot"></i><span id="motion-status">Live effects · synced across all ten studies</span></span><span>Exploration only · choose a number to continue</span></footer>
+<noscript>Enable JavaScript to view the animated orb studies.</noscript>
+<script>
+'use strict';
+const studies=[
+ ['Tidal glass','Liquid / Refraction','Slow rolling waves, rising bubbles, and a luminous wet edge.'],
+ ['Living heart','Pulse / Organic','A heartbeat travels through branching veins and rippling rings.'],
+ ['Ember vessel','Fire / Sparks','Restless tongues of flame send glowing embers toward the surface.'],
+ ['Astral vortex','Spiral / Gravity','A luminous whirlpool draws starlight into a slowly turning core.'],
+ ['Bound tempest','Lightning / Arcs','Forked electrical arcs flicker between a bright core and the glass.'],
+ ['Crystal bloom','Facets / Shimmer','Angular crystal planes catch the light in a measured, icy rhythm.'],
+ ['Spirit mist','Smoke / Wisps','Soft ribbons of spectral vapor curl and dissolve inside the vessel.'],
+ ['Runic seal','Sigils / Orbit','Counter-rotating inscriptions circle a restrained magical reservoir.'],
+ ['Mercury silk','Metal / Caustics','Polished currents fold over one another like liquid metal.'],
+ ['Eclipse core','Corona / Radiance','A dark center holds a burning corona with orbiting motes of light.']
+];
+const gallery=document.querySelector('#gallery'),motion=matchMedia('(prefers-reduced-motion: reduce)');
+const state={time:0,values:[.72,.58],targets:[.72,.58],kick:0,paused:motion.matches,cycle:false,choice:null};
+const cards=studies.map(([name,tag,description],i)=>{
+ const article=document.createElement('article');article.className='card';article.id='study-'+(i+1);
+ article.innerHTML=`<div class="card-heading"><span class="number">${String(i+1).padStart(2,'0')}</span><div><h2>${name}</h2><div class="effect">${tag}</div></div></div><figure class="stage"><canvas width="900" height="390" role="img" aria-label="${name}: animated Vitality and Essence orbs"></canvas><figcaption class="orb-labels"><span>Vitality</span><span>Essence</span></figcaption></figure><div class="card-footer"><p>${description}</p><button class="choose" aria-pressed="false">Choose ${String(i+1).padStart(2,'0')}</button></div>`;
+ gallery.append(article);const canvas=article.querySelector('canvas'),ctx=canvas.getContext('2d');article.querySelector('button').onclick=()=>choose(i);return {article,canvas,ctx,visible:true};
+});
+function choose(index){state.choice=index;cards.forEach((card,i)=>{card.article.classList.toggle('chosen',i===index);const button=card.article.querySelector('button');button.setAttribute('aria-pressed',String(i===index));button.textContent=i===index?'Selected ✓':'Choose '+String(i+1).padStart(2,'0');});const selected=document.querySelector('#selection');selected.hidden=index===null;if(index!==null){document.querySelector('#selection-text').replaceChildren();const strong=document.createElement('strong');strong.textContent=`Your choice: ${String(index+1).padStart(2,'0')} — ${studies[index][0]}`;const small=document.createElement('small');small.textContent='Tell me this number when you’re ready to use it in the game.';document.querySelector('#selection-text').append(strong,small);}try{index===null?localStorage.removeItem('hallowmere.orb-study'):localStorage.setItem('hallowmere.orb-study',String(index));}catch{}}
+try{const saved=localStorage.getItem('hallowmere.orb-study');if(saved!==null&&Number.isInteger(Number(saved))&&Number(saved)>=0&&Number(saved)<10)choose(Number(saved));}catch{}
+document.querySelector('#clear').onclick=()=>choose(null);
+const inputs=[document.querySelector('#vitality'),document.querySelector('#essence')];
+function sync(){inputs.forEach((input,i)=>{input.value=Math.round(state.targets[i]*100);document.querySelector('#'+input.id+'-value').textContent=input.value+'%';});}
+function setCycle(value){state.cycle=value;document.querySelector('#cycle').setAttribute('aria-pressed',String(value));}
+inputs.forEach((input,i)=>input.oninput=()=>{setCycle(false);state.targets[i]=Number(input.value)/100;if(state.paused)state.values=[...state.targets];state.kick=.4;sync();draw();});
+document.querySelector('#drain').onclick=()=>{setCycle(false);state.targets=state.targets.map(n=>Math.max(0,n-.28));state.kick=1;if(state.paused)state.values=[...state.targets];sync();draw();};
+document.querySelector('#refill').onclick=()=>{setCycle(false);state.targets=[1,1];state.kick=.7;if(state.paused)state.values=[1,1];sync();draw();};
+document.querySelector('#cycle').onclick=()=>{setCycle(!state.cycle);if(state.cycle&&state.paused)setPaused(false);};
+function setPaused(value){state.paused=value;const button=document.querySelector('#pause');button.setAttribute('aria-pressed',String(value));button.textContent=value?'Resume motion':'Pause motion';document.querySelector('#motion-status').textContent=value?'Motion paused · adjust levels to compare stills':'Live effects · synced across all ten studies';if(value){state.values=[...state.targets];draw();}}
+document.querySelector('#pause').onclick=()=>setPaused(!state.paused);motion.addEventListener('change',e=>{if(e.matches){setCycle(false);setPaused(true);}});
+const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{const card=cards.find(c=>c.article===entry.target);card.visible=entry.isIntersecting;if(card.visible)render(card,cards.indexOf(card));}),{rootMargin:'120px'});cards.forEach(card=>observer.observe(card.article));
+const TAU=Math.PI*2,clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),random=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+function color(h,l=55,a=1,s=90){return `hsla(${h},${s}%,${l}%,${a})`;}
+function circle(ctx,x,y,r,fill){ctx.beginPath();ctx.arc(x,y,Math.max(0,r),0,TAU);if(fill){ctx.fillStyle=fill;ctx.fill();}}
+function line(ctx,points,stroke,width=1){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}
+function glow(ctx,x,y,r,h,alpha=.5){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color(h,77,alpha));g.addColorStop(.3,color(h,56,alpha*.65));g.addColorStop(1,color(h,38,0));circle(ctx,x,y,r,g);}
+function render(card,index){const c=card.ctx;if(!c)return;c.setTransform(1.5,0,0,1.5,0,0);c.clearRect(0,0,600,260);orb(c,150,126,81,350,state.values[0],index,0);orb(c,450,126,81,201,state.values[1],index,1);}
+function orb(c,cx,cy,r,h,fill,kind,resource){
+ const t=state.time,amp=state.kick;c.save();c.translate(cx,cy);
+ glow(c,0,12,r*1.38,h,.08+amp*.06);
+ // The quiet brass mount is constant, so the energy treatment does the talking.
+ const rim=c.createLinearGradient(-r,-r,r,r);rim.addColorStop(0,'#3e4544');rim.addColorStop(.23,'#aa9470');rim.addColorStop(.42,'#454641');rim.addColorStop(.68,'#272f31');rim.addColorStop(.88,'#a9946a');rim.addColorStop(1,'#363d3d');circle(c,0,0,r+6,rim);circle(c,0,0,r+3,'#080e13');c.strokeStyle='#bac9ca24';c.lineWidth=.8;circle(c,0,0,r+8);c.stroke();
+ for(const a of [-Math.PI/2,Math.PI/2]){c.save();c.rotate(a);c.fillStyle='#9f8a64';c.beginPath();c.moveTo(r+1,0);c.lineTo(r+7,-4);c.lineTo(r+12,0);c.lineTo(r+7,4);c.closePath();c.fill();c.restore();}
+ c.save();circle(c,0,0,r);c.clip();const base=c.createRadialGradient(-25,-35,5,0,0,r);base.addColorStop(0,'#233038');base.addColorStop(1,'#070b12');circle(c,0,0,r,base);
+ const level=fill<=.001?r+12:fill>=.999?-r-12:r-2*r*fill,points=[];for(let x=-r-2;x<=r+2;x+=2){const wave=(Math.sin(x*.045+t*2.1)+Math.sin(x*.087-t*1.5)*.4)*(2+amp*5);points.push([x,level+wave]);}
+ c.save();c.beginPath();c.moveTo(-r-2,r+2);points.forEach(p=>c.lineTo(...p));c.lineTo(r+2,r+2);c.closePath();c.clip();
+ const fluid=c.createLinearGradient(-r,-r,r,r);fluid.addColorStop(0,color(h,59));fluid.addColorStop(.4,color(h,35));fluid.addColorStop(1,color(h,10));c.fillStyle=fluid;c.fillRect(-r,-r,2*r,2*r);glow(c,-22,35,95,h,.5);
+ c.globalCompositeOperation='screen';
+ if(kind===0){
+  for(let j=0;j<5;j++){const curve=[];for(let x=-r;x<=r;x+=3)curve.push([x,20+j*15+Math.sin(x*.027+t*.8+j)*14]);line(c,curve,color(h,67,.11),9);}
+  for(let j=0;j<18;j++){const x=(random(j+9)-.5)*145+Math.sin(t+j)*5,y=r-((t*(8+random(j)*12)+random(j+20)*160)%170),size=1+random(j+5)*3;circle(c,x,y,size);c.strokeStyle=color(h,85,.4);c.lineWidth=.7;c.stroke();circle(c,x-1,y-1,.65,color(h,92,.7));}
+ }else if(kind===1){
+  const beat=Math.pow(Math.max(0,Math.sin(t*4)),12);glow(c,0,12,65,h,.3+beat*.5);
+  for(let j=0;j<12;j++){const a=j/12*TAU,ps=[];for(let k=0;k<9;k++){const d=k*10;ps.push([Math.cos(a+Math.sin(k+t*.5+j)*.11)*d,12+Math.sin(a+Math.sin(k+j)*.15)*d]);}line(c,ps,color(h,65,.3+beat*.5),1.2);}
+  for(let j=0;j<3;j++){circle(c,0,12,((t*29+j*26)%85));c.strokeStyle=color(h,74,.2);c.lineWidth=2;c.stroke();}
+ }else if(kind===2){
+  for(let j=0;j<16;j++){const x=(random(j+3)-.5)*170,y=84-((t*(20+random(j)*24)+j*17)%180);glow(c,x+Math.sin(t*2+j)*12,y,10+random(j)*15,h,.22);line(c,[[x,y+18],[x+Math.sin(t*3+j)*12,y],[x+Math.sin(t*3+j+.8)*8,y-15]],color(h,75,.4),1.5);circle(c,x,y-19,1.2,color(h,95,.75));}
+ }else if(kind===3){
+  c.save();c.rotate(t*.35);for(let arm=0;arm<4;arm++){const ps=[];for(let k=0;k<95;k++){const d=4+k*.85,a=arm*TAU/4+k*.07;ps.push([Math.cos(a)*d,Math.sin(a)*d]);}line(c,ps,color(h,65,.32),5);line(c,ps,color(h,87,.48),1);}
+  for(let j=0;j<38;j++){const a=j*2.4+t*.3,d=10+random(j)*70;circle(c,Math.cos(a)*d,Math.sin(a)*d,random(j+7)*1.5,color(h,90,.3+random(j)*.6));}c.restore();glow(c,0,0,23,h,.8);
+ }else if(kind===4){
+  const tick=Math.floor(t*7);for(let j=0;j<7;j++){const a=j*TAU/7+tick*.7,ps=[[0,8]];for(let k=1;k<=6;k++){const d=k*14,wiggle=(random(tick*40+j*6+k)-.5)*25;ps.push([Math.cos(a)*d+Math.sin(a)*wiggle,8+Math.sin(a)*d+Math.cos(a)*wiggle]);}line(c,ps,color(h,62,.2),7);line(c,ps,color(h,89,.8),1.2);const p=ps[3];line(c,[p,[p[0]+Math.sin(a)*22,p[1]-Math.cos(a)*22]],color(h,79,.5),.8);}glow(c,0,8,24,h,.9);
+ }else if(kind===5){
+  for(let j=0;j<23;j++){const x=(random(j+1)-.5)*160,y=(random(j+55)-.5)*160,size=12+random(j+32)*26,phase=.5+.5*Math.sin(t*.9+j);c.beginPath();c.moveTo(x,y-size);c.lineTo(x+size*.6,y);c.lineTo(x,y+size);c.lineTo(x-size*.4,y+5);c.closePath();c.fillStyle=color(h,57+phase*25,.1+phase*.25);c.fill();c.strokeStyle=color(h,88,.3);c.lineWidth=.6;c.stroke();line(c,[[x,y-size],[x,y+size],[x+size*.6,y]],color(h,91,.3),.5);}
+ }else if(kind===6){
+  for(let j=0;j<14;j++){const y=90-((j*15+t*(7+j*.4))%190),x=Math.sin(y*.03+t*.4+j*.8)*30;glow(c,x,y,26+Math.sin(j)*8,h,.12);const ps=[];for(let k=0;k<40;k++){const xx=-90+k*4.5;ps.push([xx,y+Math.sin(xx*.022+t*.9+j)*19]);}line(c,ps,color(h,73,.085),11);line(c,ps,color(h,86,.07),3);}
+ }else if(kind===7){
+  for(let j=0;j<3;j++){c.save();c.rotate(t*(j%2?-.2:.15)+j);const radius=27+j*21;circle(c,0,0,radius);c.lineWidth=.7;c.strokeStyle=color(h,78,.5);c.stroke();for(let k=0;k<12;k++){c.save();c.rotate(k*TAU/12);line(c,[[radius-3,-3],[radius+3,0],[radius-3,3]],color(h,84,.6),1);c.restore();}c.restore();}glow(c,0,0,30,h,.5);c.save();c.rotate(t*.15);line(c,[[0,-24],[21,12],[-21,12],[0,-24]],color(h,82,.7),1.2);c.restore();
+ }else if(kind===8){
+  for(let j=0;j<15;j++){const ps=[];for(let k=0;k<65;k++){const x=-90+k*3;ps.push([x,-100+j*15+Math.sin(x*.023+t*.7+j*.35)*24+Math.sin(x*.055-t*.6)*8]);}line(c,ps,color(h,80,.15),8);line(c,ps,color(h,94,.65),1.8);}
+ }else{
+  const radius=34+Math.sin(t*1.5)*2;glow(c,0,0,69,h,.9);for(let j=0;j<80;j++){const a=j/80*TAU+t*.07,ray=5+random(j)*16+Math.sin(t*3+j)*4;line(c,[[Math.cos(a)*radius,Math.sin(a)*radius],[Math.cos(a)*(radius+ray),Math.sin(a)*(radius+ray)]],color(h,75,.25+random(j)*.45),1.1);}c.globalCompositeOperation='source-over';circle(c,0,0,radius,'#080e16');c.strokeStyle=color(h,82,.9);c.lineWidth=1.6;c.stroke();c.globalCompositeOperation='screen';for(let j=0;j<9;j++){const a=t*(.25+random(j)*.3)+j*2.4;glow(c,Math.cos(a)*62,Math.sin(a)*62,4,h,.8);}
+ }
+ c.restore();c.globalCompositeOperation='source-over';if(fill>.001&&fill<.999){line(c,points,color(h,84,.65),1);line(c,points,color(h,60,.16),5);}
+ const shade=c.createRadialGradient(-18,-22,30,0,0,r);shade.addColorStop(0,'#0000');shade.addColorStop(.77,'#0000');shade.addColorStop(1,'#000a');circle(c,0,0,r,shade);
+ const glint=c.createRadialGradient(-26,-52,0,-26,-52,31);glint.addColorStop(0,'#ffffff60');glint.addColorStop(1,'#ffffff00');c.beginPath();c.ellipse(-26,-52,25,9,-.45,0,TAU);c.fillStyle=glint;c.fill();
+ c.strokeStyle='#dceef325';c.lineWidth=1;circle(c,0,0,r-2);c.stroke();c.restore();
+ c.textAlign='center';c.textBaseline='middle';c.font='25px Georgia';c.shadowColor='#000';c.shadowBlur=7;c.fillStyle='#f4f1e7';c.fillText(Math.round(fill*100),0,3);c.font='9px system-ui';c.fillStyle='#d4d8d4';c.fillText('/ 100',0,25);c.shadowBlur=0;c.restore();
+}
+function draw(){cards.forEach((card,i)=>{if(card.visible)render(card,i);});}
+let last=performance.now(),paint=0;function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!document.hidden&&!state.paused){state.time+=dt;state.kick*=Math.exp(-dt*4);if(state.cycle){state.targets=[.52+Math.sin(state.time*.65)*.4,.52+Math.sin(state.time*.65+1.4)*.4];sync();}state.values=state.values.map((n,i)=>n+(state.targets[i]-n)*(1-Math.exp(-dt*6)));if(now-paint>32){draw();paint=now;}}requestAnimationFrame(frame);}setPaused(state.paused);draw();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
