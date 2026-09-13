@@ -1,4 +1,4 @@
-import {SOUND_BANKS, AUDIO_FILES, MAX_VOICES, spatialMix, ambienceMix} from './audio-palette.js';
+import {AUDIO_PALETTE, SOUND_BANKS, AUDIO_FILES, MAX_VOICES, spatialMix, ambienceMix} from './audio-palette.js';
 import {MusicPlayer} from './music.js';
 
 export class AudioEngine {
@@ -93,7 +93,9 @@ export class AudioEngine {
     if (this.inflight.has(file)) return this.inflight.get(file);
     const request = (async () => {
       try {
-        const response = await this.fetcher(new URL(`./assets/audio/${file}.wav`, import.meta.url));
+        const url = new URL(`./assets/audio/${file}.wav`, import.meta.url);
+        url.searchParams.set('v', `${AUDIO_PALETTE.id}-${AUDIO_PALETTE.revision}`);
+        const response = await this.fetcher(url);
         if (!response.ok) throw Error(`HTTP ${response.status}`);
         const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
         this.buffers[file] = buffer; this.failed.delete(file); return buffer;
@@ -252,7 +254,7 @@ export class AudioEngine {
   }
 
   getState() {
-    return {ready: this.ready, muted: this.muted, state: this.context?.state ?? 'not-started',
+    return {palette: AUDIO_PALETTE.name, ready: this.ready, muted: this.muted, state: this.context?.state ?? 'not-started',
       effects: Object.keys(this.buffers).length, expected: AUDIO_FILES.length, failed: [...this.failed],
       voices: this.voices.size, beds: this.loops.size, zone: this.world.zone ?? 'ashwick',
       mix: {...this.targets}, master: this.master?.gain.value ?? 0,

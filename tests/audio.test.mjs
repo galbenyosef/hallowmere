@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile, readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {AudioEngine} from '../dist/audio.js';
-import {SOUND_BANKS, AUDIO_FILES, MAX_VOICES, spatialMix, ambienceMix} from '../dist/audio-palette.js';
+import {AUDIO_PALETTE, SOUND_BANKS, AUDIO_FILES, MAX_VOICES, spatialMix, ambienceMix} from '../dist/audio-palette.js';
 
 const directory = new URL('../dist/assets/audio/', import.meta.url);
 test('every sound decodes as bounded, non-silent PCM; loops have continuous endpoints', async () => {
@@ -125,15 +125,17 @@ test('mute during pause stays muted; UI services remain audible; hidden tabs sus
 });
 
 test('concurrent unlocks share initialization and a failed asset can recover', async () => {
-  let contexts = 0, broken = true, requests = 0;
+  let contexts = 0, broken = true, requests = 0; const urls = [];
   const audio = new AudioEngine({contextFactory: () => { contexts++; return context(); }, fetcher: async url => {
-    requests++; const fail = broken && String(url).endsWith('/sword.wav');
+    requests++; urls.push(new URL(url)); const fail = broken && new URL(url).pathname.endsWith('/sword.wav');
     return {ok: !fail, status: fail ? 503 : 200, arrayBuffer: async () => new ArrayBuffer(4)};
   }});
   const warn = console.warn; console.warn = () => {};
   try { await Promise.all([audio.unlock(), audio.unlock()]); await audio.loading; }
   finally { console.warn = warn; }
   assert.equal(contexts, 1); assert.equal(requests, AUDIO_FILES.length);
+  assert.ok(urls.every(url => url.searchParams.get('v') === `${AUDIO_PALETTE.id}-${AUDIO_PALETTE.revision}`), 'replacements bypass cached files from the old palette');
+  assert.equal(audio.getState().palette, 'Witchglass');
   assert.equal(audio.ready, true); assert.ok(audio.failed.has('sword'));
   broken = false; await audio.loadFiles([...audio.failed]);
   assert.equal(audio.failed.size, 0); assert.equal(Object.keys(audio.buffers).length, AUDIO_FILES.length);

@@ -2,7 +2,7 @@
 
 Open [the standalone audition page](../dist/sound-audition.html) directly in a browser, or visit `/sound-audition.html` on the game's local development server. No external assets, packages, network requests, or game session are needed by the page. Audio begins after a playback click.
 
-All ten sets cover the 37 IDs in `dist/audio-palette.js`. They are **synthesized direction sketches**, not replacements for the current recorded/processed game bank. No winning direction is assumed. No gameplay files, audio assets, mixer settings, or music are changed.
+All ten sets cover the 37 IDs in `dist/audio-palette.js`. The user selected **Witchglass (04)**, which is now implemented in the game; see the [implementation notes](witchglass-audio.md). This page preserves the original synthesized direction sketches for comparison. Its controls do not replace gameplay sounds or change mixer settings or music.
 
 | Set | Direction | Sound construction |
 | --- | --- | --- |
@@ -25,6 +25,6 @@ Use **Compare cue** to set every card's comparison button. Each card also has fo
 
 **Choose** stores a preference only in this browser (when local storage is available) and reveals a copyable response such as `My sound direction: Set 02 — Cathedral Bells.` Clipboard failure falls back to selecting the text. Send that line back in chat, optionally specifying a mix of sets. Selection never changes gameplay.
 
-`tests/sound-audition.test.mjs` checks live cue parity, all 370 renders, signal bounds, deterministic replay, complete sequence timing, resource cleanup, volume, interrupted initialization, rapid replacement, completion, and unavailable audio. Standard repository validation remains `npm test` and `npm run build`.
+`tests/sound-audition.test.mjs` checks live cue parity, all 370 renders, signal bounds, deterministic replay, complete sequence timing, resource cleanup, volume, interrupted initialization, rapid replacement, completion, and unavailable audio. `tests/witchglass.test.mjs` checks that the implemented first takes retain the selected sketch. Standard repository validation remains `npm test` and `npm run build`.
 
 Browser verification also exercised the actual page controls and checked 1280px desktop and 390px mobile layouts. Ten complete encounters rendered through Chrome’s real `OfflineAudioContext` with zero clipped samples at the default 55% volume. Measurements and the checked interactions are recorded in [the browser review](sound-audition-review.json). These checks establish working playback and signal health; the listening preference remains yours.
