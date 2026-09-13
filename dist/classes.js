@@ -18,7 +18,7 @@ export const CLASSES={
   attack:ability('Rend','melee',.68,0,'Sweep your axe in a wide arc and inflict bleeding.',{damage:34,range:3.1,arc:2.3,dot:{damage:4,duration:3,interval:.75,type:'bleed'}}),
   bolt:ability('War Cry','burst',7,22,'Stagger nearby enemies and take 45% less damage for four seconds.',{damage:0,radius:4,root:1,guard:.45,duration:4}),dodge:evade('Rush',2.1),
   nova:ability('Blood Whirl','zone',8,35,'Spin your axe around you for 2.4 seconds while moving.',{damage:19,radius:3,duration:2.4,interval:.4,follow:true}),heal:draught}},
- nightblade:{id:'nightblade',concept:'C04',name:'Nightblade',role:'Melee · assassination',description:'Land swift paired strikes, throw a fan of knives, and disappear into smoke to reposition.',hp:115,mana:100,regen:8,speed:5.6,color:'#c1a0d0',weapon:'Paired hooked daggers',weaponType:'daggers',focus:'Throwing knives',abilities:{
+ nightblade:{id:'nightblade',concept:'C04',name:'Nightblade',role:'Melee · assassination',description:'Land swift paired strikes, throw a fan of knives, and disappear into smoke to reposition.',hp:115,mana:100,regen:8,speed:5.6,color:'#c1a0d0',weapon:'Paired elven blades',weaponType:'daggers',focus:'Throwing knives',abilities:{
   attack:ability('Twin Cut','melee',.48,0,'Strike twice. Hits from behind deal 50% extra damage.',{damage:16,range:2.35,arc:1.7,hits:2,backstab:1.5}),
   bolt:ability('Knife Fan','projectile',2.2,18,'Throw three knives in a narrow fan.',{damage:20,range:9,speed:21,projectile:'knife',count:3,spread:.18}),
   dodge:ability('Shadowstep','dodge',2.4,0,'Step behind a nearby enemy on a clear path, or evade in your movement direction.',{shadowstep:true,range:5.5}),
