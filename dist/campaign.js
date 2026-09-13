@@ -11,7 +11,7 @@ export const NPCS=[
  {id:'rowan',name:'Elder Rowan',role:'Keeper of Ashwick',model:'elder',x:-66,z:1,color:0xe8c97d},
  {id:'edda',name:'Sister Edda',role:'Healer',model:'healer',x:-72,z:5,color:0xa9d9be},
  {id:'brann',name:'Brann',role:'Smith & provisions',model:'smith',x:-61,z:3,color:0xe2b084},
- {id:'rook',name:'Watchman Rook',role:'Hallowmere watch',model:'warden',x:-22,z:5,color:0xcad8a8}
+ {id:'rook',name:'Watchman Rook',role:'Hallowmere watch',model:'watchman',x:-22,z:5,color:0xcad8a8}
 ];
 export const ITEM_TEMPLATES={
  'wardens-sword':{name:"Warden’s longsword",slot:'weapon',rarity:'common',power:0,description:'A faithful blade, worn by many vigils.'},
