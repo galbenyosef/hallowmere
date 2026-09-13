@@ -53,9 +53,9 @@ test('all playable classes preserve health ratios, upgrades and cooldowns when c
 test('selection requires a sanctuary, adapts equipment, and survives resume and a new vigil',()=>{
  const {w,p}=fixture('sorcerer','W06');assert.equal(p.state.inventory[0].name,'Gnarled root staff');p.state.gold=77;
  assert.equal(command(w,p,'select-class',{classId:'ranger'}),false);assert.equal(p.state.classId,'sorcerer');
- Object.assign(p,START);assert.equal(command(w,p,'select-class',{classId:'ranger'}),true);assert.equal(p.state.inventory[0].name,'Yew longbow');assert.equal(p.state.gold,77);
+ Object.assign(p,START);assert.equal(command(w,p,'select-class',{classId:'ranger'}),true);assert.equal(p.state.inventory[0].name,'Elven longbow');assert.equal(p.state.gold,77);
  const snap=w.snapshot(p.id);assert.equal(snap.players[0].classId,'ranger');assert.equal(snap.players[0].speed,5.2);
- w.leave(p.id);assert.equal(w.join(p.token).player.state.classId,'ranger');w.reset();assert.equal(p.state.classId,'ranger');assert.equal(p.state.inventory[0].name,'Yew longbow');assert.equal(p.state.gold,0);
+ w.leave(p.id);assert.equal(w.join(p.token).player.state.classId,'ranger');w.reset();assert.equal(p.state.classId,'ranger');assert.equal(p.state.inventory[0].name,'Elven longbow');assert.equal(p.state.gold,0);
 });
 
 test('class movement prediction agrees with the authoritative movement step',()=>{

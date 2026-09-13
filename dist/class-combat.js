@@ -51,12 +51,15 @@ function affectArea(world,p,center,skill){
  }
 }
 export function castClassAbility(world,p,m){
- const skills=abilitiesFor(p.state),skill=Object.hasOwn(skills,m.action)?skills[m.action]:null;
+ const skills=abilitiesFor(p.state);
+ let skill=Object.hasOwn(skills,m.action)?skills[m.action]:null,variant;
  if(!Number.isFinite(m.angle)||!skill)return false;
  const bounds=boundsFor(world,p);
- const a=m.angle%(Math.PI*2),center=centerFor(world,p,m,skill,a);if(!center){world.result(p,{ok:false,reason:'That spell cannot reach through the wall.'});return false;}
+ const a=m.angle%(Math.PI*2);
+ if(skill.closeRange&&world.enemies.some(e=>e.hp>0&&sameMap(p,e)&&withinArc(p,e,a,skill.closeRange.range,skill.closeRange.arc)&&hasLineOfSight(p,e,obstaclesFor(world,p)))){skill=skill.closeRange;variant='closeRange';}
+ const center=centerFor(world,p,m,skill,a);if(!center){world.result(p,{ok:false,reason:'That spell cannot reach through the wall.'});return false;}
  if(!useAbility(p.state,m.action))return false;
- p.angle=a;world.emit('ability',{playerId:p.id,mapId:p.mapId,action:m.action,classId:p.state.classId,appearanceId:p.state.appearanceId,kind:skill.kind,color:skill.color||classColor(p.state),x:center.x,z:center.z,angle:a});
+ p.angle=a;world.emit('ability',{playerId:p.id,mapId:p.mapId,action:m.action,classId:p.state.classId,appearanceId:p.state.appearanceId,kind:skill.kind,...(variant?{variant}:{}),color:skill.color||classColor(p.state),x:center.x,z:center.z,angle:a});
  const damage=(skill.damage||0)+p.state.level*2+p.state.damageBonus;
  if(skill.kind==='melee')for(let i=0;i<(skill.hits||1);i++)world.hits.push({playerId:p.id,mapId:p.mapId,at:world.time+.11+i*.13,angle:a,skill,damage});
  if(skill.kind==='projectile')for(let i=0;i<(skill.count||1);i++){
@@ -76,7 +79,11 @@ export function castClassAbility(world,p,m){
     if(!pointBlocked(destination,obstaclesFor(world,p),.42)&&hasLineOfSight(p,destination,obstaclesFor(world,p),.42)&&destination.x>=bounds.minX&&destination.x<=bounds.maxX&&destination.z>=bounds.minZ&&destination.z<=bounds.maxZ){Object.assign(p,destination);p.dodge=0;p.input={x:0,z:0};stepped=true;}
    }
   }
-  if(!stepped){p.dodge=.27;p.dodgeDir=Math.hypot(p.input.x,p.input.z)>.05?{...p.input}:{x:Math.sin(a),z:Math.cos(a)};}
+  if(!stepped){
+   const direction=skill.retreat?-1:1,input=skill.retreat&&world.time-p.lastInput>=.25?{x:0,z:0}:p.input;
+   p.dodge=.27;p.dodgeDir=Math.hypot(input.x,input.z)>.05?{...input}:{x:Math.sin(a)*direction,z:Math.cos(a)*direction};
+   if(skill.retreat)p.angle=Math.atan2(p.dodgeDir.x,p.dodgeDir.z);
+  }
   p.state.invulnerable=.48;
  }
  return true;

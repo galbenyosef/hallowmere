@@ -1,7 +1,7 @@
 import {LocalSession} from './local-session.js';
 import {consumeAvailability} from './foraging.js';
 import {updateInventoryResources} from './pouch.js';
-import {CLASS_LIST,CLASSES,abilitiesFor,classFor,classAppearance,conceptFor,classColor} from './classes.js';
+import {CLASS_LIST,CLASSES,abilitiesFor,abilityForEvent,classFor,classAppearance,conceptFor,classColor} from './classes.js';
 import {createPlayableCharacter} from './playable-characters.js';
 import {createPredatorWorldPreview} from './predator-world-preview.js';
 import {createRosterPicker} from './roster-picker.js';
@@ -281,8 +281,8 @@ function networkEvent(event){
  if(event.type==='ability'){
   const actor=event.playerId===network.id?{model:player,rig:heroRig}:multiplayerView.actors.get(event.playerId);if(!actor)return;
   const local=event.playerId===network.id,rig=actor.rig;
-  const skill=abilitiesFor(event)[event.action],color=event.color||classColor(event);
-  if(skill?.kind==='melee'){rig.attack=.42;rig.attackKind='attack';slash(pos,event.angle,color,skill.range,.3);audioAt('sword',pos,.6);}
+  const skill=abilityForEvent(event),color=event.color||classColor(event);
+  if(skill?.kind==='melee'){rig.attack=.42;rig.attackKind=event.variant==='closeRange'?'paired':'attack';slash(pos,event.angle,color,skill.range,.3);audioAt('sword',pos,.6);}
   if(skill?.kind==='projectile'){
    rig.attack=.36;rig.attackKind='bolt';
    const hand=pos.clone().add(new T.Vector3(0,1.2,0)),direction=new T.Vector3(Math.sin(event.angle),0,Math.cos(event.angle));

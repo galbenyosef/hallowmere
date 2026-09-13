@@ -16,7 +16,7 @@ choices is the Hallowmere character study gallery.
 | ID | Class | Weapon | Off-hand equipment |
 | --- | --- | --- | --- |
 | C01 | Sorcerer | Crystal-tipped staff | Spellbook |
-| C02 | Ranger | Yew longbow | Quiver of barbed arrows |
+| C02 | Ranger | Elven longbow | Quiver & twin fighting knives |
 | C03 | Reaver | Two-handed war axe | Fury talisman |
 | C04 | Nightblade | Paired hooked daggers | Throwing knives |
 | C05 | Oathkeeper | Lantern mace | Kite shield |
@@ -50,7 +50,7 @@ large fireball, fiery trail, cast flash, and impact burst on right mouse
 | Class | Primary attack | Right mouse | 1 · Evade | 2 · Class skill |
 | --- | --- | --- | --- | --- |
 | Sorcerer | Arcane Bolt | Fireball | Miststep | Elemental Storm |
-| Ranger | Quickshot | Piercing Shot | Hunter’s Roll | Arrow Rain |
+| Ranger | Elven Quickshot / Twin Blades | Piercing Shot | Elven Step | Threefold Volley |
 | Reaver | Rend | War Cry | Rush | Blood Whirl |
 | Nightblade | Twin Cut | Knife Fan | Shadowstep | Smoke Veil |
 | Oathkeeper | Consecrated Strike | Aegis | Pilgrim’s Step | Sanctuary |
@@ -62,6 +62,14 @@ menu while in a sanctuary. Switching retains quest progress, crowns, equipment
 IDs, upgrades, and health/essence percentages. Weapons adapt to the chosen class;
 cooldowns cannot be reset by switching. A per-tab reconnect retains the class,
 and group world resets retain the class choice while resetting campaign progress.
+
+The Ranger's Legolas-inspired kit keeps the existing `ranger` class and `C02`
+appearance identity. Primary attacks automatically use two knife cuts against
+visible enemies within 2.15 units in the forward cone, and bow shots otherwise.
+Both modes share one cooldown. Elven Step follows movement input or retreats
+opposite the aim when stationary. Threefold Volley fires three physical arrows;
+each can pierce two enemies and is stopped by walls. Appearance work awaits the
+user's visual references; the original Ranger model is still in place.
 
 The authoritative server owns damage, projectiles, poison and bleed ticks,
 roots, slows, shields, concealment, and cooperative healing. Class definitions
