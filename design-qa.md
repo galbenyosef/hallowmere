@@ -1,3 +1,44 @@
+# Dialogue character beside the conversation
+
+final result: passed
+
+## Target and comparison
+
+The requested change adds the speaking villager on the left and offsets the existing dialogue tree to the right. The source is the previously implemented conversation, captured in `screenshots/dialogue-character/before.png`; the new arrangement is an intentional layout change rather than a pixel-identical clone.
+
+- Before and `screenshots/dialogue-character/brann-desktop.png` were opened together in the same comparison input. Both captures are 1661 × 1273 pixels from a 1661 × 1273 CSS viewport, devicePixelRatio 2; browser output normalizes to one screenshot pixel per CSS pixel. No image rescaling was applied.
+- Both show Brann with zero crowns, three draughts, and unavailable services. The background quest state differs after starting a fresh local session; the foreground conversation state is the same.
+- Additional evidence: `rowan-desktop.png` and `edda-desktop.png` at 1661 × 1273; `rowan-laptop.png` at 1280 × 720; `rowan-mobile.png` at 390 × 844. All are in `screenshots/dialogue-character/`, with pixel dimensions matching CSS viewport dimensions.
+- Full-view comparisons show the new composition and retained dialogue hierarchy. Text and character details were readable at native screenshot size, so a separate detail crop was unnecessary.
+
+## Findings and fidelity
+
+No actionable P0/P1/P2 findings in the first comparison; no subsequent visual fixes were required.
+
+- **Fonts and typography:** Existing Cinzel character heading, Georgia speech/responses, and Inter metadata retained. The desktop dialogue keeps its original width and text wrapping; phone headings wrap naturally beside the portrait.
+- **Spacing and layout:** Desktop uses a 1080px maximum composition with the character in the left column and a 600px conversation column on the right. At 700px and below, the smaller portrait sits left of the identity and the speech/responses span the width beneath it. At 390px the dialog is 354px wide; at 320px it is 284px wide. No horizontal overflow or hidden resource footer was observed. The 1280 × 720 laptop layout contains the full character and quest choices.
+- **Colors and tokens:** Existing dark backdrop, gold accents, quiet Farewell, and response focus treatment remain. Warm key lighting and cool rim lighting make the actual game models legible against the backdrop.
+- **Image quality and fidelity:** Portraits are transparent 720 × 960 renders of the loaded gameplay prefabs, with the elder's staff, smith's hammer, healer's hood, and watchman's equipment included. No replacement artwork. Camera framing tests load all four actual GLBs and verify every vertex is in frame. Cloning preserves the original world geometry, materials, and transforms. Each portrait is cached; its temporary WebGL renderer is released after capture.
+- **Copy and content:** Dialogue text, prices, services, quests, numbered responses, and resource counts are unchanged. The image alternative text identifies the current speaker.
+
+## Validation
+
+- In the live Single Player game, approached Brann, Rowan, and Edda through ordinary movement and verified their distinct portraits.
+- Accepted Rowan's quest with the number shortcut; the correct portrait stayed visible and focus moved to Farewell after the service disappeared.
+- Closed the conversation and opened Inventory; the portrait was hidden and Inventory's original modal layout restored.
+- Browser error log: no errors. Responsive overrides were reset after verification.
+- 205 tests passed, zero failures; `npm run build` passed. The local integration workflow repeats validation on the final merge.
+- Physical touch devices and a forced GPU failure were not tested. If portrait rendering fails, the existing centered dialogue remains usable.
+
+## Implementation checklist
+
+- [x] Show the actual speaking character on the left.
+- [x] Offset the existing conversation to the right on desktop.
+- [x] Preserve readable phone layouts and existing keyboard actions.
+- [x] Verify model framing, identity changes, and other modal layouts.
+
+---
+
 # Dialogue tree implementation — selected variation 02
 
 final result: passed
