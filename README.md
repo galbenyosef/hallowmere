@@ -58,7 +58,7 @@ Touch devices have a movement stick and ability buttons with automatic enemy aim
 
 ## Foraging
 
-Harvest 18 outdoor patches with **F**, the interaction button, or a plant label. Clicking a distant label walks to it. Ashwick has three patches, Mourning Road nine, and Hallowmere six. Each plant gives one food, independently for each adventurer, and returns after three minutes. A full stack leaves the plant available.
+Harvest 6 outdoor patches with **F**, the interaction button, or a plant label. Clicking a distant label walks to it. Ashwick has one patch, Mourning Road three, and Hallowmere two, with two patches of each food across the world. Each plant gives one food, independently for each adventurer, and returns after three minutes. A full stack leaves the plant available.
 
 Open **Inventory (I)** to use the pouch above your equipment satchel. It holds **five of each food**:
 

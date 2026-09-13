@@ -14,10 +14,11 @@ const send=(world,p,type,data={})=>world.command(p.id,{worldId:world.id,seq:p.la
 const near=(p,patch)=>Object.assign(p,{x:patch.x,z:patch.z});
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} ≠ ${b}`);
 
-test('18 balanced patches are outdoors, away from doors, and reachable with shared collision',()=>{
+test('6 balanced patches are outdoors, away from doors, and reachable with shared collision',()=>{
  const {buildings,obstacles}=createWorldLayout();
- assert.equal(FORAGE_PATCHES.length,18);assert.equal(new Set(FORAGE_PATCHES.map(p=>p.id)).size,18);
- for(const [zone,count] of [['ashwick',1],['road',3],['hallowmere',2]])for(const food of FOOD_LIST)assert.equal(FORAGE_PATCHES.filter(p=>p.zone===zone&&p.itemId===food.id).length,count);
+ assert.equal(FORAGE_PATCHES.length,6);assert.equal(new Set(FORAGE_PATCHES.map(p=>p.id)).size,6);
+ for(const [zone,count] of [['ashwick',1],['road',3],['hallowmere',2]])assert.equal(FORAGE_PATCHES.filter(p=>p.zone===zone).length,count);
+ for(const food of FOOD_LIST)assert.equal(FORAGE_PATCHES.filter(p=>p.itemId===food.id).length,2);
  for(const patch of FORAGE_PATCHES){
   assert.equal(zoneAt(patch),patch.zone);assert.equal(pointBlocked(patch,obstacles,.5),false,patch.id);
   assert.ok(buildings.every(b=>!insideBuilding(b,patch)&&distance(patch,b.door)>2.8),patch.id);
@@ -67,16 +68,16 @@ test('server harvests privately, regrows at 180 seconds, and rejects range, wall
  a.state.pouch[mushroom]=0;assert.equal(send(world,a,'forage',{id:patch.id}),true);assert.equal(a.state.pouch[mushroom],1);
  const seq=a.lastSeq;assert.equal(world.command(a.id,{type:'forage',id:patch.id,worldId:world.id,seq}),false);
  assert.equal(send(world,a,'forage',{id:patch.id}),false);assert.equal(send(world,a,'forage',{id:'fake'}),false);
- assert.equal(world.snapshot(a.id).forage.length,17);assert.equal(world.snapshot(b.id).forage.length,18);
+ assert.equal(world.snapshot(a.id).forage.length,5);assert.equal(world.snapshot(b.id).forage.length,6);
  assert.equal(world.snapshot(b.id).events.some(e=>e.operation==='forage'),false);
  assert.equal(world.snapshot(b.id).players.some(p=>'pouch' in p),false);
  near(b,patch);assert.equal(send(world,b,'forage',{id:patch.id}),true);assert.equal(b.state.pouch[mushroom],1);
- world.time=179.999;assert.equal(world.snapshot(a.id).forage.length,17);assert.equal(send(world,a,'forage',{id:patch.id}),false);
- world.time=180;assert.equal(world.snapshot(a.id).forage.length,18);assert.equal(send(world,a,'forage',{id:patch.id}),true);
+ world.time=179.999;assert.equal(world.snapshot(a.id).forage.length,5);assert.equal(send(world,a,'forage',{id:patch.id}),false);
+ world.time=180;assert.equal(world.snapshot(a.id).forage.length,6);assert.equal(send(world,a,'forage',{id:patch.id}),true);
 });
 
 test('food and harvest state survive reconnect and respawn, death clears regen, new vigil resets them',()=>{
- let now=0;const world=new World({seed:12,now:()=>now}),p=world.join().player,patch=FORAGE_PATCHES[1];world.enemies=[];
+ let now=0;const world=new World({seed:12,now:()=>now}),p=world.join().player,patch=FORAGE_PATCHES.find(patch=>patch.itemId===herb);world.enemies=[];
  near(p,patch);send(world,p,'forage',{id:patch.id});p.state.mana=0;
  assert.equal(send(world,p,'consume',{itemId:herb}),true);assert.equal(p.state.pouch[herb],0);
  const ready=p.forageReadyAt[patch.id];world.leave(p.id);const saved=structuredClone(p.state);
@@ -87,7 +88,7 @@ test('food and harvest state survive reconnect and respawn, death clears regen, 
  p.state.pouch[mushroom]=2;hurtPlayer(p.state,999);assert.equal(p.state.essenceRegen,0);assert.equal(p.state.ended,true);
  assert.equal(send(world,p,'consume',{itemId:mushroom}),false);assert.equal(send(world,p,'forage',{id:FORAGE_PATCHES[0].id}),false);
  assert.equal(send(world,p,'respawn'),true);assert.equal(p.state.pouch[mushroom],2);assert.equal(p.forageReadyAt[patch.id],ready);assert.equal(p.state.essenceRegen,0);
- world.reset(13);assert.deepEqual(p.state.pouch,createState().pouch);assert.deepEqual(p.forageReadyAt,{});assert.equal(p.state.foodCooldown,0);assert.equal(world.snapshot(p.id).forage.length,18);
+ world.reset(13);assert.deepEqual(p.state.pouch,createState().pouch);assert.deepEqual(p.forageReadyAt,{});assert.equal(p.state.foodCooldown,0);assert.equal(world.snapshot(p.id).forage.length,6);
 });
 
 test('server consumption keeps pouch ownership and rejects repeated charges',()=>{
