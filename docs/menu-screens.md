@@ -40,3 +40,34 @@ navigation, not a new persistent save system.
   blending over the menu background. The subtitle remains accessible HTML.
 
 Visual evidence and comparison history are recorded in `design-qa.md`.
+
+## Open Chronicle game menus
+
+Option 3 in `dist/menu-directions.html` is the selected direction for the in-game
+menus. Character selection, inventory, journal, controls, conversations, pause,
+death, victory, and the expanded map now use the same moonlit backdrop, ivory
+headings, and open composition. Connection and restart-vote prompts share those
+colors, typography, and square gold borders.
+
+`dist/menu-chrome.js` provides the shared menu index. It routes through existing
+game transitions; character changes still require a sanctuary, and navigation is
+unavailable before choosing the first character or while dead. The index becomes
+a horizontally scrolling row on small screens. Menus open at the top without
+scrolling to the focused close button.
+
+Inventory inspection stays beneath the character and satchel. Hovering or
+focusing a tile changes the visible details; clicking or pressing Enter retains
+the existing equip/eat action. Inspection survives inventory refreshes, preserves
+equipped semantics, and never changes equipment by itself. The map retains its
+live canvas, markers, discovery data, and keyboard shortcut.
+
+`dist/chronicle.css` owns this shared presentation and its responsive rules. The
+loading and game-mode selection screens retain the Twin Paths presentation.
+Screenshots are in `screenshots/open-chronicle/`. Automated tests and build
+validation remain deferred until an explicitly authorized merge.
+
+The character, inventory, and journal screenshots show a local game session.
+The conversation, game-menu layout, and mobile inventory captures use the actual
+menu renderers with sample data in a temporary layout fixture, without a game
+loop. That fixture was removed after review. A gameplay-resume review action was
+blocked by automatic approval review because it could advance session state.
