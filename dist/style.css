@@ -93,3 +93,9 @@
 #mode-choice button:focus-visible,#connection-back:focus-visible{outline:2px solid var(--gold-bright);outline-offset:5px}
 #connection-back{display:block;margin:12px auto 0;min-height:44px;font-size:14px}#connection-back[hidden]{display:none}
 @media(max-width:560px){#mode-choice{flex-direction:column;max-width:360px;gap:12px}#mode-choice button{min-height:100px}#loading{overflow:auto}}
+
+/* Soundtrack controls share the game menu's quiet, worn-gold palette. */
+.soundtrack-settings{margin-top:1.25rem;padding-top:1rem;border-top:1px solid #63573b55}
+.soundtrack-settings p{font-size:.875rem;line-height:1.7;margin:.65rem 0 0}
+.soundtrack-settings a{color:#cdb47c;text-underline-offset:3px}
+.soundtrack-settings a:focus-visible{outline:2px solid #d6c397;outline-offset:4px}

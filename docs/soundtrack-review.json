@@ -1,0 +1,33 @@
+{
+  "method": "Full MP3 decode with FFmpeg ebur128=true-peak analysis",
+  "tracks": [
+    {
+      "id": "balefire",
+      "duration": 339.945601,
+      "integratedLufs": -18.4,
+      "truePeakDbfs": -4.3,
+      "decodeErrors": false
+    },
+    {
+      "id": "descent",
+      "duration": 137.693152,
+      "integratedLufs": -18.4,
+      "truePeakDbfs": -4.1,
+      "decodeErrors": false
+    },
+    {
+      "id": "incantation",
+      "duration": 433.033469,
+      "integratedLufs": -18.4,
+      "truePeakDbfs": -5.6,
+      "decodeErrors": false
+    },
+    {
+      "id": "the-old-ones",
+      "duration": 302.071429,
+      "integratedLufs": -19.4,
+      "truePeakDbfs": -2.1,
+      "decodeErrors": false
+    }
+  ]
+}
