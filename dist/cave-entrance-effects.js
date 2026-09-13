@@ -5,6 +5,7 @@ export function createCaveEntranceEffect(parent,portal){
  const group=new T.Group();group.name=`cave-light-${portal.id}`;parent.add(group);
  const stairs=portal.appearance==='stairs',size=stairs?.6:1,color=0xa2efbe;
  group.position.set(portal.x,stairs?.32:.02,portal.z-(stairs?0:1.2));
+ if(stairs)group.rotation.y=portal.rotation||0;
  const pixels=new Uint8Array(64*64*4);
  for(let y=0;y<64;y++)for(let x=0;x<64;x++){
   const i=(y*64+x)*4,r=Math.hypot((x-31.5)/31.5,(y-31.5)/31.5);

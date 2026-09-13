@@ -1,3 +1,5 @@
+import {BUILDING_SPECS,buildingWorld} from './buildings.js';
+
 // Authored chambers and winding routes are rasterized once. Navigation, the map,
 // and the scenery all use the same solid rock footprint.
 const CELL=2;
@@ -99,10 +101,22 @@ export const FIRST_LEVEL_CAVES=[
   tunnel(5,[-36,-13],[-27,-21],[-10,-15]),tunnel(5,[-10,-15],[3,-22],[18,-14]),tunnel(5,[-36,-13],[-43,-27],[-36,-39]),
   tunnel(5,[-10,-15],[-17,-29],[-7,-38]),tunnel(5,[-36,-39],[-23,-45],[-7,-38]),tunnel(5,[-7,-38],[4,-46],[20,-43]),
   tunnel(5,[18,-14],[11,-28],[20,-43]),tunnel(5,[40,-6],[34,-20],[41,-31]),tunnel(5,[41,-31],[34,-43],[20,-43])
- ],[6,10,11,13,14])
+ ],[6,10,11,13,14]),
+ cave('old-road-cellar','Old Road Cellar',32,36,[
+  chamber('Lodge cellar',0,11,5,5,'camp'),chamber('Collapsed stores',-7,-3,6,6,'camp'),chamber('Hidden workings',7,-11,5,5,'crystals')
+ ],[tunnel(5,[0,11],[-5,6],[-7,-3]),tunnel(5,[-7,-3],[1,-4],[7,-11])],[2]),
+ cave('gravekeepers-hollow','Gravekeeper’s Hollow',36,40,[
+  chamber('Keeper’s cellar',0,14,6,4,'camp'),chamber('Sunken passage',-8,0,6,6),chamber('Buried ossuary',7,-11,7,6,'shrine')
+ ],[tunnel(5,[0,14],[-7,9],[-8,0]),tunnel(5,[-8,0],[-1,-7],[7,-11])],[2])
 ];
+function houseEntrance(id,caveId,buildingId,name){
+ const house=BUILDING_SPECS.find(b=>b.id===buildingId);
+ return{id,caveId,buildingId,name,...buildingWorld(house,0,-.7),rotation:house.rotation,appearance:'stairs',hidden:true};
+}
 export const CAVE_ENTRANCES=[
  {id:'moss-hollow-entrance',caveId:'moss-hollow',x:-54,z:20,appearance:'cave',name:'Moss Hollow'},
- {id:'cellar-depths-entrance',caveId:'cellar-depths',x:13,z:14.3,appearance:'stairs',buildingId:'south-house',name:'Cellar Depths'},
- {id:'gloom-cavern-entrance',caveId:'gloom-cavern',x:-35,z:-19,appearance:'cave',name:'Gloom Cavern'}
+ houseEntrance('cellar-depths-entrance','cellar-depths','south-house','Cellar Depths'),
+ {id:'gloom-cavern-entrance',caveId:'gloom-cavern',x:-35,z:-19,appearance:'cave',name:'Gloom Cavern'},
+ houseEntrance('old-road-cellar-entrance','old-road-cellar','west-lodge','Old Road Cellar'),
+ houseEntrance('gravekeepers-hollow-entrance','gravekeepers-hollow','grave-house','Gravekeeper’s Hollow')
 ];

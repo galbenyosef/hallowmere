@@ -6,17 +6,19 @@ import {PORTALS} from '../dist/regions.js';
 import {findPath,resolveMove,distance,pointBlocked} from '../dist/combat.js';
 import {insideBuilding,buildingWorld} from '../dist/buildings.js';
 import {START,regionQuestSummary} from '../dist/campaign.js';
+import {discoverEntrances} from '../dist/region-campaign.js';
 const command=(w,p,type,id)=>w.command(p.id,{type,id,worldId:w.id,seq:p.lastSeq+1});
 const at=(p,o)=>{Object.assign(p,{x:o.x,z:o.z,mapId:o.mapId});p.state.mapId=p.mapId;};
 function walk(w,p,goal){
  const path=findPath(p,goal,w.obstaclesFor(p),w.boundsFor(p));assert.ok(path.length);
  for(const point of path){let steps=0;while(distance(p,point)>.03&&steps++<500){const d=distance(p,point),step=Math.min(.12,d);Object.assign(p,resolveMove(p,(point.x-p.x)/d*step,(point.z-p.z)/d*step,w.obstaclesFor(p),.42,w.boundsFor(p)));}assert.ok(distance(p,point)<.04);}
+ discoverEntrances(w,p);
 }
-test('three distinct cave sizes have complete round trips from the starting level before its boss',()=>{
- assert.deepEqual(FIRST_LEVEL_CAVES.map(c=>c.encounters.length),[26,33,46]);
+test('outdoor and house caves have complete round trips from the starting level before its boss',()=>{
+ assert.deepEqual(FIRST_LEVEL_CAVES.map(c=>c.encounters.length),[26,33,46,6,6]);
  for(const entrance of CAVE_ENTRANCES){
   const w=new World({seed:17}),p=w.join().player,portal=PORTALS.find(o=>o.id===entrance.id);
-  assert.ok(w.snapshot(p.id).interactions.portals.some(o=>o.id===portal.id&&!o.locked));
+  assert.equal(w.snapshot(p.id).interactions.portals.some(o=>o.id===portal.id&&!o.locked),!portal.hidden);
   assert.equal(command(w,p,'travel',portal.id),false);
   walk(w,p,portal);assert.equal(command(w,p,'travel',portal.id),true);
   const map=FIRST_LEVEL_CAVES.find(c=>c.id===p.mapId);assert.ok(map);
@@ -27,15 +29,25 @@ test('three distinct cave sizes have complete round trips from the starting leve
   assert.equal(w.shared.victory,false);assert.equal(w.shared.bossSpawned,false);
  }
 });
-test('cellar stairs require entering the house and cannot be activated through a wall',()=>{
- const w=new World({seed:17}),p=w.join().player,portal=PORTALS.find(o=>o.id==='cellar-depths-entrance'),house=w.buildings.find(b=>b.id===portal.buildingId);
+test('house caves are discovered inside and stay hidden from players outside, including allies',()=>{
+ for(const entrance of CAVE_ENTRANCES.filter(e=>e.buildingId)){
+ const w=new World({seed:17}),p=w.join().player,ally=w.join().player,portal=PORTALS.find(o=>o.id===entrance.id),house=w.buildings.find(b=>b.id===portal.buildingId);
+ assert.equal(house.abandoned,true);
+ Object.assign(p,house.exit);discoverEntrances(w,p);
+ assert.equal(w.shared.discoveries.includes(portal.id),false);
  Object.assign(p,buildingWorld(house,0,-house.d/2-.5));
- assert.ok(distance(p,portal)<2.8);assert.equal(insideBuilding(house,p),false);
+ assert.equal(insideBuilding(house,p),false);
  assert.equal(command(w,p,'travel',portal.id),false);
  walk(w,p,portal);assert.equal(insideBuilding(house,p),true);
+ assert.ok(w.shared.discoveries.includes(portal.id));
+ assert.ok(w.snapshot(p.id).interactions.portals.some(o=>o.id===portal.id));
+ Object.assign(ally,house.exit);assert.equal(w.snapshot(ally.id).interactions.portals.some(o=>o.id===portal.id),false);
+ assert.equal(command(w,ally,'travel',portal.id),false);
  assert.equal(command(w,p,'travel',portal.id),true);
  assert.equal(command(w,p,'travel',`${portal.id}-return`),true);
  assert.equal(insideBuilding(house,p),true);walk(w,p,house.exit);assert.equal(insideBuilding(house,p),false);
+ assert.equal(w.snapshot(p.id).interactions.portals.some(o=>o.id===portal.id),false);
+ }
 });
 test('cave rewards are guarded, personal and single use without advancing village progress',()=>{
  for(const map of FIRST_LEVEL_CAVES){
@@ -64,5 +76,5 @@ test('cave combat and snapshots stay on their map; death returns to Ashwick',()=
 });
 
 test('caves clearly identify optional exploration and the claimed reward',()=>{
- for(const map of FIRST_LEVEL_CAVES){const state={mapId:map.id,claimedCaches:[]};assert.equal(regionQuestSummary(state).count,'OPTIONAL');state.claimedCaches.push(map.caches[0].id);assert.equal(regionQuestSummary(state).objective,`Explore the tunnels · 1 / ${map.caches.length} caches`);state.claimedCaches=map.caches.map(c=>c.id);assert.equal(regionQuestSummary(state).objective,'Caches claimed · Return to Hallowmere');}
+ for(const map of FIRST_LEVEL_CAVES){const state={mapId:map.id,claimedCaches:[]};assert.equal(regionQuestSummary(state).count,'OPTIONAL');state.claimedCaches.push(map.caches[0].id);assert.equal(regionQuestSummary(state).objective,map.caches.length===1?'Caches claimed · Return to Hallowmere':`Explore the tunnels · 1 / ${map.caches.length} caches`);state.claimedCaches=map.caches.map(c=>c.id);assert.equal(regionQuestSummary(state).objective,'Caches claimed · Return to Hallowmere');}
 });

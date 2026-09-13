@@ -1,4 +1,5 @@
 import {FIRST_LEVEL_CAVES,CAVE_ENTRANCES} from './caves.js';
+import {caveSceneryObstacles} from './cave-scenery-layout.js';
 const WORLD_BOUNDS={minX:-81,maxX:26,minZ:-27,maxZ:27};
 const START={x:-66,z:5};
 
@@ -47,7 +48,7 @@ const pair=(id,mapId,x,z,toMapId,toX,toZ,requires=null,hidden=false,name='Passag
  {id:`${id}-return`,mapId:toMapId,x:toX,z:toZ,toMapId:mapId,toX:x,toZ:z,requires,hidden:false,name:`Return to ${MAPS[mapId].name}`}
 ];
 export const PORTALS=[
- ...CAVE_ENTRANCES.flatMap(entrance=>pair(entrance.id,'overworld',entrance.x,entrance.z,entrance.caveId,MAPS[entrance.caveId].start.x,MAPS[entrance.caveId].start.z,null,false,entrance.name).map((portal,i)=>({...portal,appearance:i?'cave':entrance.appearance,...(!i&&entrance.buildingId?{buildingId:entrance.buildingId}:{})}))),
+ ...CAVE_ENTRANCES.flatMap(entrance=>pair(entrance.id,'overworld',entrance.x,entrance.z,entrance.caveId,MAPS[entrance.caveId].start.x,MAPS[entrance.caveId].start.z,null,!!entrance.hidden,entrance.name).map((portal,i)=>({...portal,appearance:i?'cave':entrance.appearance,...(!i&&entrance.buildingId?{buildingId:entrance.buildingId,rotation:entrance.rotation}:{})}))),
  ...pair('wood-road','overworld',23,5,'drowned-wood',0,27,'boss',false,'Road to Drowned Wood'),
  ...pair('quarry-road','drowned-wood',0,-28,'blackvein-quarry',0,27,'rootbound',false,'Road to Blackvein Quarry'),
  ...pair('keep-road','blackvein-quarry',0,-28,'crownfall-keep',0,27,'quarry-warden',false,'Road to Crownfall Keep'),
@@ -56,6 +57,7 @@ export const PORTALS=[
  ...pair('quarry-cave','blackvein-quarry',26,15,'underways',0,12,'rootbound',true,'Abandoned mine adit'),
  ...pair('keep-cave','crownfall-keep',26,14,'underways',24,11,'quarry-warden',true,'Forgotten crypt')
 ];
+for(const portal of PORTALS)MAPS[portal.mapId].obstacles.push(...caveSceneryObstacles(portal).map(o=>({...o,caveScenery:true})));
 for(const map of Object.values(MAPS))for(const cache of map.caches){cache.mapId=map.id;cache.enemyId??=map.encounters.find(e=>e.elite&&e.tier===cache.tier)?.id;}
 export const CHECKPOINTS=Object.values(MAPS).map(m=>m.checkpoint).filter(Boolean);
 export const mapFor=id=>MAPS[id]||MAPS.overworld;
