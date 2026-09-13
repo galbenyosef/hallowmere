@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {MAPS,PORTALS,mapFor,availablePortal} from './regions.js';
 import {createCaveEntranceEffect} from './cave-entrance-effects.js';
+import {createCaveScenery} from './cave-scenery.js';
 
 const palettes={
  'drowned-wood':{ground:0x273d37,stone:0x4e6052,dark:0x243129,trim:0x8b9564,glow:0x8fc4a1},
@@ -60,6 +61,11 @@ export function createRegionLandmarks(scene,mapId){
  return{group,dispose(){for(const effect of caveEffects)effect.dispose();k.dispose();},updateProgress,sync,update};
 }
 export function createRegionEnvironment(scene,mapId){
+ if(mapFor(mapId).theme==='cave'){
+  const map=mapFor(mapId),scenery=createCaveScenery(scene,map),landmarks=createRegionLandmarks(scene,mapId);scenery.group.add(landmarks.group);
+  return{group:scenery.group,obstacles:map.obstacles.map(o=>({...o})),buildings:[],torches:[],mists:[],windowGlows:[],glowTexture:null,currentBuilding:()=>null,pickDoor:()=>null,nearestDoor:()=>null,updateProgress:landmarks.updateProgress,sync:landmarks.sync,
+   update(t,dt,victory,camera,player){scenery.update(t,player);landmarks.update(t);},dispose(){landmarks.dispose();scenery.dispose();}};
+ }
  const map=mapFor(mapId),k=kit(scene,mapId),{mesh,group}=k,b=map.bounds,obstacles=map.obstacles.map(o=>({...o})),gates=[],cover=[];
  let seed=mapId.length*977;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  mesh('box','ground',(b.minX+b.maxX)/2,-.21,(b.minZ+b.maxZ)/2,b.maxX-b.minX,.4,b.maxZ-b.minZ);
