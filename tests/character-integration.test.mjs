@@ -56,20 +56,49 @@ test('gameplay optimization and actor cloning preserve Geralt face materials and
 });
 
 const pickerSource=(await readFile(new URL('../dist/roster-picker.js',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace('export function','function');
-test('picker removes skin controls, replaces old Sorcerer preferences, and submits playable Geralt',async()=>{
+function pickerHarness(state={classId:'sorcerer',appearanceId:'W10'}){
  const nodes=new Map(),handlers={},choices=[];let saved=JSON.stringify({classId:'sorcerer',appearanceId:'W06'});
- const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{style:{},setAttribute(){},focus(){}});return nodes.get(selector);};
- const dialog={setAttribute(){},querySelector:node,querySelectorAll:()=>[],addEventListener:(event,handler)=>{handlers[event]=handler;},showModal(){this.open=true;},close(){this.open=false;}};
- const context=vm.createContext({CLASS_LIST,CLASSES,classAppearance,document:{createElement:()=>dialog,body:{append(){}}},localStorage:{getItem:()=>saved,setItem:(_key,value)=>{saved=value;}},prepareCharacterPortraits:async()=>{},portraitFor:(id,look)=>`${id}/${look}.png`,getState:()=>({classId:'sorcerer',appearanceId:'W10'}),onChoose:choice=>{choices.push(choice);return true;},onClose(){}});
+ const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{style:{},attributes:{},setAttribute(key,value){this.attributes[key]=value;},focus(){this.focused=true;},addEventListener(event,handler){handlers[`${selector}:${event}`]=handler;}});return nodes.get(selector);};
+ const buttons=CLASS_LIST.map(c=>Object.assign(node(`[data-class-choice="${c.id}"]`),{dataset:{classChoice:c.id},querySelector:()=>node(`portrait:${c.id}`)}));
+ const dialog={setAttribute(){},querySelector:node,querySelectorAll:()=>buttons,addEventListener:(event,handler)=>{handlers[event]=handler;},showModal(){this.open=true;},close(){this.open=false;}};
+ const context=vm.createContext({CLASS_LIST,CLASSES,classAppearance,document:{createElement:()=>dialog,body:{append(){}}},localStorage:{getItem:()=>saved,setItem:(_key,value)=>{saved=value;}},prepareCharacterPortraits:async()=>{},portraitFor:(id,look)=>`${id}/${look}.png`,getState:()=>state,onChoose:choice=>{choices.push(choice);return true;},onClose(){}});
  vm.runInContext(pickerSource+'\nvar picker=createRosterPicker({getState,onChoose,onClose});',context);
+ return {context,node,handlers,choices,dialog,buttons,saved:()=>JSON.parse(saved)};
+}
+test('picker removes skin controls, replaces old Sorcerer preferences, and submits playable Geralt',async()=>{
+ const {context,node,handlers,choices,dialog,saved}=pickerHarness();
  await context.picker.show();
  assert.doesNotMatch(dialog.innerHTML,/Sorcerer skins|roster-appearances|data-appearance-choice/);
  assert.match(node('.roster-classes').innerHTML,/data-class-choice="geralt"/);
  assert.equal(node('.roster-portrait img').src,'sorcerer/W07.png');
  node('.roster-confirm').onclick();assert.equal(choices[0].appearanceId,'W07');context.picker.resolve({ok:true});
- assert.equal(JSON.parse(saved).appearanceId,'W07');
+ assert.equal(saved().appearanceId,'W07');
  await context.picker.show();handlers.click({target:{closest:()=>({dataset:{classChoice:'geralt'}})}});
  assert.equal(node('.roster-name').textContent,'Geralt');assert.match(node('.roster-skills').innerHTML,/Igni/);
  node('.roster-confirm').onclick();assert.equal(choices[1].classId,'geralt');assert.equal(choices[1].appearanceId,'geralt');
- context.picker.resolve({ok:true});assert.equal(JSON.parse(saved).classId,'geralt');
+ context.picker.resolve({ok:true});assert.equal(saved().classId,'geralt');
+});
+
+test('radial picker cycles and wraps in both directions, follows keyboard focus, and locks selection while joining',async()=>{
+ const {context,node,handlers,choices,buttons,dialog}=pickerHarness({});
+ await context.picker.show();
+ node('.roster-previous').onclick();assert.equal(node('.roster-name').textContent,CLASS_LIST.at(-1).name);
+ node('.roster-next').onclick();assert.equal(node('.roster-name').textContent,CLASS_LIST[0].name);
+ for(let i=1;i<=CLASS_LIST.length;i++){
+  node('.roster-next').onclick();const hero=CLASS_LIST[i%CLASS_LIST.length];
+  assert.equal(node('.roster-name').textContent,hero.name);
+  assert.equal(node('.roster-portrait img').src,`${hero.id}/${hero.concept}.png`);
+  assert.deepEqual(buttons.filter(b=>b.attributes['aria-pressed']==='true').map(b=>b.dataset.classChoice),[hero.id]);
+ }
+ let prevented=0;const key=key=>handlers['.roster-wheel:keydown']({key,preventDefault(){prevented++;},target:{closest:()=>buttons[0]}});
+ key('ArrowRight');assert.equal(node('.roster-name').textContent,CLASS_LIST[1].name);assert.equal(buttons[1].focused,true);
+ assert.equal(buttons.filter(b=>b.tabIndex===0).length,1);
+ key('End');assert.equal(node('.roster-name').textContent,CLASS_LIST.at(-1).name);
+ key('Home');assert.equal(node('.roster-name').textContent,CLASS_LIST[0].name);
+ node('.roster-confirm').onclick();assert.equal(choices[0].classId,CLASS_LIST[0].id);
+ assert.equal(node('.roster-previous').disabled,true);assert.equal(node('.roster-next').disabled,true);
+ node('.roster-next').onclick();key('ArrowLeft');
+ assert.equal(node('.roster-name').textContent,CLASS_LIST[0].name);assert.equal(prevented,4);
+ context.picker.resolve({ok:false,reason:'Try again'});assert.equal(dialog.open,true);assert.equal(node('.roster-next').disabled,false);
+ node('.roster-next').onclick();assert.equal(node('.roster-name').textContent,CLASS_LIST[1].name);
 });
