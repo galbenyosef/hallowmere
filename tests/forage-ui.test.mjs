@@ -46,6 +46,7 @@ test('pouch has three explicit Eat actions above the satchel and live updates pr
  const state=Object.assign(createState(),createCampaign(42)),markup=inventoryMarkup(state,'starting-sword');
  assert.equal((markup.match(/data-consume=/g)||[]).length,3);assert.ok(markup.indexOf('inventory-pouch')<markup.indexOf('<h3>Satchel'));
  assert.match(markup,/world keeps moving/);assert.match(markup,/5 of each food/);
+ for(const key of ['hp','mana','maxHp','maxMana','potions','level','forgeLevel'])assert.ok(markup.includes(`data-resource="${key}"`),`Inventory must expose live ${key} updates`);
  // A DOM contract fixture rejects subtree replacement and unknown selectors.
  const node=()=>({textContent:'',attrs:{},setAttribute(k,v){this.attrs[k]=v;},set innerHTML(_){assert.fail('Snapshot replaced a subtree');}});
  const nodes=new Map(),rows=new Map();

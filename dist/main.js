@@ -4,6 +4,8 @@ import {CLASS_LIST,CLASSES,abilitiesFor,classFor,classAppearance,conceptFor,clas
 import {createPlayableCharacter} from './playable-characters.js';
 import {createRosterPicker} from './roster-picker.js';
 import {prepareCharacterPortraits} from './character-portraits.js';
+import {prepareInventoryPortrait} from './inventory-portraits.js';
+import {inventoryPortraitStatus} from './character-art.js';
 import {createClassProjectile,createClassZone} from './class-effects.js';
 import {MultiplayerClient,predictedPosition} from './multiplayer-client.js';
 import {createMultiplayerView,disposeActor} from './multiplayer-view.js';
@@ -141,7 +143,8 @@ function renderInventory(){
  const content=$('modal-content'),focused=content.contains(document.activeElement)?document.activeElement.closest('[data-select-item]'):null;
  const focusedFood=content.contains(document.activeElement)?document.activeElement.dataset?.consume:null;
  const focusedId=focused?.dataset.selectItem,inSlot=!!focused?.closest('.equipment-slot');
- const gridScroll=content.querySelector('.inventory-grid')?.scrollTop||0,modal=content.closest('.modal'),modalScroll=modal.scrollTop;
+ const gridScroll=content.querySelector('.inventory-grid')?.scrollTop||0,modal=content.closest('.modal'),modalScroll=modal.scrollTop,contentScroll=content.scrollTop;
+ $('inventory-purse').innerHTML=`<strong data-resource="gold">${state.gold}</strong><span>Crowns</span>`;
  content.innerHTML=inventoryMarkup(state,selectedInventoryItem);
  content.querySelector('.inventory-grid').scrollTop=gridScroll;
  if(focusedId){
@@ -152,8 +155,13 @@ function renderInventory(){
   inspectInventoryItem(content,state,selectedInventoryItem);
  }
  if(focusedFood)[...content.querySelectorAll('[data-consume]')].find(button=>button.dataset.consume===focusedFood)?.focus({preventScroll:true});
- updateInventoryResources(content,state,!!network?.connected);
- modal.scrollTop=modalScroll;
+ updateInventoryResources(modal,state,!!network?.connected);
+ modal.scrollTop=modalScroll;content.scrollTop=contentScroll;
+ if(state.classId&&inventoryPortraitStatus(state.classId,state.appearanceId)==='idle'){
+  const key=conceptFor(state.classId,state.appearanceId);
+  const refresh=()=>{if(modalKind==='inventory'&&key===conceptFor(state.classId,state.appearanceId))renderInventory();};
+  prepareInventoryPortrait(state.classId,state.appearanceId).then(refresh,refresh);
+ }
 }
 
 function previewInventoryItem(id){
@@ -177,7 +185,7 @@ function consumePouchItem(itemId){
  const available=consumeAvailability(state,itemId);if(!available.ok)return available;
  return network?.send('consume',{itemId})?{ok:true,pending:true}:{ok:false,reason:'Reconnect to eat.'};
 }
-function showModal(kind){if(!ready||mapExpanded||state.ended&&kind!=='death')return;if(kind!=='death'&&kind!=='victory')audio.play('ui-open',.55);previousFocus=document.activeElement;modalKind=kind;paused=true;releaseInput();audio.pause(true,backgrounded);$('modal-shade').hidden=false;$('modal-secondary').hidden=true;document.querySelector('.modal').classList.toggle('inventory-modal',kind==='inventory');$('modal-eyebrow').textContent=kind==='victory'?'THE BELLKEEPER DEFEATED':kind==='death'?'THE VEIL TAKES ANOTHER':'THE ASHEN VIGIL';const title=$('modal-title'),content=$('modal-content'),primary=$('modal-primary');
+function showModal(kind){if(!ready||mapExpanded||state.ended&&kind!=='death')return;if(kind!=='death'&&kind!=='victory')audio.play('ui-open',.55);previousFocus=document.activeElement;modalKind=kind;paused=true;releaseInput();audio.pause(true,backgrounded);$('modal-shade').hidden=false;$('modal-secondary').hidden=true;$('inventory-purse').hidden=kind!=='inventory';$('inventory-controls').hidden=kind!=='inventory';document.querySelector('.modal').classList.toggle('inventory-modal',kind==='inventory');$('modal-eyebrow').textContent=kind==='victory'?'THE BELLKEEPER DEFEATED':kind==='death'?'THE VEIL TAKES ANOTHER':'THE ASHEN VIGIL';const title=$('modal-title'),content=$('modal-content'),primary=$('modal-primary');
  if(kind==='pause'){title.textContent='The vigil continues';content.innerHTML='<p>The shared world keeps moving while this menu is open. Rest in Ashwick to stay safe.</p><button class="text-button change-class-button" data-open-roster>Choose class · C</button>'; primary.textContent='Return to the road';$('modal-secondary').hidden=false;$('modal-secondary').textContent='Vote for a new vigil';}
  if(kind==='help'){title.textContent='Your calling & controls';content.innerHTML='<div class="controls-table"><div><span>Move / attack a creature</span><kbd>WASD / LEFT CLICK</kbd></div><div><span>Stand and attack</span><kbd>SHIFT + CLICK</kbd></div><div><span>Secondary class skill</span><kbd>RIGHT CLICK</kbd></div><div><span>Evade the red attack zones</span><kbd>1</kbd></div><div><span>Major class skill / healing draught</span><kbd>2 / 3</kbd></div><div><span>Speak / collect loot / forage</span><kbd>F</kbd></div><div><span>Inventory & pouch / journal / map</span><kbd>I / J / M</kbd></div></div><p>Hold a creature to attack at your class’s range. Press C at a sanctuary to change class. Essence regenerates. Crowns are collected by walking over them; equipment and draughts glow on the ground. Forage mushrooms, moonleaf, and berries with F or a plant label. Open Inventory with I and choose Eat in your pouch to restore health or essence. Hold Alt to reveal nearby loot and plants during combat. Ashwick and Rook’s lantern are safe places to rest. Walk through a door or tap Enter to explore a room. Tap Leave to return outside. Hallowmere’s chapel opens after the Bellkeeper falls.</p>';primary.textContent='Return to the road';}
  if(kind==='journal'){const quest=questSummary(state);title.textContent='The Last Toll';content.innerHTML=`<div class="journal-copy"><p>Hallowmere’s chapel bell has rung for thirteen years. The dead now haunt the road from Ashwick, and the Bellkeeper still pulls the rope.</p><p><strong>${quest.objective}</strong><br>${quest.hint}</p><p class="journal-progress">Mourning Road: ${state.roadKills} monsters slain<br>Hallowmere: ${state.villageKills} / 12 afflicted<br>Bellkeeper: ${state.victory?'Defeated':state.bossSpawned?'Awakened':'Not yet awakened'}<br>Spoils collected: ${state.lootCollected}<br>Village reward: ${state.questRewarded?'Claimed':'80 crowns from Elder Rowan'}</p></div>`;primary.textContent='Return to the road';}
@@ -191,7 +199,7 @@ $('modal-content').addEventListener('focusin',event=>{const item=event.target.cl
 $('modal-content').addEventListener('click',event=>{const food=event.target.closest('[data-consume]');if(food){const result=consumePouchItem(food.dataset.consume);if(!result.ok)toast(result.reason);return;}if(event.target.closest('[data-open-roster]')){openRoster();return;}const item=event.target.closest('[data-select-item]');if(item){const r=equipOwnedItem(item.dataset.selectItem);if(!r.ok)toast(r.reason);return;}const service=event.target.closest('[data-service]');if(service){const r=serviceNpc(service.dataset.service);if(!r.ok)toast(r.reason);}});
 $('modal-primary').onclick=()=>{if(modalKind==='death')restart();else{closeModal();awaken();}};$('modal-secondary').onclick=restart;$('modal-shade').addEventListener('keydown',e=>{if(e.key!=='Tab')return;const focusable=[...$('modal-shade').querySelectorAll('button:not([hidden]):not([disabled])')];const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});
 function restart(){if(!network?.connected)return;if(state.ended){network.send('respawn');}else{network.send('vote',{agree:true});closeModal();}}
-function connectionStatus(message,connected){const el=$('multiplayer-status');if(el.textContent!==message)el.textContent=message;el.classList.toggle('offline',!connected);$('connection-overlay').hidden=connected;if(!connected)$('connection-message').textContent=message;if(!connected){if(modalKind==='inventory')updateInventoryResources($('modal-content'),state,false);releaseInput();rosterPicker?.resolve({ok:false,reason:'Connection lost. Try again once connected.'});}}
+function connectionStatus(message,connected){const el=$('multiplayer-status');if(el.textContent!==message)el.textContent=message;el.classList.toggle('offline',!connected);$('connection-overlay').hidden=connected;if(!connected)$('connection-message').textContent=message;if(!connected){if(modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),state,false);releaseInput();rosterPicker?.resolve({ok:false,reason:'Connection lost. Try again once connected.'});}}
 $('connection-retry').onclick=()=>location.reload();
 $('restart-yes').onclick=()=>network?.send('vote',{agree:true});
 $('restart-no').onclick=()=>network?.send('vote',{agree:false});
@@ -219,7 +227,7 @@ function applySnapshot(snapshot,changed){
  if(state.level>oldLevel&&!changed){toast(`Oath strengthened · Level ${state.level}`);audio.play('levelup',.65);}if(state.ended&&!wasDead){audio.play('death-player',.8);releaseInput();if(mapExpanded)toggleMapForDeath();showModal('death');}
  if(wasDead&&!state.ended||changed){audio.pause(backgrounded,backgrounded);$('modal-shade').hidden=true;modalKind='';paused=false;mapExpanded=false;document.querySelector('.map-panel').classList.remove('expanded');player.rotation.z=0;player.position.y=0;}
  if(!state.classId&&!rosterPicker?.open)openRoster();
- if(modalKind==='npc'&&beforeServices!==JSON.stringify([state.gold,state.potions,state.forgeLevel,state.questAccepted,state.questRewarded,state.victory,state.bossLootClaimed,state.rookSupplies]))renderNpc();if(modalKind==='inventory'&&beforeInventory!==JSON.stringify([state.inventory,state.equipped]))renderInventory();if(modalKind==='inventory')updateInventoryResources($('modal-content'),state,network.connected);updateUI();
+ if(modalKind==='npc'&&beforeServices!==JSON.stringify([state.gold,state.potions,state.forgeLevel,state.questAccepted,state.questRewarded,state.victory,state.bossLootClaimed,state.rookSupplies]))renderNpc();if(modalKind==='inventory'&&beforeInventory!==JSON.stringify([state.inventory,state.equipped]))renderInventory();if(modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),state,network.connected);updateUI();
 }
 function toggleMapForDeath(){mapExpanded=false;document.querySelector('.map-panel').classList.remove('expanded');paused=false;}
 function networkEvent(event){

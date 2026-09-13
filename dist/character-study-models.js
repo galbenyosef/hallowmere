@@ -170,7 +170,7 @@ export function createCharacter(c){
   return root;
 }
 
-export function createStudyScene(c){
+export function createStudyScene(c,root=createCharacter(c)){
   const scene=new T.Scene();
   scene.add(new T.HemisphereLight(0xacc6dc,0x554836,2.0));
   const moon=new T.DirectionalLight(0xa7c7ee,3.1);moon.position.set(-3,6,5);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);Object.assign(moon.shadow.camera,{left:-3,right:3,top:4,bottom:-3,near:.1,far:18});moon.shadow.normalBias=.025;moon.shadow.bias=-.0003;scene.add(moon);
@@ -181,7 +181,7 @@ export function createStudyScene(c){
   const stones=[material('#34464a'),material('#2b3c40'),material('#3a4849')];
   for(let ring=0;ring<4;ring++){const count=ring===0?1:ring*8;for(let i=0;i<count;i++){const a=i/count*Math.PI*2+ring*.23,r=ring*.38;const mesh=cylinder(scene,stones[(i+ring)%3],Math.sin(a)*r,-.06,Math.cos(a)*r,.17+(i%3)*.013,.18,.065,5+i%3);mesh.rotation.y=i*.71;mesh.scale.z=.89;}}
   const ring=add(scene,new T.RingGeometry(.55,.567,48),new T.MeshBasicMaterial({color:0x9dced0,transparent:true,opacity:.47,side:T.DoubleSide}),0,-.015,0);ring.rotation.x=-Math.PI/2;
-  const root=createCharacter(c);root.rotation.y=.12;scene.add(root);
+  root.rotation.y=.12;scene.add(root);
   const glow=new T.PointLight(c.color,1.4,3,2);glow.position.set(.5,2.1,.5);scene.add(glow);
   const fx=new T.Group();scene.add(fx);
   return{scene,root,fx,glow};
