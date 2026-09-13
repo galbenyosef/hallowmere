@@ -3,7 +3,7 @@ services:
   - type: web
     name: hallowmere-multiplayer
     runtime: node
-    plan: 0.5c-512mb
+    plan: free
     region: oregon
     numInstances: 1
     buildCommand: npm ci && npm test && npm run build
