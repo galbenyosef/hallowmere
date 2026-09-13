@@ -12,6 +12,9 @@ export function createRosterPicker({getState,onChoose,onClose,onNavigate=()=>{}}
  try{const saved=JSON.parse(localStorage.getItem('hallowmere.character-choice')||'null');if(saved&&Object.hasOwn(CLASSES,saved.classId)){chosen=saved.classId;}}catch{}
  q('.roster-classes').innerHTML=CLASS_LIST.map((c,i)=>{const angle=-Math.PI/2+i*Math.PI*2/CLASS_LIST.length;return `<button data-class-choice="${c.id}" aria-label="Select ${c.name}" aria-pressed="false" style="--x:${50+Math.cos(angle)*40}%;--y:${50+Math.sin(angle)*40}%"><span class="roster-medallion"><img alt="" hidden draggable="false"></span><span class="roster-class-label">${c.name}</span></button>`;}).join('');
  function render(){
+  const initialSelection=!getState().classId;
+  dialog.classList.toggle('roster-initial',initialSelection);
+  q('.chronicle-sidebar').hidden=initialSelection;
   updateMenuNavigation(dialog,'character',{disabled:pending||!getState().classId});
   const c=CLASSES[chosen],look=classAppearance(chosen,c.concept),image=portraitFor(chosen,c.concept);
   q('.roster-role').textContent=c.role;q('.roster-role').style.color=look?.color||c.color;q('.roster-name').textContent=c.name;q('.roster-story').textContent=c.description;
