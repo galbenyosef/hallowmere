@@ -30,9 +30,11 @@ If the game stays on the connection screen with a WebSocket error, check **http:
 
 ## GitHub Pages
 
-The [Pages workflow](.github/workflows/pages.yml) tests and validates the game on pull requests to `main`. Pushes to `main` also deploy the checked-in `dist/` directory. You can redeploy from **Actions → Deploy game to GitHub Pages → Run workflow** on `main`.
+The [Pages workflow](.github/workflows/pages.yml) tests and validates the game on pull requests and pushes to `main`. Pushes to `main` also deploy the checked-in `dist/` directory when a multiplayer backend is configured. You can redeploy from **Actions → Deploy game to GitHub Pages → Run workflow** on `main`.
 
-For the first deployment, select **GitHub Actions** under **Settings → Pages → Build and deployment → Source**, then push `main`. The game will be available at **https://miguelsolorio.github.io/hallowmere/** after the workflow succeeds. Set the repository variable `MULTIPLAYER_SERVER_URL` to the deployed backend’s `wss://<host>/multiplayer` URL. The workflow checks backend health and protocol compatibility before uploading the frontend. It refuses to publish without that URL, leaving the existing public game in place. Deployment uses the workflow’s built-in GitHub token.
+For the first deployment, select **GitHub Actions** under **Settings → Pages → Build and deployment → Source**, then push `main`. The game will be available at **https://miguelsolorio.github.io/hallowmere/** after the deployment succeeds. Under **Settings → Secrets and variables → Actions → Variables**, set `MULTIPLAYER_SERVER_URL` to the deployed backend’s `wss://<host>/multiplayer` URL. A variable in the `github-pages` environment also works; a secret with the same name is accepted when no variable is set. This endpoint is public and is written into the frontend artifact.
+
+Code validation runs independently of deployment setup. If the URL is missing or blank, validation still passes when the code is valid, and the workflow skips uploading and deploying, with a warning and setup instructions in the run summary. The existing public game stays in place. Once a URL is configured, invalid URLs, failed backend health checks, and incompatible protocols still fail deployment before uploading the frontend. Deployment uses the workflow’s built-in GitHub token.
 
 Keep local asset URLs relative so the game works both at a domain root and under a repository path such as `/hallowmere/`. `npm run build` checks these URLs before deployment. The workflow uses GitHub's [custom Pages deployment actions](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 

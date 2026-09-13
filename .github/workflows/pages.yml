@@ -34,22 +34,68 @@ jobs:
       - name: Validate static game
         run: npm run build
 
-      - name: Configure live multiplayer
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+  prepare:
+    name: Prepare Pages deployment
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: github-pages
+    outputs:
+      ready: ${{ steps.multiplayer.outputs.ready }}
+    steps:
+      - name: Check multiplayer deployment setup
+        id: multiplayer
         env:
-          MULTIPLAYER_SERVER_URL: ${{ vars.MULTIPLAYER_SERVER_URL }}
+          MULTIPLAYER_SERVER_URL: ${{ vars.MULTIPLAYER_SERVER_URL || secrets.MULTIPLAYER_SERVER_URL }}
+        shell: bash
+        run: |
+          if [[ -z "${MULTIPLAYER_SERVER_URL//[[:space:]]/}" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Pages deployment skipped: set MULTIPLAYER_SERVER_URL to the deployed backend's wss://<host>/multiplayer URL."
+            cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ### Pages deployment skipped
+
+          Tests and static validation passed. The multiplayer backend URL is not configured, so the existing public game has been left in place.
+
+          1. Deploy the multiplayer backend using the repository's `render.yaml` and README instructions.
+          2. In **Settings → Secrets and variables → Actions → Variables**, set `MULTIPLAYER_SERVER_URL` to `wss://<backend-host>/multiplayer`. The `github-pages` environment variable or a secret with the same name also works.
+          3. Run **Deploy game to GitHub Pages** again on `main`.
+
+          The backend must pass its health and protocol checks before a new frontend can be published.
+          EOF
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out repository
+        if: steps.multiplayer.outputs.ready == 'true'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        if: steps.multiplayer.outputs.ready == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Configure live multiplayer
+        if: steps.multiplayer.outputs.ready == 'true'
+        env:
+          MULTIPLAYER_SERVER_URL: ${{ vars.MULTIPLAYER_SERVER_URL || secrets.MULTIPLAYER_SERVER_URL }}
         run: npm run configure:multiplayer
 
       - name: Upload game
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: steps.multiplayer.outputs.ready == 'true'
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   deploy:
     name: Deploy to GitHub Pages
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: validate
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.prepare.outputs.ready == 'true'
+    needs: prepare
     runs-on: ubuntu-latest
     permissions:
       pages: write
