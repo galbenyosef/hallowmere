@@ -11,7 +11,7 @@ move keyboard focus, and Enter or Space activates the focused card directly.
 Loading progress reports the actual asset
 preparation stages. Connection and retry screens share the solo scene.
 
-The compact pause menu offers **Resume game**, **Return to game menu**, and
+The compact pause menu offers **Resume game** and
 settings for music, brightness, shadows, and camera shake. The main menu keeps
 the current session and offers **Resume game** and **Change character**. Closing
 or confirming character selection returns to that menu; Escape resumes play.
@@ -87,9 +87,10 @@ blocked by automatic approval review because it could advance session state.
 
 ## Compact pause and initial character selection
 
-`dist/pause-menu.js` renders the two pause actions and accessible settings
-switches and slider. Return to game menu reuses the existing session-preserving
-main-menu transition. Resume and Escape close the pause card. The brightness
+`dist/pause-menu.js` renders Resume game and accessible settings switches and
+slider. Resume and Escape close the pause card. The Return to game menu button
+was removed; `screenshots/compact-pause-menu/pause-no-return.png` captures the
+updated card. The brightness
 slider participates in the modal focus trap, and Escape also works from it.
 The pause card has no menu index or restart/character shortcuts.
 

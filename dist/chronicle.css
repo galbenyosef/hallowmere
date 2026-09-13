@@ -242,12 +242,9 @@
 .pause-modal .chronicle-heading { text-align:center;padding:0 0 23px; }
 .modal.pause-modal .chronicle-heading h2 { font-size:30px;margin:9px 0 8px; }
 .modal.pause-modal .chronicle-heading>p { font-size:12px;line-height:1.7; }
-.pause-quick-actions { display:grid;gap:9px; }
+.pause-quick-actions { display:grid; }
 .pause-quick-actions button { display:flex;align-items:center;justify-content:center;gap:14px;width:100%;min-height:46px; }
 .pause-quick-actions kbd { font:9px var(--sans);border:1px solid #d4bd784d;background:none;padding:3px 5px;color:#c9bd9e; }
-.pause-return { padding:12px;border:1px solid var(--chronicle-line);background:#c6b58c08;color:#c0cecd;font:13px var(--sans); }
-.pause-return:hover { color:#efdfb7;border-color:#c6b58c88;background:#c6b58c12; }
-.pause-return>span { font-size:16px;color:#bba77a; }
 .pause-settings { margin-top:23px;padding-top:19px;border-top:1px solid var(--chronicle-line); }
 .pause-settings h3 { margin:0 0 9px;color:#d7c8a5;font:16px var(--serif); }
 .pause-setting { display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;padding:8px 0;border:0;border-bottom:1px solid #c6b58c1a;background:none;text-align:left;color:#c4d0d0;font:12px var(--sans); }

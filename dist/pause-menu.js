@@ -3,7 +3,7 @@ function switchMarkup(key,label,enabled){
 }
 
 export function pauseMenuMarkup(settings){
- return `<div class="pause-quick-actions"><button type="button" class="primary-button" data-resume-game>Resume game <kbd>Esc</kbd></button><button type="button" class="pause-return" data-main-menu>Return to game menu <span aria-hidden="true">↗</span></button></div>
+ return `<div class="pause-quick-actions"><button type="button" class="primary-button" data-resume-game>Resume game <kbd>Esc</kbd></button></div>
  <section class="pause-settings" aria-labelledby="pause-settings-title"><h3 id="pause-settings-title">Sound & visuals</h3>
  ${switchMarkup('music','Music',settings.music)}
  <div class="pause-brightness"><label for="pause-brightness">Brightness</label><output for="pause-brightness" data-brightness-value>${settings.brightness}%</output><input id="pause-brightness" data-setting="brightness" type="range" min="75" max="135" step="5" value="${settings.brightness}" aria-valuetext="${settings.brightness}%"></div>
@@ -12,10 +12,9 @@ export function pauseMenuMarkup(settings){
  </section><p class="pause-credits">Music by <a href="https://www.scottbuckley.com.au" target="_blank" rel="noopener noreferrer">Scott Buckley</a> · <a href="./assets/music/CREDITS.txt" target="_blank" rel="noopener noreferrer">Credits & license</a></p>`;
 }
 
-export function bindPauseMenu(container,{onResume,onMainMenu,onSetting}){
+export function bindPauseMenu(container,{onResume,onSetting}){
  container.addEventListener('click',event=>{
   if(event.target.closest('[data-resume-game]')){onResume();return;}
-  if(event.target.closest('[data-main-menu]')){onMainMenu();return;}
   const button=event.target.closest('button[data-setting]');
   if(!button)return;
   const enabled=button.getAttribute('aria-checked')!=='true';

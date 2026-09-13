@@ -298,7 +298,6 @@ function showModal(kind){if(mainMenuOpen&&kind!=='death')return;if(!ready||!netw
 function closeModal(){if(state.ended||rosterPicker?.open)return;if(mainMenuOpen){resumeFromMainMenu();return;}inventoryPreviews.hide();audio.play('ui-close',.5);$('modal-shade').hidden=true;paused=false;audio.pause(backgrounded,backgrounded);modalKind='';currentNpc=null;previousFocus?.focus?.({preventScroll:true});$('world').focus({preventScroll:true});}
 bindPauseMenu($('modal-content'),{
  onResume:()=>{closeModal();awaken();},
- onMainMenu:openMainMenu,
  onSetting:(key,value)=>{
   gameSettings[key]=value;saveGameSettings(gameSettings);
   if(key==='music'){audio.musicEnabled=value;audio.applyState();if(value)awaken();}
