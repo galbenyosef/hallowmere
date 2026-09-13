@@ -1,4 +1,5 @@
 import {SCENERY_OBSTACLES} from './world-layout.js';
+import {bareTreeSegments} from './bare-tree.js';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {BUILDING_SPECS,createBuildingLayout,buildingLocal,insideBuilding,setBuildingAccess} from './buildings.js';
@@ -63,7 +64,7 @@ export function createEnvironment(scene){
  for(let i=0;i<14;i++){const x=16.5+(i%3)*1.7,z=-3-Math.floor(i/3)*2.25;const g=new T.Group();g.position.set(x,0,z);g.rotation.z=range(-.12,.12);g.rotation.y=range(-.2,.2);statics.add(g);box(materials.grave,0,.47,0,.62,.9,.18,g);add(new T.CylinderGeometry(.31,.31,.18,10,1,false,0,Math.PI),materials.grave,0,.94,0,1,1,1,g).rotation.x=Math.PI/2;box(materials.dark,0,.67,.1,.035,.32,.005,g);box(materials.dark,0,.73,.103,.19,.027,.005,g);box(materials.stoneDark,0,.04,.5,.9,.07,1.5,g);}
  function fence(x1,z1,x2,z2){const len=Math.hypot(x2-x1,z2-z1),n=Math.ceil(len/.6);for(let i=0;i<=n;i++){if(rand()<.08)continue;const u=i/n,x=x1+(x2-x1)*u,z=z1+(z2-z1)*u;beam([x,.12,z],[x+range(-.045,.045),1.2+rand()*.16,z],.024,materials.iron);add(new T.ConeGeometry(.065,.22,4),materials.iron,x,1.38,z);}for(const y of [.38,.98])beam([x1,y,z1],[x2,y,z2],.034,materials.iron);}
  fence(15.9,1.5,23,1.5);fence(15.9,1.5,15.9,-9);fence(23,1.5,23,-20);fence(-22,15,-17,15);fence(-22,-13,-17,-13);
- function tree(x,z,scale=1){const trunk=new T.Group();trunk.position.set(x,0,z);trunk.scale.setScalar(scale);statics.add(trunk);const points=[[0,0,0],[.12,1.6,.04],[-.1,2.7,0],[.1,4,.1],[.2,5.2,.22]];for(let i=0;i<4;i++)beam(points[i],points[i+1],.26-i*.052,materials.timber,trunk);for(let i=0;i<7;i++){const a=i*2.39,y=1.5+i*.39,r=range(1.0,1.7);const b=[Math.cos(a)*r,y+range(.5,1),Math.sin(a)*r];beam([0,y,0],b,.095-i*.007,materials.timber,trunk);const end=[b[0]*1.45,b[1]+.8,b[2]*1.4];beam(b,end,.035,materials.timber,trunk);beam(b,[b[0]*1.2+.3,b[1]+.65,b[2]*1.1-.25],.025,materials.timber,trunk);}for(let k=0;k<5;k++){const a=k*1.25;beam([0,.25,0],[Math.cos(a)*.85,.03,Math.sin(a)*.85],.09,materials.timber,trunk);}}
+ function tree(x,z,scale=1){const trunk=new T.Group();trunk.position.set(x,0,z);trunk.scale.setScalar(scale);statics.add(trunk);for(const [a,b,r]of bareTreeSegments(rand))beam(a,b,r,materials.timber,trunk);}
  for(const [x,z,s]of[[-18,3,1.35],[-18,-10,1.1],[19,8,1.35],[21,-17,1.3],[-8,18,1.3],[7,20,1.2],[-20,-22,1.6],[-4,-26,1.3],[20,20,1.4],[24,-5,1.3],[-24,10,1.2],[-28,-2,1.5],[-17,20,1.1]])tree(x,z,s);
  for(let x=-82;x<-26;x+=3.7)for(const side of [-1,1]){const z=5+side*range(6,13);if(x<-58&&z>-7&&z<19)continue;tree(x+range(-1,1),z,range(.8,1.5));}for(const [x,z]of[[-78,-9],[-68,-13],[-58,-13],[-80,22],[-70,24],[-57,23]])tree(x,z,1.2);
  fence(-78,1,-78,-8);fence(-78,9,-78,20);fence(-58,-9,-58,1);fence(-58,9,-58,20);

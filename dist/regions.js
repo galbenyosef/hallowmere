@@ -1,4 +1,5 @@
 import {FIRST_LEVEL_CAVES,CAVE_ENTRANCES} from './caves.js';
+import {caveSceneryObstacles} from './cave-scenery-layout.js';
 const WORLD_BOUNDS={minX:-81,maxX:26,minZ:-27,maxZ:27};
 const START={x:-66,z:5};
 
@@ -56,6 +57,7 @@ export const PORTALS=[
  ...pair('quarry-cave','blackvein-quarry',26,15,'underways',0,12,'rootbound',true,'Abandoned mine adit'),
  ...pair('keep-cave','crownfall-keep',26,14,'underways',24,11,'quarry-warden',true,'Forgotten crypt')
 ];
+for(const portal of PORTALS)MAPS[portal.mapId].obstacles.push(...caveSceneryObstacles(portal).map(o=>({...o,caveScenery:true})));
 for(const map of Object.values(MAPS))for(const cache of map.caches){cache.mapId=map.id;cache.enemyId??=map.encounters.find(e=>e.elite&&e.tier===cache.tier)?.id;}
 export const CHECKPOINTS=Object.values(MAPS).map(m=>m.checkpoint).filter(Boolean);
 export const mapFor=id=>MAPS[id]||MAPS.overworld;

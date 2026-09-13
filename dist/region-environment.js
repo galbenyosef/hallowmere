@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {MAPS,PORTALS,mapFor,availablePortal} from './regions.js';
 import {createCaveEntranceEffect} from './cave-entrance-effects.js';
+import {createCaveScenery} from './cave-scenery.js';
 
 const palettes={
  'drowned-wood':{ground:0x273d37,stone:0x4e6052,dark:0x243129,trim:0x8b9564,glow:0x8fc4a1},
@@ -19,9 +20,10 @@ function kit(scene,mapId){
  return{group,materials,geometries,mesh,dispose};
 }
 export function createRegionLandmarks(scene,mapId){
- const k=kit(scene,mapId),{mesh,group}=k,map=mapFor(mapId),animated=[],portalMarks=[],objectives=[],seal=[],cacheMarks=[],caveEffects=[];
+ const k=kit(scene,mapId),{mesh,group}=k,map=mapFor(mapId),animated=[],portalMarks=[],objectives=[],seal=[],cacheMarks=[],caveEffects=[],caveScenery=[];
  for(const p of PORTALS.filter(p=>p.mapId===mapId)){
   const pieces=[],mouthZ=p.z-(p.appearance==='cave'?1.2:0);
+  const scenery=createCaveScenery(group,p);if(scenery)caveScenery.push(scenery);
   if(p.appearance==='stairs'){
    pieces.push(mesh('box','dark',p.x,.135,p.z,1.25,.025,1.65));
    for(let i=0;i<5;i++)pieces.push(mesh('box','stone',p.x,.15+i*.025,p.z-.6+i*.3,1.05,.045,.25));
@@ -57,7 +59,7 @@ export function createRegionLandmarks(scene,mapId){
  function updateProgress(progress){for(const mark of portalMarks){mark.glow.visible=availablePortal(mark.portal,progress);if(mark.caveEffect)mark.caveEffect.group.visible=mark.glow.visible;}const r=(progress?.regionProgress||progress?.regions||progress)?.[mapId];for(const part of seal)part.visible=!map.objectives.every(o=>r?.objectives?.includes(o.id));for(const o of objectives){o.crystal.visible=!r?.objectives?.includes(o.id);}}
  function sync(interactions=[],discoveries=[]){const found=new Set(Array.isArray(discoveries)?discoveries:[]);for(const mark of portalMarks)if(mark.portal.hidden)mark.glow.scale.setScalar(found.has(mark.portal.id)?.45:.18);for(const o of objectives){const interaction=(Array.isArray(interactions)?interactions:interactions?.objectives||[]).find(i=>i.id===o.id);if(interaction?.completed)o.crystal.visible=false;}if(Array.isArray(interactions?.caches))for(const c of cacheMarks)for(const part of c.parts)part.visible=interactions.caches.some(i=>i.id===c.id);}
  function update(t){for(let i=0;i<animated.length;i++)animated[i].rotation.y=t*.4+i;for(const effect of caveEffects)effect.update(t);}
- return{group,dispose(){for(const effect of caveEffects)effect.dispose();k.dispose();},updateProgress,sync,update};
+ return{group,dispose(){for(const effect of caveEffects)effect.dispose();for(const scenery of caveScenery)scenery.dispose();k.dispose();},updateProgress,sync,update};
 }
 export function createRegionEnvironment(scene,mapId){
  const map=mapFor(mapId),k=kit(scene,mapId),{mesh,group}=k,b=map.bounds,obstacles=map.obstacles.map(o=>({...o})),gates=[],cover=[];
@@ -67,6 +69,8 @@ export function createRegionEnvironment(scene,mapId){
  if(map.theme!=='cave'){const lane=mesh('box','dark',0,.005,0,mapId==='underways'?58:4,.035,mapId==='underways'?4:58);lane.castShadow=false;}
  for(const o of map.objectives){mesh('box','dark',o.x/2,.008,o.z,Math.abs(o.x)+2,.04,2.6);}
  for(const obstacle of obstacles){
+  // Cave hills are rendered by the landmarks from these same footprints.
+  if(obstacle.caveScenery)continue;
   const h=map.theme==='cave'?.55:obstacle.requires?2.5:mapId==='crownfall-keep'?2.8:mapId==='drowned-wood'?1.1:1.7;
   const solid=mesh('box',obstacle.requires?'trim':'stone',obstacle.x,h/2,obstacle.z,obstacle.w,h,obstacle.d);
   if(map.theme==='cave'){
