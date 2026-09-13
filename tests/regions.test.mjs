@@ -13,7 +13,8 @@ test('regional landmarks and spawn points are traversable with collision clearan
 });
 test('caves provide paired exits and cannot bypass regional milestones',()=>{
  const progress={victory:false,regionProgress:createRegionProgress()};
- assert.equal(PORTALS.filter(p=>p.hidden).length,4);
+ assert.equal(PORTALS.filter(p=>p.hidden&&!p.buildingId).length,4);
+ assert.equal(PORTALS.filter(p=>p.hidden&&p.buildingId).length,3);
  for(const portal of PORTALS){assert.ok(PORTALS.some(p=>p.mapId===portal.toMapId&&p.toMapId===portal.mapId&&p.x===portal.toX&&p.z===portal.toZ));assert.equal(availablePortal(portal,allProgress),true);}
  assert.equal(availablePortal(PORTALS.find(p=>p.id==='wood-road'),progress),false);progress.victory=true;
  assert.equal(availablePortal(PORTALS.find(p=>p.id==='wood-road'),progress),true);

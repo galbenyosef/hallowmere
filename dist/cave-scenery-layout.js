@@ -6,7 +6,7 @@ export function caveSceneryFor(portal){
  const crag=portal.id==='gloom-cavern-entrance'||portal.mapId==='blackvein-quarry'||portal.mapId==='crownfall-keep';
  const mouthZ=portal.z-(portal.appearance==='cave'?1.2:0);
  const shapes=crag?[
-  [0,-3.3,8.8,5.2,5.8],[-3.35,-.7,3.4,2.7,3.8],[3.3,-.9,3.3,3.2,4.2]
+  [0,-3.7,8.8,5.2,5.8],[-3.35,-.7,3.4,2.7,3.8],[3.3,-.9,3.3,3.2,4.2]
  ]:[
   [0,-2.8,7.8,4.2,4.7],[-2.9,-.5,2.7,2.2,3.2],[3,-.8,2.8,2.7,3.7]
  ];
