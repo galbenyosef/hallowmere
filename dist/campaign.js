@@ -4,6 +4,8 @@ import {distance} from './combat.js';
 
 export const WORLD_BOUNDS={minX:-81,maxX:26,minZ:-27,maxZ:27};
 export const START={x:-66,z:5};
+// Match the furthest distance at which ground loot labels can be shown.
+export const LOOT_PICKUP_RANGE=17;
 export const VILLAGES=[{id:'ashwick',name:'Ashwick',x:-67,z:5,radius:12},{id:'hallowmere',name:'Hallowmere',x:0,z:0,radius:23}];
 export const NPCS=[
  {id:'rowan',name:'Elder Rowan',role:'Keeper of Ashwick',model:'elder',x:-66,z:1,color:0xe8c97d},
@@ -30,7 +32,24 @@ export function zoneAt(position){if(position.mapId&&position.mapId!=='overworld'
 export function zoneName(zone){if(!['ashwick','road','hallowmere'].includes(zone))return mapFor(zone).name;return zone==='ashwick'?'Ashwick Village':zone==='road'?'The Mourning Road':'Hallowmere Village';}
 export function isSanctuary(position){if(position.mapId&&position.mapId!=='overworld')return isMapSanctuary(position);return zoneAt(position)==='ashwick'||distance(position,{x:-22,z:5})<3.4;}
 export function generateRoadEncounters(seed){const random=seededRandom(seed);const encounters=[];for(let pack=0;pack<3;pack++){const center=-51+pack*10;const count=2+Math.floor(random()*2);for(let member=0;member<count;member++){const roll=random();const type=roll<.45?'hollow':roll<.83?'hound':'revenant';encounters.push({id:`road-${pack}-${member}`,type,x:center+(random()-.5)*3.2,z:5+(member%2?1:-1)*(1.4+random()*2.5),zone:'road'});}}return encounters;}
-export function rollLoot(state,type,zone){if(['rootbound','quarry-warden','ash-regent'].includes(type))return regionalBossLoot(state,type,zone);const serial=++state.dropSerial,random=seededRandom(state.seed^Math.imul(serial,2654435761));const drops=[];const drop=(data)=>drops.push({id:`loot-${serial}-${drops.length}`,claimed:false,source:type,zone,...data});drop({kind:'gold',name:'Crowns',amount:type==='boss'?60:5+Math.floor(random()*9),rarity:type==='boss'?'rare':'common'});if(type==='boss'){drop({kind:'item',template:'bellkeeper-edge',name:weaponForClass({template:'bellkeeper-edge',...ITEM_TEMPLATES['bellkeeper-edge']},state).name,rarity:'legendary'});drop({kind:'potion',name:'Healing draught',amount:2,rarity:'uncommon'});}else{if(random()<.3)drop({kind:'potion',name:'Healing draught',amount:1,rarity:'common'});if(serial===1||random()<.28){const roll=random(),template=roll<.18?'cinder-blade':roll<.58?'oak-charm':'iron-falchion';drop({kind:'item',template,name:weaponForClass({template,...ITEM_TEMPLATES[template]},state).name,rarity:ITEM_TEMPLATES[template].rarity});}}return drops;}
+export function rollLoot(state,type,zone){
+ if(['rootbound','quarry-warden','ash-regent'].includes(type))return regionalBossLoot(state,type,zone);
+ const serial=++state.dropSerial,random=seededRandom(state.seed^Math.imul(serial,2654435761)),drops=[];
+ const drop=data=>drops.push({id:`loot-${serial}-${drops.length}`,claimed:false,source:type,zone,...data});
+ drop({kind:'gold',name:'Crowns',amount:type==='boss'?60:5+Math.floor(random()*9),rarity:type==='boss'?'rare':'common'});
+ if(type==='boss'){
+  drop({kind:'item',template:'bellkeeper-edge',name:weaponForClass({template:'bellkeeper-edge',...ITEM_TEMPLATES['bellkeeper-edge']},state).name,rarity:'legendary'});
+  drop({kind:'potion',name:'Healing draught',amount:2,rarity:'uncommon'});
+  return drops;
+ }
+ if(random()<.3)drop({kind:'potion',name:'Healing draught',amount:1,rarity:'common'});
+ if(serial===1||random()<.28){
+  const roll=random(),template=roll<.18?'cinder-blade':roll<.58?'oak-charm':'iron-falchion';
+  drop({kind:'item',template,name:weaponForClass({template,...ITEM_TEMPLATES[template]},state).name,rarity:ITEM_TEMPLATES[template].rarity});
+ }
+ // Keep one third of ordinary drops, preserving the first equipment reward.
+ return drops.filter(drop=>(serial===1&&drop.kind==='item')||random()<1/3);
+}
 export function collectLoot(state,drop){if(drop.claimed||state.collectedIds.includes(drop.id))return{collected:false,reason:'Already collected'};if(drop.kind==='potion'&&state.potions>=5)return{collected:false,reason:'Draught belt is full'};if(drop.kind==='gold')state.gold+=drop.amount;else if(drop.kind==='potion')state.potions=Math.min(5,state.potions+drop.amount);else if(drop.kind==='item'){state.inventory.push(weaponForClass({id:drop.id,template:drop.template,...ITEM_TEMPLATES[drop.template]},state));if(drop.template==='bellkeeper-edge')state.bossLootClaimed=true;}else return{collected:false,reason:'Unknown loot'};drop.claimed=true;state.collectedIds.push(drop.id);state.lootCollected++;return{collected:true,name:drop.name,kind:drop.kind};}
 export function equipItem(state,id){const item=state.inventory.find(item=>item.id===id);if(!item)return{ok:false,reason:'You do not own that item.'};state.equipped[item.slot]=item.id;const weapon=state.inventory.find(i=>i.id===state.equipped.weapon),charm=state.inventory.find(i=>i.id===state.equipped.charm);state.damageBonus=(weapon?.power??0)+state.forgeLevel*4;state.healthBonus=charm?.power??0;state.maxHp=(state.baseHp||140)+(state.level-1)*15+state.healthBonus;state.hp=Math.min(state.hp,state.maxHp);return{ok:true,item:item.name,damageBonus:state.damageBonus,maxHp:state.maxHp};}
 export function npcDialogue(state,id){const npc=NPCS.find(n=>n.id===id);if(!npc)return null;let text='',choices=[];

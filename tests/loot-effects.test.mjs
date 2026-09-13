@@ -64,7 +64,7 @@ test('snapshot collection and local pickup remove every shader layer and label w
  const initialNodes=scene.children.length,initialLabels=labels.size;
  life.syncLoot(records);const original=life.drops.slice(),checks=original.map(d=>trackResources(d.model));
  life.syncLoot(records);assert.deepEqual(life.drops,original);
- let requested=null;life.requestCollect=id=>{requested=id;};
+ let requested=null;life.requestCollect=id=>{requested=id;return true;};
  life.pickup(life.find('crowns'));assert.equal(requested,'crowns');
  assert.equal(life.drops.length,5); // Remains visible until the authoritative snapshot confirms collection.
  life.syncLoot(records.slice(1));checks[0]();assert.equal(life.find('crowns'),undefined);

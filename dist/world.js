@@ -6,7 +6,7 @@ import {classFor,applyClass,weaponForClass} from './classes.js';
 import {selectClass,castClassAbility,resolveClassHits,advanceClassEffects,hitEnemy} from './class-combat.js';
 import {randomUUID,randomSeed,randomToken} from './world-random.js';
 import {ENEMY_TYPES,SPAWNS,createState,advanceState,useAbility,hurtPlayer,awardKill,withinArc,resolveMove,distance,segmentHitsCircle,findPath,hasLineOfSight,pointBlocked} from './combat.js';
-import {WORLD_BOUNDS,START,NPCS,createCampaign,generateRoadEncounters,zoneAt,isSanctuary,rollLoot,collectLoot,equipItem,performNpcAction} from './campaign.js';
+import {WORLD_BOUNDS,START,NPCS,LOOT_PICKUP_RANGE,createCampaign,generateRoadEncounters,zoneAt,isSanctuary,rollLoot,collectLoot,equipItem,performNpcAction} from './campaign.js';
 import {setBuildingAccess} from './buildings.js';
 import {createWorldLayout} from './world-layout.js';
 import {PLAYER_COLORS,PLAYER_SPEED,SHARED_KEYS,finitePoint,direction} from './multiplayer-protocol.js';
@@ -77,8 +77,8 @@ export class World {
   return false;
  }
  result(p,result){this.emit('result',{playerId:p.id,...result});}
- collect(p,id){const d=p.loot.find(d=>d.id===id&&!d.claimed);if(!d||!sameMap(p,d)||distance(p,d)>2.8||!hasLineOfSight(p,d,this.obstaclesFor(p)))return false;
-  const result=collectLoot(p.state,d);if(result.collected){if(d.template==='bellkeeper-edge')this.shared.bossLootClaimed=true;this.emit('loot',{playerId:p.id,drop:d});}return result.collected;
+ collect(p,id){const d=p.loot.find(d=>d.id===id&&!d.claimed);if(!d||!sameMap(p,d)||distance(p,d)>LOOT_PICKUP_RANGE)return false;
+  const result=collectLoot(p.state,d);if(result.collected){if(d.template==='bellkeeper-edge')this.shared.bossLootClaimed=true;this.emit('loot',{playerId:p.id,drop:d});}else this.result(p,{ok:false,reason:result.reason});return result.collected;
  }
  forage(p,id){
   const patch=FORAGE_PATCHES.find(patch=>patch.id===id);
