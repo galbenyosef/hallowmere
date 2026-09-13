@@ -2,6 +2,8 @@ import {CLASS_LIST,CLASSES,abilitiesFor,classFor,classAppearance,conceptFor,clas
 import {createPlayableCharacter} from './playable-characters.js';
 import {createRosterPicker} from './roster-picker.js';
 import {prepareCharacterPortraits} from './character-portraits.js';
+import {prepareInventoryPortrait} from './inventory-portraits.js';
+import {inventoryPortraitStatus} from './character-art.js';
 import {createClassProjectile,createClassZone} from './class-effects.js';
 import {MultiplayerClient,predictedPosition} from './multiplayer-client.js';
 import {createMultiplayerView,disposeActor} from './multiplayer-view.js';
@@ -138,7 +140,8 @@ let selectedInventoryItem=null;
 function renderInventory(){
  const content=$('modal-content'),focused=content.contains(document.activeElement)?document.activeElement.closest('[data-select-item]'):null;
  const focusedId=focused?.dataset.selectItem,inSlot=!!focused?.closest('.equipment-slot');
- const gridScroll=content.querySelector('.inventory-grid')?.scrollTop||0,modal=content.closest('.modal'),modalScroll=modal.scrollTop;
+ const gridScroll=content.querySelector('.inventory-grid')?.scrollTop||0,modal=content.closest('.modal'),modalScroll=modal.scrollTop,contentScroll=content.scrollTop;
+ $('inventory-purse').innerHTML=`<strong>${state.gold}</strong><span>Crowns</span>`;
  content.innerHTML=inventoryMarkup(state,selectedInventoryItem);
  content.querySelector('.inventory-grid').scrollTop=gridScroll;
  if(focusedId){
@@ -148,7 +151,12 @@ function renderInventory(){
   selectedInventoryItem=inspectedId;
   inspectInventoryItem(content,state,selectedInventoryItem);
  }
- modal.scrollTop=modalScroll;
+ modal.scrollTop=modalScroll;content.scrollTop=contentScroll;
+ if(state.classId&&inventoryPortraitStatus(state.classId,state.appearanceId)==='idle'){
+  const key=conceptFor(state.classId,state.appearanceId);
+  const refresh=()=>{if(modalKind==='inventory'&&key===conceptFor(state.classId,state.appearanceId))renderInventory();};
+  prepareInventoryPortrait(state.classId,state.appearanceId).then(refresh,refresh);
+ }
 }
 
 function previewInventoryItem(id){
@@ -166,7 +174,7 @@ function equipOwnedItem(id){
  if(state.equipped[item.slot]===id)return{ok:true};
  return network?.send('equip',{id})?{ok:true}:{ok:false,reason:'Unable to equip while disconnected.'};
 }
-function showModal(kind){if(!ready||mapExpanded||state.ended&&kind!=='death')return;if(kind!=='death'&&kind!=='victory')audio.play('ui-open',.55);previousFocus=document.activeElement;modalKind=kind;paused=true;releaseInput();audio.pause(true,backgrounded);$('modal-shade').hidden=false;$('modal-secondary').hidden=true;document.querySelector('.modal').classList.toggle('inventory-modal',kind==='inventory');$('modal-eyebrow').textContent=kind==='victory'?'THE BELLKEEPER DEFEATED':kind==='death'?'THE VEIL TAKES ANOTHER':'THE ASHEN VIGIL';const title=$('modal-title'),content=$('modal-content'),primary=$('modal-primary');
+function showModal(kind){if(!ready||mapExpanded||state.ended&&kind!=='death')return;if(kind!=='death'&&kind!=='victory')audio.play('ui-open',.55);previousFocus=document.activeElement;modalKind=kind;paused=true;releaseInput();audio.pause(true,backgrounded);$('modal-shade').hidden=false;$('modal-secondary').hidden=true;$('inventory-purse').hidden=kind!=='inventory';$('inventory-controls').hidden=kind!=='inventory';document.querySelector('.modal').classList.toggle('inventory-modal',kind==='inventory');$('modal-eyebrow').textContent=kind==='victory'?'THE BELLKEEPER DEFEATED':kind==='death'?'THE VEIL TAKES ANOTHER':'THE ASHEN VIGIL';const title=$('modal-title'),content=$('modal-content'),primary=$('modal-primary');
  if(kind==='pause'){title.textContent='The vigil continues';content.innerHTML='<p>The shared world keeps moving while this menu is open. Rest in Ashwick to stay safe.</p><button class="text-button change-class-button" data-open-roster>Choose class · C</button>'; primary.textContent='Return to the road';$('modal-secondary').hidden=false;$('modal-secondary').textContent='Vote for a new vigil';}
  if(kind==='help'){title.textContent='Your calling & controls';content.innerHTML='<div class="controls-table"><div><span>Move / attack a creature</span><kbd>WASD / LEFT CLICK</kbd></div><div><span>Stand and attack</span><kbd>SHIFT + CLICK</kbd></div><div><span>Secondary class skill</span><kbd>RIGHT CLICK</kbd></div><div><span>Evade the red attack zones</span><kbd>1</kbd></div><div><span>Major class skill / healing draught</span><kbd>2 / 3</kbd></div><div><span>Speak / collect nearby loot</span><kbd>F</kbd></div><div><span>Equipment / journal / map</span><kbd>I / J / M</kbd></div></div><p>Hold a creature to attack at your class’s range. Press C at a sanctuary to change class. Essence regenerates. Crowns are collected by walking over them; equipment and draughts glow on the ground. Hold Alt to reveal all nearby loot labels during combat. Ashwick and Rook’s lantern are safe places to rest. Walk through a door or tap Enter to explore a room. Tap Leave to return outside. Hallowmere’s chapel opens after the Bellkeeper falls.</p>';primary.textContent='Return to the road';}
  if(kind==='journal'){const quest=questSummary(state);title.textContent='The Last Toll';content.innerHTML=`<div class="journal-copy"><p>Hallowmere’s chapel bell has rung for thirteen years. The dead now haunt the road from Ashwick, and the Bellkeeper still pulls the rope.</p><p><strong>${quest.objective}</strong><br>${quest.hint}</p><p class="journal-progress">Mourning Road: ${state.roadKills} monsters slain<br>Hallowmere: ${state.villageKills} / 12 afflicted<br>Bellkeeper: ${state.victory?'Defeated':state.bossSpawned?'Awakened':'Not yet awakened'}<br>Spoils collected: ${state.lootCollected}<br>Village reward: ${state.questRewarded?'Claimed':'80 crowns from Elder Rowan'}</p></div>`;primary.textContent='Return to the road';}

@@ -1,7 +1,7 @@
 import {classFor,primaryDamage,classAppearance} from './classes.js';
-import {portraitFor,weaponPortraitFor} from './character-art.js';
+import {portraitFor,weaponPortraitFor,inventoryPortraitFor,inventoryPortraitStatus} from './character-art.js';
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const art=(item,state)=>item.slot==='weapon'&&weaponPortraitFor(state.classId,state.appearanceId)||`./assets/inventory/${item.slot==='weapon'?'sword':'charm'}.png`;
+const art=(item,state)=>item.slot==='weapon'?(weaponPortraitFor(state.classId,state.appearanceId)||(!state.classId?'./assets/inventory/sword.png':null)):'./assets/inventory/charm.png';
 const inspectedItem=(state,id)=>state.inventory.find(item=>item.id===id)||state.inventory[0];
 
 export function inventoryComparison(state,item){
@@ -41,11 +41,39 @@ export function inspectInventoryItem(container,state,id){
 }
 
 export function inventoryMarkup(state,selectedId){
- const selected=inspectedItem(state,selectedId);
- const equipped=item=>state.equipped[item.slot]===item.id;
- const tile=(item,slot=false)=>`<button type="button" class="gear-tile ${item.rarity} ${item.slot} ${selected?.id===item.id?'selected':''}" data-select-item="${escape(item.id)}" aria-label="${escape(item.name)}${equipped(item)?', equipped':', equip '+escape(item.slot)}" aria-pressed="${equipped(item)}"${selected?.id===item.id?' aria-describedby="inventory-item-detail"':''}><img src="${art(item,state)}" alt="" draggable="false">${equipped(item)&&!slot?'<span class="gear-equipped" aria-hidden="true">E</span>':''}</button>`;
- const slot=kind=>{const item=state.inventory.find(item=>item.id===state.equipped[kind]);return `<div class="equipment-slot ${kind}"><span>${kind}</span>${item?tile(item,true):'<div class="empty-equipment">Empty</div>'}</div>`;};
- const used=state.inventory.length;
- const cells=Math.max(24,Math.ceil(used/8)*8);
- return `<div class="inventory-character"><section class="inventory-attributes" aria-label="Character attributes"><h3>Attributes</h3><dl><div><dt>Level</dt><dd>${state.level}</dd></div><div><dt>Vitality</dt><dd>${Math.ceil(state.hp)} <small>/ ${state.maxHp}</small></dd></div><div><dt>Essence</dt><dd>${Math.floor(state.mana)} <small>/ ${state.maxMana}</small></dd></div><div class="stat-divider"><dt>${state.classId?'Primary hit':'Cleave'}</dt><dd>${primaryDamage(state)}</dd></div><div><dt>Honing</dt><dd>${state.forgeLevel} <small>/ 3</small></dd></div><div><dt>Draughts</dt><dd>${state.potions} <small>/ 5</small></dd></div></dl><div class="inventory-crowns"><strong>${state.gold}</strong><span>Crowns</span></div></section><section class="equipment-view" aria-label="Equipped gear"><img class="warden-portrait" src="${portraitFor(state.classId,state.appearanceId)||'./assets/inventory/warden.png'}" alt="${escape(classAppearance(state.classId,state.appearanceId)?.name||classFor(state).name)}"><span class="warden-label">${escape(classFor(state).name)}</span>${slot('weapon')}${slot('charm')}</section></div><div class="inventory-bag-heading"><h3>Satchel</h3><span>${state.inventory.length} ${state.inventory.length===1?'item':'items'}</span></div><div class="inventory-grid" aria-label="Owned items">${state.inventory.map(item=>tile(item)).join('')}${Array.from({length:cells-used},()=>'<span class="empty-cell" aria-hidden="true"></span>').join('')}</div><section id="inventory-item-detail" class="inventory-detail ${selected?.rarity||''}" aria-label="Item preview" aria-live="polite" aria-atomic="true">${inventoryDetailMarkup(state,selected?.id)}</section><p class="inventory-hint"><span class="inventory-pointer-hint">Hover or focus to compare · Click or press Enter to equip</span><span class="inventory-touch-hint">Tap an item to equip</span><br>Collect marked loot with <kbd>F</kbd></p>`;
+  const selected=inspectedItem(state,selectedId),calling=classFor(state);
+  const appearance=classAppearance(state.classId,state.appearanceId);
+  const equipped=item=>state.equipped[item.slot]===item.id;
+  const tile=(item,slot=false)=>`<button type="button" class="gear-tile ${item.rarity} ${item.slot} ${selected?.id===item.id?'selected':''}" data-select-item="${escape(item.id)}" aria-label="${escape(item.name)}${equipped(item)?', equipped':', equip '+escape(item.slot)}" aria-pressed="${equipped(item)}"${selected?.id===item.id?' aria-describedby="inventory-item-detail"':''}>${art(item,state)?`<img class="${item.slot==='weapon'&&weaponPortraitFor(state.classId,state.appearanceId)?'':'legacy-item-art'}" src="${art(item,state)}" alt="" draggable="false">`:`<span class="gear-art-label" aria-hidden="true">${escape(calling.weaponType||item.slot)}</span>`}${equipped(item)&&!slot?'<span class="gear-equipped" aria-hidden="true">E</span>':''}</button>`;
+  const slot=kind=>{
+    const item=state.inventory.find(item=>item.id===state.equipped[kind]);
+    return `<div class="equipment-slot ${kind}">${item?tile(item,true):'<div class="empty-equipment">Empty</div>'}<div><span>${kind}</span><strong>${item?escape(item.name):'No '+kind+' equipped'}</strong></div></div>`;
+  };
+  const used=state.inventory.length,cells=Math.max(24,Math.ceil(used/8)*8);
+  const portrait=inventoryPortraitFor(state.classId,state.appearanceId)||portraitFor(state.classId,state.appearanceId)||(!state.classId?'./assets/inventory/warden.png':null);
+  const portraitStatus=inventoryPortraitStatus(state.classId,state.appearanceId);
+  return `<div class="inventory-layout">
+    <div class="inventory-character">
+      <section class="equipment-view" aria-label="Equipped character">
+        <div class="inventory-identity"><h3>${escape(appearance?.name||calling.name)}</h3><p>${escape(calling.role)}</p></div>
+        <div class="inventory-portrait-stage">${portrait?`<img class="warden-portrait" src="${portrait}" alt="${escape(appearance?.name||calling.name)} with their in-game equipment" draggable="false">`:`<p class="inventory-portrait-placeholder" role="status">${portraitStatus==='error'?'Character preview unavailable':'Preparing character preview…'}</p>`}</div>
+        <div class="inventory-equipment" aria-label="Equipped gear">${slot('weapon')}${slot('charm')}</div>
+      </section>
+      <section class="inventory-attributes" aria-label="Character attributes"><h3>Attributes</h3><dl>
+        <div class="vitality-stat"><dt>Vitality</dt><dd>${Math.ceil(state.hp)} <small>/ ${state.maxHp}</small></dd></div>
+        <div class="essence-stat"><dt>Essence</dt><dd>${Math.floor(state.mana)} <small>/ ${state.maxMana}</small></dd></div>
+        <div><dt>${state.classId?'Primary hit':'Cleave'}</dt><dd>${primaryDamage(state)}</dd></div>
+        <div><dt>Level</dt><dd>${state.level}</dd></div>
+        <div><dt>Honing</dt><dd>${state.forgeLevel} <small>/ 3</small></dd></div>
+        <div><dt>Draughts</dt><dd>${state.potions} <small>/ 5</small></dd></div>
+      </dl></section>
+    </div>
+    <div class="inventory-belongings">
+      <section class="inventory-satchel" aria-label="Satchel">
+        <div class="inventory-bag-heading"><h3>Satchel</h3><span>${used} ${used===1?'item':'items'}</span></div>
+        <div class="inventory-grid" aria-label="Owned items">${state.inventory.map(item=>tile(item)).join('')}${Array.from({length:cells-used},()=>'<span class="empty-cell" aria-hidden="true"></span>').join('')}</div>
+      </section>
+      <section id="inventory-item-detail" class="inventory-detail ${selected?.rarity||''}" aria-label="Item preview" aria-live="polite" aria-atomic="true">${inventoryDetailMarkup(state,selected?.id)}</section>
+    </div>
+  </div>`;
 }
