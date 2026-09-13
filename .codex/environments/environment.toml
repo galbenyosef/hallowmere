@@ -1,0 +1,20 @@
+version = 1
+name = "Hallowmere"
+
+[setup]
+script = "bash scripts/node22.sh npm ci"
+
+[[actions]]
+name = "Run game"
+icon = "run"
+command = "bash scripts/node22.sh npm run dev:worktree"
+
+[[actions]]
+name = "Validate"
+icon = "test"
+command = "bash scripts/node22.sh npm test && bash scripts/node22.sh npm run build"
+
+[[actions]]
+name = "Worktree status"
+icon = "tool"
+command = "bash scripts/node22.sh npm run worktree -- status"
