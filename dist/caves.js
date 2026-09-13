@@ -32,13 +32,6 @@ function cave(id,name,w,d,chambers,tunnels,treasureRooms){
  }
  const obstacles=rectangles(cells,columns,rows,0,w,d),floors=rectangles(cells,columns,rows,1,w,d);
  const clear=(p,padding=.65)=>!obstacles.some(o=>Math.abs(p.x-o.x)<o.w/2+padding&&Math.abs(p.z-o.z)<o.d/2+padding);
- const lanterns=[],addLantern=p=>{if(clear(p,.25)&&!lanterns.some(l=>Math.hypot(l.x-p.x,l.z-p.z)<4))lanterns.push(p);};
- // Offset the lamps to the sides of passages so their warm pools mark every turn.
- for(const t of tunnels)for(let i=1;i<t.points.length;i++){
-  const a=t.points[i-1],b=t.points[i],length=Math.hypot(b.x-a.x,b.z-a.z),steps=Math.max(1,Math.ceil(length/7));
-  for(let j=0;j<=steps;j++){const side=(i+j)%2?1:-1,offset=t.width/2-1.25;addLantern({x:a.x+(b.x-a.x)*j/steps+(b.z-a.z)/length*offset*side,z:a.z+(b.z-a.z)*j/steps-(b.x-a.x)/length*offset*side});}
- }
- for(const r of chambers)for(const side of [-1,1])addLantern({x:r.x+side*r.rx*.65,z:r.z+1});
  const encounters=[],caches=[],features=[];
  chambers.forEach((r,index)=>{
   if(index){
@@ -49,11 +42,29 @@ function cave(id,name,w,d,chambers,tunnels,treasureRooms){
   const feature={type:r.feature,x:r.x-r.rx*.45,z:r.z-r.rz*.36,seed:index};
   if(clear(feature,1.1))features.push(feature);
  });
- return{id,name,subtitle:'BENEATH HALLOWMERE',theme:'cave',tier:0,bounds:{minX:-w/2,maxX:w/2,minZ:-d/2,maxZ:d/2},start:{x:chambers[0].x,z:chambers[0].z+1},checkpoint:null,objectives:[],boss:null,hazards:[],encounters,caches,obstacles,chambers,tunnels,lanterns,features,floors,floorTiles,walls};
+ // Light belongs to an abandoned camp or shrine, with long unlit stretches
+ // between them. Only the entrance retains a hanging lantern.
+ const lights=[];
+ chambers.forEach((r,index)=>{
+  if(index&&r.feature==='pool')return;
+  if(index&&r.feature==='crystals'&&index%2)return;
+  const p=[[.55,-.4],[-.6,.35],[.55,.45],[-.55,-.4]].map(([dx,dz])=>({x:r.x+r.rx*dx,z:r.z+r.rz*dz})).find(p=>clear(p,.9)&&[...encounters,...caches,{x:chambers[0].x,z:chambers[0].z+1}].every(o=>Math.hypot(p.x-o.x,p.z-o.z)>2.2));
+  if(!p)return;
+  lights.push({...p,kind:index===0?'lantern':r.feature==='shrine'?'shrine':r.feature==='crystals'?'cold-flame':'firepit'});
+ });
+ // A few low braziers punctuate especially long passages, never every bend.
+ tunnels.forEach((t,index)=>{
+  if(index%5!==2)return;
+  const p=t.points[1];
+  const wall=walls.filter(w=>Math.hypot(w.x-p.x,w.z-p.z)<4).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
+  if(wall){const [dx,dz]=wall.neighbors[0],p={x:wall.x+dx*1.8,z:wall.z+dz*1.8};if(clear(p,.65)&&!lights.some(l=>Math.hypot(l.x-p.x,l.z-p.z)<14)&&[...encounters,...caches].every(o=>Math.hypot(p.x-o.x,p.z-o.z)>2))lights.push({...p,kind:'brazier'});}
+ });
+ for(const l of lights)if(l.kind!=='lantern')obstacles.push({x:l.x,z:l.z,w:l.kind==='firepit'?1.65:l.kind==='brazier'?.85:1.8,d:l.kind==='firepit'?1.55:l.kind==='brazier'?.85:1.8});
+ return{id,name,subtitle:'BENEATH HALLOWMERE',theme:'cave',tier:0,bounds:{minX:-w/2,maxX:w/2,minZ:-d/2,maxZ:d/2},start:{x:chambers[0].x,z:chambers[0].z+1},checkpoint:null,objectives:[],boss:null,hazards:[],encounters,caches,obstacles,chambers,tunnels,lights,features,floors,floorTiles,walls};
 }
 export const FIRST_LEVEL_CAVES=[
  cave('moss-hollow','Moss Hollow',64,72,[
-  chamber('Lantern descent',0,29,6,5,'camp'),chamber('Moss gallery',-10,15,7,6),chamber('Pilgrim’s rest',13,13,8,6,'camp'),
+  chamber('Forsaken descent',0,29,6,5,'camp'),chamber('Moss gallery',-10,15,7,6),chamber('Pilgrim’s rest',13,13,8,6,'camp'),
   chamber('Root grotto',-22,-3,6,7,'crystals'),chamber('Sundered crossing',1,-5,8,7),chamber('Glowstone pocket',23,-8,6,8,'crystals'),
   chamber('Forgotten shrine',-17,-23,8,7,'shrine'),chamber('Hollow heart',7,-26,9,6,'crystals'),chamber('Smuggler’s niche',25,28,4,4,'camp')
  ],[
@@ -76,7 +87,7 @@ export const FIRST_LEVEL_CAVES=[
  ],[6,8,9,10]),
  cave('gloom-cavern','Gloom Cavern',104,112,[
   chamber('Watchfire descent',0,47,7,6,'camp'),chamber('West passage',-18,32,9,7,'camp'),chamber('Echo chamber',19,32,9,8),
-  chamber('Drowned hollow',-37,12,9,8),chamber('The crossroads',-9,10,9,8,'crystals'),chamber('Lantern gallery',19,9,8,7,'camp'),
+  chamber('Drowned hollow',-37,12,9,8),chamber('The crossroads',-9,10,9,8,'crystals'),chamber('Ashen gallery',19,9,8,7,'camp'),
   chamber('Prospector’s end',40,28,7,6,'camp'),chamber('Shattered sanctum',-36,-13,9,9,'shrine'),chamber('Gloom basin',-10,-15,9,8),
   chamber('Crystal throat',18,-14,9,8,'crystals'),chamber('Forgotten camp',40,-6,7,8,'camp'),chamber('Ossuary',-36,-39,9,8,'shrine'),
   chamber('Deep crossing',-7,-38,9,8,'camp'),chamber('Heart of the cavern',20,-43,11,8,'shrine'),chamber('Glittering recess',41,-31,7,7,'crystals')
