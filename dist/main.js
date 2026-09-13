@@ -231,13 +231,28 @@ function networkEvent(event){
   const local=event.playerId===network.id,rig=actor.rig;
   const skill=abilitiesFor(event)[event.action],color=event.color||classColor(event);
   if(skill?.kind==='melee'){rig.attack=.42;rig.attackKind='attack';slash(pos,event.angle,color,skill.range,.3);audioAt('sword',pos,.6);}
-  if(skill?.kind==='projectile'){rig.attack=.36;rig.attackKind='bolt';const hand=pos.clone().add(new T.Vector3(0,1.2,0));if(skill.projectile==='ember')combatEffects.cast(hand,new T.Vector3(Math.sin(event.angle),0,Math.cos(event.angle)));else particles(hand,color,9,1.8);audioAt(['arrow','knife'].includes(skill.projectile)?'sword':'ember',pos,.5);}
+  if(skill?.kind==='projectile'){
+   rig.attack=.36;rig.attackKind='bolt';
+   const hand=pos.clone().add(new T.Vector3(0,1.2,0)),direction=new T.Vector3(Math.sin(event.angle),0,Math.cos(event.angle));
+   if(skill.projectile==='ember')combatEffects.cast(hand,direction);
+   else if(skill.projectile==='arcane')combatEffects.arcaneCast(hand,direction);
+   else particles(hand,color,9,1.8);
+   audioAt(['arrow','knife'].includes(skill.projectile)?'sword':'ember',pos,.5);
+  }
   if(skill?.kind==='burst'||skill?.kind==='zone'){rig.attack=.36;rig.attackKind='bolt';ringEffect(pos,color,.3,skill.radius||3,.65);particles(pos,color,24,3);audioAt('nova',pos,.55);}
   if(skill?.kind==='shield'){ringEffect(pos,color,.8,1.2,skill.duration);audioAt('heal',pos,.6);}
   if(event.action==='heal'){ringEffect(pos,0x97cba5,.2,1.5,.7);audioAt('heal',pos,.6);}
   if(event.action==='dodge'){audioAt('dodge',pos,.5);if(local){moveTarget=null;movePath=[];lockedEnemy=null;}}
  }
- if(event.type==='hit'){floatText(String(event.damage),pos,event.magic?'magic':'');if(event.visual==='ember')combatEffects.emberImpact(pos.clone().add(new T.Vector3(0,1,0)));else if(event.magic)particles(pos.clone().add(new T.Vector3(0,1,0)),event.color||'#88cfdb',12,2.8);else steelImpact(pos.clone().add(new T.Vector3(0,1,0)));audioAt(event.magic?'ember-hit':'impact',pos,.55);}
+ if(event.type==='hit'){
+  floatText(String(event.damage),pos,event.magic?'magic':'');
+  const impact=pos.clone().add(new T.Vector3(0,1,0));
+  if(event.visual==='ember')combatEffects.emberImpact(impact);
+  else if(event.visual==='arcane')combatEffects.arcaneImpact(impact);
+  else if(event.magic)particles(impact,event.color||'#88cfdb',12,2.8);
+  else steelImpact(impact);
+  audioAt(event.magic?'ember-hit':'impact',pos,.55);
+ }
  if(event.type==='hurt'){floatText(String(event.damage),pos,'enemy-damage');if(event.playerId===network.id){audio.play('hurt',.6);$('damage-vignette').style.opacity='.75';setTimeout(()=>$('damage-vignette').style.opacity='0',210);}}
  if(event.type==='kill'){audioAt(event.typeName==='boss'?'death-boss':event.typeName==='hound'?'death-hound':event.typeName==='revenant'?'death-revenant':'death',pos,.6);if(lockedEnemy?.id===event.enemyId){lockedEnemy=null;attackHeld=false;}if(event.typeName==='boss')toast('The Bellkeeper falls · Claim your personal loot');}
  if(event.type==='boss'){toast('The Bellkeeper has answered.');audio.play('bell',.6);}
@@ -254,7 +269,14 @@ function renderSharedWorld(dt,t){
  }
  const ids=new Set(lastSnapshot?.projectiles.map(b=>b.id)||[]);
  for(const [id,b] of networkProjectiles)if(!ids.has(id)){b.visual?b.visual.dispose():removeObject(b.mesh);networkProjectiles.delete(id);}
- for(const b of lastSnapshot?.projectiles||[]){let visual=networkProjectiles.get(b.id);if(!visual){const pos=new T.Vector3(b.x,b.hostile?.8:1.1,b.z),dir=new T.Vector3(Math.sin(b.angle),0,Math.cos(b.angle));if(!b.hostile){const bolt=b.visual&&b.visual!=='ember'?createClassProjectile(scene,b):combatEffects.emberbolt(pos,dir);visual={mesh:bolt.mesh,visual:bolt};}else{const mesh=new T.Mesh(new T.SphereGeometry(.15,8,6),new T.MeshBasicMaterial({color:0xef7051}));mesh.position.copy(pos);scene.add(mesh);visual={mesh};}networkProjectiles.set(b.id,visual);}
+ for(const b of lastSnapshot?.projectiles||[]){let visual=networkProjectiles.get(b.id);if(!visual){
+  const pos=new T.Vector3(b.x,b.hostile?.8:1.1,b.z),dir=new T.Vector3(Math.sin(b.angle),0,Math.cos(b.angle));
+  if(!b.hostile){
+   const bolt=b.visual==='arcane'?combatEffects.arcaneBolt(pos,dir,b.speed):b.visual&&b.visual!=='ember'?createClassProjectile(scene,b):combatEffects.emberbolt(pos,dir);
+   visual={mesh:bolt.mesh,visual:bolt};
+  }else{const mesh=new T.Mesh(new T.SphereGeometry(.15,8,6),new T.MeshBasicMaterial({color:0xef7051}));mesh.position.copy(pos);scene.add(mesh);visual={mesh};}
+  networkProjectiles.set(b.id,visual);
+ }
   const blend=1-Math.exp(-dt*20);visual.mesh.position.x=T.MathUtils.lerp(visual.mesh.position.x,b.x,blend);visual.mesh.position.z=T.MathUtils.lerp(visual.mesh.position.z,b.z,blend);visual.visual?.update(dt);
  }
  const zoneIds=new Set(lastSnapshot?.zones?.map(z=>z.id)||[]);
