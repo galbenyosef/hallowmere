@@ -6,7 +6,7 @@ import {World} from './world.mjs';
 import {PROTOCOL_VERSION,TICK_SECONDS} from '../dist/multiplayer-protocol.js';
 
 export function createGameServer({world=new World(),origins=[],staticRoot=resolve('dist'),log=console.log}={}){
- const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.glb':'model/gltf-binary','.wav':'audio/wav','.svg':'image/svg+xml','.png':'image/png'};
+ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.glb':'model/gltf-binary','.wav':'audio/wav','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg'};
  const server=http.createServer(async(req,res)=>{
   try{
    const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);

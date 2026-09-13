@@ -160,6 +160,8 @@ The two villages and connecting forest use merged scenery geometry, instanced co
 
 The [1024 × 1024 app icon](dist/assets/icons/app-icon.png) was created with built-in ImageGen using the Warden artwork and village screenshot as references, then revised to match the game's cold blue-green shadows, weathered steel, and haunted atmosphere. It includes the Hallowmere title and rounded corners. Browser and home-screen exports live in `dist/assets/icons/`; the game uses them as its favicon and Apple touch icon. The [artwork notes](docs/app-icon.md) include the revision prompt. The gameplay screenshot above is a direct browser capture.
 
+Social links use a [landscape Hallowmere card](dist/og.png) based on the existing Warden and village artwork. Open Graph also offers the [actual gameplay screenshot](dist/assets/social/gameplay.jpg) as an alternate image; Twitter uses the branded card. The metadata is included directly in `dist/index.html` and uses the public GitHub Pages URL. See [social preview notes](docs/social-previews.md) for asset sources, the generation prompt, and updating the public URL.
+
 ## Validation
 
 ```sh
