@@ -15,6 +15,8 @@ async function build(){
  try{for(const [classId,appearanceId] of choices){
   const id=conceptFor(classId,appearanceId),model=createPlayableCharacter(classId,appearanceId),concept=roster.find(c=>c.id===id);
   const study=concept?createStudyScene(concept):createStudyScene(CLASSES[classId],model);
+  // Use study scale for portraits, with a taller silhouette for Geralt.
+  study.root.scale.set(1,classId==='geralt'?1.12:1,1);
   renderer.render(study.scene,camera);portraits.set(id,renderer.domElement.toDataURL('image/png'));
   const weapon=model.getObjectByName('weapon');
   if(weapon){const item=weapon.clone(true);item.position.set(0,0,0);item.rotation.set(0,0,0);study.root.visible=false;study.scene.add(item);
