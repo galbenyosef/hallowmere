@@ -49,3 +49,20 @@ test('prediction honors local region bounds instead of overworld limits',()=>{
  const rooted=predictedPosition({x:1,z:1,speed:0},[{seq:2,x:1,z:0}],1,[],bounds);assert.deepEqual(rooted,{x:1,z:1});
  const acknowledged=predictedPosition({x:29.5,z:0},[{seq:2,x:1,z:0}],2,[],bounds);assert.equal(acknowledged.x,29.5);
 });
+
+test('canceling configuration prevents sockets, intervals and late status updates',async t=>{
+ let resolveConfig,calls=0;const statuses=[];
+ t.mock.method(globalThis,'fetch',()=>{calls++;return new Promise(resolve=>resolveConfig=resolve);});
+ t.mock.method(globalThis,'WebSocket',()=>assert.fail('Canceled session opened a socket'));
+ const previous=globalThis.document;globalThis.document={removeEventListener(){}};
+ const client=new MultiplayerClient({onSnapshot(){assert.fail('Late snapshot');},onStatus:(...s)=>statuses.push(s)});
+ try{const loading=client.start();await client.start();assert.equal(calls,1);client.close();resolveConfig({ok:true,json:async()=>({serverUrl:'wss://example.test/multiplayer'})});await loading;assert.equal(statuses.length,1);assert.equal(client.interval,undefined);assert.equal(client.abort.signal.aborted,true);}finally{client.close();if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
+});
+
+test('closed sockets cannot welcome, sync, or reconnect after returning to game modes',t=>{
+ const previous=globalThis.document;globalThis.document={removeEventListener(){}};
+ class Socket{constructor(){this.readyState=1;}close(){this.readyState=3;this.onclose?.();}send(){assert.fail('Canceled socket sent a join');}}
+ const originalSocket=globalThis.WebSocket;globalThis.WebSocket=Socket;t.after(()=>globalThis.WebSocket=originalSocket);const statuses=[];
+ const client=new MultiplayerClient({onSnapshot(){assert.fail('Late snapshot');},onWelcome(){assert.fail('Late welcome');},onStatus:s=>statuses.push(s)});
+ try{client.url='ws://localhost/multiplayer';client.connect();const ws=client.socket;client.close();ws.onopen();for(const type of ['welcome','snapshot'])ws.onmessage({data:JSON.stringify({v:PROTOCOL_VERSION,type})});ws.onclose();assert.equal(client.connected,false);assert.equal(client.retry,undefined);assert.equal(statuses.length,1);}finally{client.close();if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
+});
