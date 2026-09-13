@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Compare ten complete sound directions for Hallowmere. Audition all 37 game cues and a shared encounter sequence.">
+  <title>Hallowmere · Sound studies</title>
+  <style>
+    :root{color-scheme:dark;--bg:#101314;--panel:#181d1e;--line:#343c3e;--text:#f0f0e8;--muted:#afb9b8;--accent:#cce58f;--font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 var(--font)}
+    button,input,select{font:inherit}button,select{border:1px solid var(--line);border-radius:6px;color:var(--text);background:#22292a;min-height:44px;padding:9px 13px}button{cursor:pointer}button:hover{background:#303a3b;border-color:#738280}button:active{transform:translateY(1px)}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:4px}a{color:var(--accent)}
+    .shell{max-width:1240px;margin:auto;padding:30px 30px 70px}.masthead{display:flex;justify-content:space-between;align-items:center;gap:15px;padding-bottom:24px;border-bottom:1px solid var(--line)}.brand,.eyebrow{font-size:12px;letter-spacing:.16em;font-weight:650;text-transform:uppercase}.brand{color:#d5ded9}.edition{color:var(--muted);font-size:13px}.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;padding:28px 0 24px}h1{font-family:Georgia,serif;font-size:clamp(32px,4.5vw,51px);font-weight:400;line-height:1.12;letter-spacing:-.035em;margin:0 0 14px}p{margin:0}.intro p{max-width:660px;color:var(--muted)}.count{font-family:Georgia,serif;font-size:56px;line-height:1;color:var(--accent)}.count small{display:block;font:12px/1.8 var(--font);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);white-space:nowrap;margin-top:6px}
+    .transport{position:sticky;top:0;z-index:3;background:#1b2223;border:1px solid #435052;border-radius:9px;padding:18px;box-shadow:0 12px 25px #0004}.controls{display:flex;gap:20px;align-items:center;flex-wrap:wrap}.compare{display:flex;align-items:center;gap:12px;flex:1;min-width:280px}label{font-size:14px;color:var(--muted)}select{flex:1;min-width:0;max-width:330px}.volume{display:flex;gap:10px;align-items:center}.volume input{accent-color:var(--accent);width:115px}.volume output{font-size:14px;min-width:36px;font-variant-numeric:tabular-nums}.stop{border-color:#8f7269;background:#332a27;color:#f9d8ca}.now{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;font-size:14px}.now span:first-child{color:var(--accent)}.time{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}progress{display:block;width:100%;height:4px;margin-top:12px;border:0;accent-color:var(--accent);background:#394141}progress::-webkit-progress-bar{background:#394141}progress::-webkit-progress-value{background:var(--accent)}
+    .instructions{color:var(--muted);font-size:14px;margin:18px 0 26px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.set{border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:22px;scroll-margin-top:200px;min-width:0;transition:border-color .15s}.set.playing{border-color:var(--accent)}.set.chosen{box-shadow:inset 4px 0 var(--accent)}.card-head{display:flex;gap:17px}.number{font:30px/1 Georgia,serif;color:var(--color);padding-top:4px;min-width:36px}h2{font-size:23px;line-height:1.2;letter-spacing:-.02em;font-weight:550;margin:0 0 8px}.description{color:var(--muted);min-height:48px}.signature{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:17px 0;margin:0 0 16px;border-bottom:1px solid var(--line)}.tags{color:var(--color);font-size:12px;text-transform:uppercase;letter-spacing:.07em}.wave{width:128px;height:26px;flex-shrink:0;color:var(--color)}.actions{display:grid;grid-template-columns:1.2fr 1fr;gap:8px}.primary{background:#cce58f;color:#152016;border-color:#cce58f;font-weight:650}.primary:hover{background:#dff6ab;border-color:#dff6ab}.cue-caption{display:block;color:var(--muted);font-size:12px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.preview{font-size:14px;padding:7px 10px;min-width:0}.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px}.quick button,.cue-grid button{font-size:13px;padding:8px 6px;min-height:40px}.cue-button[aria-pressed="true"]{background:#3e4c2c;border-color:var(--accent);color:#effbcf}.footer-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:19px}.choose{font-size:14px;background:transparent;border-color:transparent;min-height:40px;padding:8px 10px}.choose[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}summary{cursor:pointer;font-size:14px;color:var(--muted);padding:12px 0}.all-cues{margin-top:6px}.cue-group{margin-top:14px}.cue-group h3{color:var(--muted);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px}.cue-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.selected{border:1px solid #4f6241;background:#1b241a;border-radius:9px;padding:20px;margin-top:24px}.selected label{display:block;color:var(--accent);margin-bottom:10px}.choice-row{display:flex;gap:10px}.choice-row input{width:100%;min-width:0;border:1px solid #506045;border-radius:5px;padding:11px;background:#121a13;color:var(--text);font-size:15px}.choice-row button{white-space:nowrap}.selected p{color:var(--muted);font-size:14px;margin-top:10px}.notes{border-top:1px solid var(--line);padding-top:24px;margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:30px}.notes h2{font-size:16px;letter-spacing:0}.notes p{color:var(--muted);font-size:14px}.notes details{margin-top:8px}.timeline{margin:8px 0;padding-left:24px;color:var(--muted);font-size:14px;columns:2}.timeline li{margin-bottom:5px;break-inside:avoid}noscript{display:block;padding:25px;background:#542b25}button .play-icon{font-size:12px;margin-right:7px}[hidden]{display:none!important}
+    @media(max-width:740px){.shell{padding:18px 16px 40px}.intro{gap:18px}.count{font-size:42px}.grid{grid-template-columns:1fr}.controls{gap:12px}.compare{width:100%;flex-basis:100%;min-width:0}.volume{flex:1}.volume input{width:100%;max-width:180px}.transport{padding:12px;top:0}.now{font-size:13px}.set{padding:18px}.description{min-height:0}.notes{grid-template-columns:1fr;gap:22px}.edition{font-size:12px}.choice-row{flex-direction:column}.timeline{columns:1}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+<noscript>Enable JavaScript to audition these browser-generated sound studies.</noscript>
+<main class="shell">
+  <header class="masthead"><span class="brand">Hallowmere / Audio workshop</span><span class="edition">Direction studies · 01–10</span></header>
+  <section class="intro" aria-labelledby="title"><div><h1 id="title">Find the sound of the vigil.</h1><p>Ten complete sound directions. Play the same encounter in each, or compare one effect across all ten. Choose a direction when you’ve heard enough.</p></div><div class="count">37<small>Cues per set</small></div></section>
+  <section class="transport" aria-label="Playback controls">
+    <div class="controls"><div class="compare"><label for="compare-cue">Compare cue</label><select id="compare-cue"></select></div><div class="volume"><label for="volume">Volume</label><input id="volume" type="range" min="0" max="100" value="55"><output id="volume-value" for="volume">55%</output></div><button class="stop" id="stop" aria-label="Stop all audio (Escape)">■ Stop <small>Esc</small></button></div>
+    <div class="now"><span id="status" role="status" aria-live="polite">Ready. Pick any set to begin.</span><span class="time" id="time">0:00 / 0:00</span></div><progress id="progress" max="1" value="0" aria-label="Playback progress"></progress>
+  </section>
+  <p class="instructions">Each encounter is 26 seconds, with identical cues and timing. Starting another sound replaces playback. Atmosphere buttons play a finite excerpt.</p>
+  <section class="grid" id="sets" aria-label="Ten sound directions"></section>
+  <section class="selected" id="selection" hidden aria-label="Your sound direction"><label for="choice-text">Your direction</label><div class="choice-row"><input id="choice-text" readonly aria-label="Choice to send back"><button id="copy">Copy choice</button></div><p id="choice-help">Send this line back in chat. You can also request a mix, such as “Set 02 bells with Set 01 combat.” Choosing here only records your preference in this browser.</p></section>
+  <footer class="notes"><div><h2>Same game. Different character.</h2><p>Every set covers the game’s 37 audio events, including its five atmosphere and health layers. These are synthesized direction sketches: listen for texture, attack, decay, and mood. The game’s active audio is unchanged.</p></div><div><h2>A shared encounter</h2><p>Enter the road, trade blows, cast and heal, then face the Bellkeeper and recover a relic. Music is omitted so the effects stay easy to compare.</p><details><summary>See encounter cue sheet</summary><ol class="timeline" id="timeline"></ol></details></div></footer>
+</main>
+<script id="audition-engine">
+/* Standalone direction sketches. Cue IDs mirror audio-palette.js; no gameplay imports or mutations.
+   Seeded PCM recipes make repeat comparisons identical. Ten synthesis models deliberately change
+   excitation, spectrum, rhythm, and decay. Each cue retains its role within every model. */
+(() => {
+  const SETS = [
+    {id:'01',name:'Worn Iron',description:'Close steel, gritty scrapes, and blunt wooden weight. Dry, worn, and immediate.',tags:'Dry · Tactile · Gritty',color:'#cfb394',model:'iron',tail:.12},
+    {id:'02',name:'Cathedral Bells',description:'Bronze overtones and low ceremonial tolls bloom into a dark, resonant space.',tags:'Bronze · Ritual · Resonant',color:'#d8c87f',model:'bells',tail:.95},
+    {id:'03',name:'Bone & Hide',description:'Hollow knocks, stretched skin, and brittle rattles. A primitive, percussive world.',tags:'Hollow · Tribal · Brittle',color:'#d6c6a8',model:'bone',tail:.20},
+    {id:'04',name:'Witchglass',description:'Splintering crystal and liquid chimes. Bright edges with an unstable magical shimmer.',tags:'Glass · Prismatic · Airy',color:'#8bcfd4',model:'glass',tail:.70},
+    {id:'05',name:'Black Powder',description:'Compressed blasts, heavy low-end punches, and hot debris. Explosive and forceful.',tags:'Heavy · Explosive · Compressed',color:'#e3a080',model:'powder',tail:.26},
+    {id:'06',name:'Mire & Mouth',description:'Wet pops, gulping throats, and rubbery bubbles. Uneasy, close, and organic.',tags:'Wet · Vocal · Elastic',color:'#aaca8e',model:'mire',tail:.30},
+    {id:'07',name:'Stormbound',description:'Arcing buzz, sharp electrical snaps, and sliding charge. Fast, volatile energy.',tags:'Electric · Charged · Jagged',color:'#a7b8ed',model:'storm',tail:.32},
+    {id:'08',name:'Velvet Dread',description:'Breathy swells and blurred, bowed shadows. Soft attacks with lingering unease.',tags:'Breath · Bowed · Slow bloom',color:'#c5b0d5',model:'dread',tail:.90},
+    {id:'09',name:'Runic Arcade',description:'Square-wave chirps, stepped arpeggios, and crunchy noise. An unapologetic retro spellbook.',tags:'8-bit · Melodic · Stepped',color:'#98d9bd',model:'arcade',tail:.08},
+    {id:'10',name:'Clockwork Crypt',description:'Springy plucks, winding teeth, and tiny metal ticks. Intricate, dry machinery.',tags:'Mechanical · Plucked · Ratcheted',color:'#e1b984',model:'clock',tail:.22},
+  ];
+  // id, label, group, gesture, fundamental, core duration, material brightness
+  const rows = [
+    ['sword','Weapon swing','Combat','sweep',210,.30,.9],
+    ['impact','Weapon hit','Combat','hit',115,.30,.6],
+    ['ember','Spell cast','Combat','rise',290,.65,.9],
+    ['ember-hit','Spell impact','Combat','hit',175,.48,.9],
+    ['nova','Area burst','Combat','burst',72,1.05,.8],
+    ['dodge','Evade','Player','sweep',130,.35,.35],
+    ['hurt','Player hurt','Player','hit',87,.37,.3],
+    ['death-player','Player death','Player','fall',67,1.55,.3],
+    ['heal','Heal / shield','Player','reward',330,1.05,.6],
+    ['voice-hollow','Hollow voice','Creatures','voice',83,.95,.5],
+    ['death','Hollow death','Creatures','fall',80,1.10,.5],
+    ['voice-hound','Hound voice','Creatures','voice',125,.65,.8],
+    ['death-hound','Hound death','Creatures','fall',138,.80,.8],
+    ['voice-revenant','Revenant voice','Creatures','voice',190,1.20,.45],
+    ['death-revenant','Revenant death','Creatures','fall',175,1.45,.45],
+    ['roar','Bellkeeper roar','Bellkeeper','voice',48,1.75,.55],
+    ['boss-windup','Boss windup','Bellkeeper','rise',74,1.30,.65],
+    ['boss-slam','Boss slam','Bellkeeper','burst',43,1.15,.6],
+    ['death-boss','Boss death','Bellkeeper','fall',48,2.25,.65],
+    ['pickup','Coin pickup','Rewards & menus','reward',720,.30,.9],
+    ['relic','Relic reward','Rewards & menus','reward',220,1.80,.8],
+    ['equip','Equip item','Rewards & menus','double',285,.35,.8],
+    ['levelup','Level up','Rewards & menus','reward',277,1.55,.7],
+    ['ui-open','Menu open','Rewards & menus','rise',400,.18,.35],
+    ['ui-close','Menu close','Rewards & menus','fall',350,.18,.3],
+    ['step','Stone footstep','Movement & world','step',130,.16,.8],
+    ['step-dirt','Dirt footstep','Movement & world','step',85,.18,.2],
+    ['step-wood','Wood footstep','Movement & world','step',185,.21,.5],
+    ['door','Door','Movement & world','double',77,.95,.6],
+    ['bell','Distant bell','Movement & world','bell',130,2.10,.7],
+    ['whisper','Whisper','Movement & world','air',300,1.55,.7],
+    ['creak','Creak','Movement & world','rise',122,1.10,.35],
+    ['ambience','Ashwick ambience','Atmosphere · excerpts','bed',62,5.50,.25],
+    ['ambience-road','Road ambience','Atmosphere · excerpts','bed',49,5.50,.5],
+    ['ambience-haunted','Haunted ambience','Atmosphere · excerpts','bed',37,5.50,.75],
+    ['tension','Threat layer','Atmosphere · excerpts','pulse',55,5.50,.7],
+    ['heartbeat','Low health','Atmosphere · excerpts','heart',48,4.50,.2],
+  ];
+  const CUES = rows.map(([id,label,group,kind,hz,duration,brightness])=>({id,label,group,kind,hz,duration,brightness}));
+  const SEQUENCE = [
+    [0,'ambience-road',.55],[.30,'step',.8],[.72,'step-dirt',.8],[1.15,'step-wood',.8],
+    [1.85,'door',.65],[3.10,'voice-hollow',.85],[4.4,'sword',1],[4.65,'impact',1],
+    [5.4,'sword',1],[5.65,'impact',1],[6.40,'ember',1],[7.15,'ember-hit',1],
+    [8.15,'dodge',1],[8.9,'hurt',1],[9.8,'heal',1],[11.2,'voice-hound',.8],
+    [12.15,'nova',1],[13.5,'death-hound',.8],[15,'boss-windup',1],[16.55,'boss-slam',1],
+    [18.1,'death-boss',.9],[21,'pickup',.75],[22.1,'relic',1],
+  ].map(([time,cue,gain])=>({time,cue,gain}));
+  const SEQUENCE_DURATION=26, RATE=24000, TAU=Math.PI*2;
+  const sin=Math.sin, exp=Math.exp;
+  function hash(text){let seed=2166136261;for(const char of text)seed=Math.imul(seed^char.charCodeAt(0),16777619);return seed>>>0;}
+  function random(seed){return()=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return(seed>>>0)/2147483648-1;};}
+  const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
+  function synthesize(setId,cueId,sampleRate=RATE){
+    const set=SETS.find(s=>s.id===setId),cue=CUES.find(c=>c.id===cueId);
+    if(!set||!cue)throw Error('Unknown sound set or cue');
+    if(!Number.isFinite(sampleRate)||sampleRate<8000||sampleRate>96000)throw Error('Unsupported sample rate');
+    const {kind,hz:f,duration:d,brightness:b}=cue;
+    const bed=['bed','pulse','heart'].includes(kind),tail=bed?.12:set.tail;
+    const data=new Float32Array(Math.ceil((d+tail)*sampleRate));
+    const noise=random(hash(setId+cueId));let low=0,mid=0,phase=0,extra=0,held=0;
+    const dark=.018+b*.065;
+    for(let i=0;i<Math.ceil(d*sampleRate);i++){
+      const t=i/sampleRate,u=t/d,n=noise();low+=dark*(n-low);mid+=(.15+b*.3)*(n-mid);
+      let envelope=exp(-5*u),pitch=f*(1+.3*exp(-20*u)),activity=1;
+      if(kind==='sweep'){envelope=sin(Math.PI*u)**1.6;pitch=f*(2.8-2.1*u);}
+      if(kind==='hit'||kind==='step'||kind==='burst'){envelope=exp(-(kind==='burst'?3.8:6)*u);pitch=f*(1+1.6*exp(-30*u));}
+      if(kind==='rise'){envelope=sin(Math.PI*u)**.8;pitch=f*(.55+1.6*u);}
+      if(kind==='fall'){envelope=(1-u)**1.5;pitch=f*(1.3-.95*u);}
+      if(kind==='double'){envelope=exp(-14*u)+(u>.3?.7*exp(-13*(u-.3)):0);pitch=f*(1.2-.5*u);}
+      if(kind==='reward'){const note=Math.min(3,Math.floor(u*4)),local=(u*4)%1;pitch=f*[1,1.1892,1.4983,2][note];envelope=(.3+.7*exp(-5*local))*(1-u*.65);}
+      if(kind==='bell'){pitch=f;envelope=exp(-3*u);}
+      if(kind==='voice'){activity=.5+.5*sin(TAU*(cue.id.includes('hound')?9:5)*t+2*sin(13*t))**2;envelope=sin(Math.PI*u)**.55*activity;pitch=f*(1+.12*sin(19*t)+.08*sin(47*t));}
+      if(kind==='air'){envelope=sin(Math.PI*u)**1.2;pitch=f*(.8+.3*sin(7*t));}
+      if(bed){envelope=clamp(t/ .35,0,1)*clamp((d-t)/.5,0,1);pitch=f*(1+.03*sin(t*1.4));activity=.5+.5*sin(TAU*.6*t)**2;}
+      if(kind==='pulse')envelope*=.25+.75*sin(TAU*1.8*t)**6;
+      if(kind==='heart'){const beat=t%.85;envelope*=exp(-beat*36)+(beat>.21?.65*exp(-(beat-.21)*42):0);}
+      phase+=pitch/sampleRate;extra+=pitch*(1.7+.3*sin(t*3))/sampleRate;
+      const p=phase*TAU, tonal=sin(p),edge=kind==='sweep'||kind==='air';
+      let value=0;
+      switch(set.model){
+        case 'iron': { // Damped steel modes plus a coarse scrape; short, dry contact.
+          const scrape=(mid-low)*(.35+.65*sin(145*t)**2);
+          value=.6*tonal*exp(-9*u)+.32*sin(p*2.76)*exp(-18*u)+.18*sin(p*5.41)*exp(-28*u)+scrape*(edge?3:1.5);
+          if(kind==='voice'||bed)value+=.4*Math.tanh(3*sin(p+sin(p*.51)))*activity;
+          break;
+        }
+        case 'bells': { // Inharmonic bronze, beating modes, an unpitched mallet front.
+          value=.54*tonal+.3*sin(p*2.01)*exp(-2*u)+.24*sin(p*2.76)*exp(-3*u)+.17*sin(p*5.43)*exp(-5*u);
+          value*=.8+.2*sin(t*8);value+=mid*.5*exp(-60*t);if(edge)value+=low*.9;
+          break;
+        }
+        case 'bone': { // Hollow membrane and wood blocks with independent rattling impulses.
+          const rattle=(t%.039)/.039;
+          value=.65*sin(p+2.5*exp(-t*40))*exp(-5*u)+.4*sin(p*1.59)*exp(-9*u)+.2*sin(p*2.14)*exp(-14*u);
+          value+=mid*2.5*exp(-rattle*12)*(.2+b);if(edge||bed||kind==='voice')value+=low*(.6+.7*sin(t*83)**2);
+          break;
+        }
+        case 'glass': { // High, dissonant FM glass with irregular shivering fragments.
+          const shimmer=sin(p*3.93+1.8*sin(p*1.414)*exp(-2*u));
+          value=.25*tonal+.55*shimmer*exp(-1.4*u)+.24*sin(p*7.13)*exp(-4*u);
+          value+=.14*sin(p*10.7)*sin(63*t)**8+mid*.4*exp(-80*t);if(edge)value+=mid*.7;
+          break;
+        }
+        case 'powder': { // Saturated sub punch, noisy pressure front, scattered debris.
+          const blast=mid*2.7*exp(-4*u)+low*2,sub=sin(p*.65+2*exp(-45*t));
+          value=Math.tanh((blast+.8*sub*exp(-5*u))*2)*.7+n*.2*exp(-t*65);
+          if(kind==='reward'||kind==='bell')value+=.4*sin(p*2)*exp(-3*u);
+          break;
+        }
+        case 'mire': { // Nonlinear vowel carrier and droplets whose pitch falls within each bubble.
+          const cycle=(t*(kind==='voice'?12:18))%1,drop=sin(TAU*(cycle*7-2.8*cycle*cycle))*exp(-cycle*6);
+          value=.5*sin(p+3.5*sin(p*.5))+.33*sin(p*2.3+2*sin(p*.25))*activity+.7*drop;
+          value+=low*1.7*(.2+.8*sin(32*t)**4);break;
+        }
+        case 'storm': { // Hard-sync-like buzz, fast amplitude chopping, and broadband sparks.
+          const saw=2*(phase%1)-1,gate=.25+.75*(sin(TAU*47*t)>0?1:0);
+          value=(.4*saw+.4*sin(p+5*sin(extra*TAU)))*gate+mid*.8;
+          value+=n*.7*(sin(t*TAU*113)>.88?1:0)*exp(-2*u);break;
+        }
+        case 'dread': { // Slow bowed attack, detuned shadow tones, and breath. No sharp front.
+          envelope*=clamp(t/(Math.min(.20,d*.32)),0,1);
+          value=.45*sin(p*.5)+.3*sin(p*.503+1)+.2*sin(p*1.007+2)+low*2.4;
+          value*=.6+.4*sin(t*9+sin(t*2))**2;break;
+        }
+        case 'arcade': { // Sample-held noise and quantized pulse/triangle tones, no reverb.
+          if(i%Math.max(1,Math.floor(sampleRate/3500))===0)held=n;
+          const stair=[1,1.5,2,.75][Math.floor(t*24)%4],qphase=(Math.floor(t*sampleRate/3)*3/sampleRate*f*stair)%1;
+          const square=qphase<.25?1:-.6,triangle=1-4*Math.abs((phase%1)-.5);
+          value=.43*square+.28*triangle+held*(edge||kind==='hit'||kind==='step'?.45:.12);
+          value=Math.round(value*15)/15;break;
+        }
+        case 'clock': { // Spring plucks and a decelerating toothed ratchet.
+          const teeth=(t*29+1.4*(1-exp(-t*10)))%1;
+          value=.5*sin(p+3*sin(p*1.005)*exp(-7*u))*exp(-4*u)+.22*sin(p*3.04)*exp(-12*u);
+          value+=(.5*sin(p*6.7)+mid)*exp(-teeth*20)*(.3+.7*(1-u));if(bed)value+=.2*sin(p*.5);break;
+        }
+      }
+      // Air and distinct ground materials retain event semantics across all ten directions.
+      if(kind==='air')value=value*.25+mid*(.5+.5*sin(21*t)**2);
+      if(kind==='step')value*=cue.id==='step-dirt'?.7:1;
+      const attack=clamp(t/.004,0,1),release=clamp((d-t)/.025,0,1);
+      data[i]=value*envelope*attack*release;
+    }
+    // Feed-forward reflections are baked into the finite buffer, so Stop cuts every tail.
+    if(!bed&&set.tail>.25){
+      const dry=data.slice(),delay=set.model==='bells'?.113:set.model==='dread'?.173:.079;
+      for(let tap=1;tap<=5;tap++){
+        const offset=Math.round(delay*tap*sampleRate),level=(set.model==='dread'?.52:.42)**tap;
+        for(let i=offset;i<data.length;i++)data[i]+=dry[i-offset]*level;
+      }
+    }
+    // DC removal and common RMS targets preserve dynamics between event categories,
+    // with a -5 dBFS source peak cap; perceived loudness still depends on timbre.
+    let dc=0,square=0,peak=0;
+    for(let i=0;i<data.length;i++){
+      dc+=.004*(data[i]-dc);data[i]-=dc;
+      data[i]*=clamp(i/(sampleRate*.003),0,1)*clamp((data.length-1-i)/(sampleRate*.025),0,1);
+      square+=data[i]*data[i];peak=Math.max(peak,Math.abs(data[i]));
+    }
+    const target=bed?.052:kind==='step'?.08:kind==='burst'?.15:.115;
+    const scale=Math.min(target/Math.max(1e-8,Math.sqrt(square/data.length)),.56/Math.max(1e-8,peak));
+    for(let i=0;i<data.length;i++)data[i]*=scale;
+    return {data,sampleRate,duration:data.length/sampleRate};
+  }
+  class Player {
+    constructor({contextFactory,onState=()=>{},onCue=()=>{}}={}){
+      this.contextFactory=contextFactory||(()=>new(globalThis.AudioContext||globalThis.webkitAudioContext)());
+      this.onState=onState;this.onCue=onCue;this.sources=new Set();this.cache=new Map();this.generation=0;this.volume=.55;
+    }
+    async unlock(){
+      if(!this.context){this.context=this.contextFactory();this.master=this.context.createGain();this.master.gain.value=this.volume;
+        this.compressor=this.context.createDynamicsCompressor();this.compressor.threshold.value=-12;this.compressor.knee.value=12;this.compressor.ratio.value=6;this.compressor.attack.value=.003;this.compressor.release.value=.18;
+        this.master.connect(this.compressor);this.compressor.connect(this.context.destination);}
+      if(this.context.state!=='running')await this.context.resume();
+      if(this.context.state!=='running')throw Error('Audio could not start. Try playing again.');
+    }
+    setVolume(value){this.volume=clamp(Number(value)||0,0,1);if(this.master)this.master.gain.setTargetAtTime(this.volume,this.context.currentTime,.015);}
+    stop(message='Stopped. Pick any set to play.'){
+      this.generation++;clearInterval(this.timer);this.timer=null;this.active=null;
+      for(const source of this.sources){source.onended=null;try{source.stop();}catch{}source.disconnect();source.voiceGain.disconnect();}
+      this.sources.clear();this.onState({status:'idle',message});
+    }
+    buffer(set,cue){const key=set+':'+cue;if(this.cache.has(key))return this.cache.get(key);
+      const rendered=synthesize(set,cue),buffer=this.context.createBuffer(1,rendered.data.length,rendered.sampleRate);
+      buffer.getChannelData(0).set(rendered.data);this.cache.set(key,buffer);
+      if(this.cache.size>64)this.cache.delete(this.cache.keys().next().value);return buffer;
+    }
+    async play(setId,cueId=null){
+      this.stop();const token=this.generation,set=SETS.find(s=>s.id===setId);
+      if(!set)return;this.onState({status:'loading',set:setId,message:`Preparing ${setId} · ${set.name}…`});
+      try{
+        await this.unlock();if(token!==this.generation)return;
+        const plan=cueId?[{time:0,cue:cueId,gain:1}]:SEQUENCE;
+        const prepared=[];
+        for(const item of plan){prepared.push({...item,buffer:this.buffer(setId,item.cue)});await new Promise(resolve=>setTimeout(resolve,0));if(token!==this.generation)return;}
+        const start=this.context.currentTime+.04,duration=cueId?prepared[0].buffer.duration:SEQUENCE_DURATION;
+        this.active={set:setId,cue:cueId,start,duration,plan,lastCue:-1};
+        for(const item of prepared){
+          const source=this.context.createBufferSource(),gain=this.context.createGain();source.buffer=item.buffer;gain.gain.value=item.gain;
+          source.connect(gain);gain.connect(this.master);source.voiceGain=gain;this.sources.add(source);
+          source.onended=()=>{source.disconnect();gain.disconnect();this.sources.delete(source);};source.start(start+item.time);
+        }
+        this.onState({status:'playing',set:setId,cue:cueId,duration,message:`${setId} · ${set.name} / ${cueId?CUES.find(c=>c.id===cueId).label:'Encounter'}`});
+        this.tick();this.timer=setInterval(()=>this.tick(),50);
+      }catch(error){if(token===this.generation){this.stop();this.onState({status:'error',message:error.message||'Audio is unavailable in this browser.'});}}
+    }
+    tick(){const a=this.active;if(!a)return;const elapsed=Math.max(0,this.context.currentTime-a.start);
+      let index=-1;for(let i=0;i<a.plan.length;i++)if(a.plan[i].time<=elapsed)index=i;
+      if(index!==a.lastCue){a.lastCue=index;this.onCue({set:a.set,cue:a.plan[index]?.cue});}
+      this.onState({status:'progress',elapsed,duration:a.duration});
+      if(elapsed>=a.duration)this.stop('Finished. Replay or compare another set.');
+    }
+  }
+  globalThis.SoundAudition={SETS,CUES,SEQUENCE,SEQUENCE_DURATION,synthesize,Player};
+})();
+</script>
+<script id="audition-ui">
+(() => {
+  const {SETS,CUES,SEQUENCE,Player,synthesize}=SoundAudition;
+  const $=id=>document.getElementById(id),groups=[...new Set(CUES.map(c=>c.group))];
+  let selected=null,playingSet=null;
+  const button=(cue,short=false)=>`<button class="cue-button" data-cue="${cue.id}" aria-pressed="false" title="${cue.label}">${short?({'sword':'Swing','impact':'Hit','ember':'Cast','heal':'Heal'}[cue.id]||cue.label):cue.label}</button>`;
+  function wave(set){const {data}=synthesize(set.id,'impact',8000);let lines='';for(let i=0;i<38;i++){let peak=0;const from=Math.floor(i*data.length/38),to=Math.floor((i+1)*data.length/38);for(let j=from;j<to;j++)peak=Math.max(peak,Math.abs(data[j]));const h=Math.max(1,peak*22);lines+=`<path d="M${i*3.3+1} ${13-h}v${h*2}"/>`;}return `<svg class="wave" viewBox="0 0 128 26" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7">${lines}</svg>`;}
+  $('compare-cue').innerHTML=groups.map(group=>`<optgroup label="${group}">${CUES.filter(c=>c.group===group).map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}</optgroup>`).join('');
+  $('compare-cue').value='impact';
+  $('sets').innerHTML=SETS.map(set=>`<article class="set" id="set-${set.id}" data-set="${set.id}" style="--color:${set.color}" aria-labelledby="name-${set.id}"><div class="card-head"><span class="number">${set.id}</span><div><h2 id="name-${set.id}">${set.name}</h2><p class="description">${set.description}</p></div></div><div class="signature"><span class="tags">${set.tags}</span>${wave(set)}</div><div class="actions"><button class="primary encounter" aria-label="Play encounter, set ${set.id}, ${set.name}"><span class="play-icon" aria-hidden="true">▶</span>Encounter · 26s</button><button class="preview" aria-label="Play comparison cue, set ${set.id}, ${set.name}">Play comparison<span class="cue-caption">Weapon hit</span></button></div><div class="quick" aria-label="Quick cues">${['sword','impact','ember','heal'].map(id=>button(CUES.find(c=>c.id===id),true)).join('')}</div><div class="footer-actions"><span class="edition">37 cues · Complete set</span><button class="choose" aria-pressed="false">Choose ${set.id}</button></div><details class="all-cues"><summary>Browse all 37 effects</summary>${groups.map(group=>`<section class="cue-group"><h3>${group}</h3><div class="cue-grid">${CUES.filter(c=>c.group===group).map(c=>button(c)).join('')}</div></section>`).join('')}</details></article>`).join('');
+  $('timeline').innerHTML=SEQUENCE.map(item=>`<li>${item.time.toFixed(1)}s · ${CUES.find(c=>c.id===item.cue).label}</li>`).join('');
+  const format=seconds=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
+  function clearCue(){document.querySelectorAll('.cue-button[aria-pressed="true"]').forEach(b=>b.setAttribute('aria-pressed','false'));}
+  const player=new Player({onState(state){
+    if(state.status==='progress'){$('progress').value=state.elapsed/state.duration;$('time').textContent=`${format(Math.min(state.elapsed,state.duration))} / ${format(state.duration)}`;return;}
+    if(state.message)$('status').textContent=state.message;
+    playingSet=state.set||null;document.querySelectorAll('.set').forEach(card=>card.classList.toggle('playing',card.dataset.set===playingSet));
+    if(state.status==='idle'||state.status==='error'){$('progress').value=0;$('time').textContent='0:00 / 0:00';clearCue();}
+  },onCue({set,cue}){clearCue();document.querySelectorAll(`#set-${set} [data-cue="${cue}"]`).forEach(b=>b.setAttribute('aria-pressed','true'));const active=player.active;if(active&&!active.cue)$('status').textContent=`${set} · ${SETS.find(s=>s.id===set).name} / ${CUES.find(c=>c.id===cue)?.label||'Encounter'}`;}});
+  function choose(id,save=true){selected=SETS.find(s=>s.id===id);if(!selected)return;
+    $('selection').hidden=false;$('choice-text').value=`My sound direction: Set ${selected.id} — ${selected.name}.`;
+    document.querySelectorAll('.set').forEach(card=>{const chosen=card.dataset.set===id;card.classList.toggle('chosen',chosen);const b=card.querySelector('.choose');b.setAttribute('aria-pressed',String(chosen));b.textContent=chosen?'✓ Chosen':`Choose ${card.dataset.set}`;});
+    if(save){try{localStorage.setItem('hallowmere-sound-study-v1',id);}catch{}$('status').textContent=`Set ${id} chosen. Copy your choice below to send it back.`;}
+  }
+  $('sets').addEventListener('click',event=>{const b=event.target.closest('button');if(!b)return;const set=b.closest('[data-set]').dataset.set;
+    if(b.classList.contains('choose')){choose(set);$('selection').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'nearest'});return;}
+    if(b.dataset.cue)void player.play(set,b.dataset.cue);else if(b.classList.contains('preview'))void player.play(set,$('compare-cue').value);else if(b.classList.contains('encounter'))void player.play(set);
+  });
+  $('compare-cue').addEventListener('change',()=>{const label=CUES.find(c=>c.id===$('compare-cue').value).label;document.querySelectorAll('.cue-caption').forEach(el=>el.textContent=label);});
+  $('volume').addEventListener('input',()=>{player.setVolume($('volume').value/100);$('volume-value').textContent=`${$('volume').value}%`;});
+  $('stop').addEventListener('click',()=>player.stop());
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')player.stop();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)player.stop('Stopped while this tab was hidden.');});
+  window.addEventListener('pagehide',()=>player.stop());
+  $('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('choice-text').value);$('copy').textContent='Copied';setTimeout(()=>$('copy').textContent='Copy choice',1800);}catch{$('choice-text').focus();$('choice-text').select();$('status').textContent='Choice selected. Press Command+C or Control+C to copy.';}});
+  try{choose(localStorage.getItem('hallowmere-sound-study-v1'),false);}catch{}
+})();
+</script>
+</body>
+</html>

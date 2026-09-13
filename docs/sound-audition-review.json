@@ -1,0 +1,87 @@
+{
+  "url": "http://127.0.0.1:5561/sound-audition.html",
+  "checks": [
+    "Ten cards and all 37 cues per card",
+    "Individual playback and identical encounter scheduling",
+    "Comparison cue selector updates all cards",
+    "Volume zero, replacement playback, Stop and Escape",
+    "Choice text and local preference persistence",
+    "1280px desktop and 390px mobile layouts without horizontal overflow",
+    "Ten encounter renders through Chrome OfflineAudioContext with zero clipped samples"
+  ],
+  "renders": [
+    {
+      "set": "01",
+      "name": "Worn Iron",
+      "peakDbFS": -6.15,
+      "rmsDbFS": -26.98,
+      "clippedSamples": 0
+    },
+    {
+      "set": "02",
+      "name": "Cathedral Bells",
+      "peakDbFS": -5.65,
+      "rmsDbFS": -23.0,
+      "clippedSamples": 0
+    },
+    {
+      "set": "03",
+      "name": "Bone & Hide",
+      "peakDbFS": -6.97,
+      "rmsDbFS": -29.3,
+      "clippedSamples": 0
+    },
+    {
+      "set": "04",
+      "name": "Witchglass",
+      "peakDbFS": -5.64,
+      "rmsDbFS": -24.11,
+      "clippedSamples": 0
+    },
+    {
+      "set": "05",
+      "name": "Black Powder",
+      "peakDbFS": -5.11,
+      "rmsDbFS": -23.19,
+      "clippedSamples": 0
+    },
+    {
+      "set": "06",
+      "name": "Mire & Mouth",
+      "peakDbFS": -5.32,
+      "rmsDbFS": -23.64,
+      "clippedSamples": 0
+    },
+    {
+      "set": "07",
+      "name": "Stormbound",
+      "peakDbFS": -6.58,
+      "rmsDbFS": -26.21,
+      "clippedSamples": 0
+    },
+    {
+      "set": "08",
+      "name": "Velvet Dread",
+      "peakDbFS": -5.36,
+      "rmsDbFS": -23.32,
+      "clippedSamples": 0
+    },
+    {
+      "set": "09",
+      "name": "Runic Arcade",
+      "peakDbFS": -6.45,
+      "rmsDbFS": -24.24,
+      "clippedSamples": 0
+    },
+    {
+      "set": "10",
+      "name": "Clockwork Crypt",
+      "peakDbFS": -6.61,
+      "rmsDbFS": -28.78,
+      "clippedSamples": 0
+    }
+  ],
+  "volume": 0.55,
+  "sampleRate": 24000,
+  "durationSeconds": 26.1
+}
