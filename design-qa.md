@@ -1,3 +1,61 @@
+# Dialogue tree implementation — selected variation 02
+
+final result: passed
+
+## Target and evidence
+
+The user selected “02 The dialogue tree” from `dist/quest-proposals.html#variation-2`. The source panel and the implemented conversation use the same 600px desktop width. The gallery navigation and captions are study controls, outside the implementation target.
+
+- Source visual truth: `screenshots/dialogue-tree/reference.png`.
+- Implementation capture: `screenshots/dialogue-tree/desktop.png`.
+- Aligned full-dialog comparison: `screenshots/dialogue-tree/comparison.png` (reference on the left, implementation on the right).
+- Both desktop captures use a 1280 × 720 CSS viewport and are saved as 1280 × 720 pixels. The browser reported source density 1 and implementation density 2; its screenshot output normalizes both to one pixel per CSS pixel. No subsequent image scaling was used. The comparison crops are 600 × 505 and 600 × 533 pixels, aligned at their panel tops on a 1232 × 533 canvas.
+- State: Brann, 45 crowns, four draughts, no prior honing. The temporary fixture imported the real campaign, rendering, keyboard handling, and styling modules. Its sample funds were controlled QA data; they were not added to the live game. The fixture route was removed after verification.
+- `screenshots/dialogue-tree/mobile.png`: 390 × 844 viewport and pixels, same Brann state after the mobile correction.
+- `screenshots/dialogue-tree/unavailable.png`: after honing and buying a draught, three crowns and a full belt, with both unavailable reasons visible.
+- `screenshots/dialogue-tree/live-brann.png`: real Single Player conversation, zero crowns and three draughts.
+- `screenshots/dialogue-tree/live-quest.png`: real Elder Rowan quest proposal with its first response focused.
+
+Both full desktop captures were viewed together. The aligned comparison was then opened to inspect the complete conversation at readable, unscaled size, including typography, rule, response highlighting, prices, departure, and resources. This also provides the focused-region evidence; no separate detail crop was needed.
+
+## Findings and comparison history
+
+No unresolved P0/P1/P2 issues.
+
+1. **P2: Mobile dialog exceeded the viewport.** The inherited grid's intrinsic column expanded to the 600px dialog width even on a 390px screen. A page-width check alone missed it because the game clips overflow. Added scoped `minmax(0, 1fr)` grid tracks, `width: min(600px, 100%)`, and `min-width: 0`. Reopened the default-state fixture and inspected actual panel bounds: at 390 × 844 the panel is 354px wide at x=18; at 320 × 740 it is 284px wide at x=18. Both contain the complete responses and resource footer. The corrected mobile capture and recaptured desktop comparison passed.
+2. **Accepted implementation accommodations:** Farewell has a 44px hit area while retaining its small text treatment, producing a slightly taller dialog than the study. Price units use the same readable size as their numbers. The background uses the live game's modal shade and scene rather than the gallery's static stage. These do not change the selected hierarchy.
+
+## Required fidelity surfaces
+
+- **Fonts and typography:** Retained Cinzel for the 32px character heading, Georgia for the 19px speech and 17px responses, and Inter for supporting text and prices. Centered speech wraps like the selected desktop panel. Mobile uses 18px speech and 16px responses; long text wraps inside the available width.
+- **Spacing and layout:** Centered identity and speech, an 80px rule, 32px gap before choices, left-aligned numbers, right-aligned prices, and a divided resource footer. No outer dialog frame or large primary departure button. The active available response has the selected gold edge and subtle horizontal highlight.
+- **Colors and tokens:** Existing gold/green palette retained, with the study's speech, response, metadata, number, and highlight colors. Disabled choices stay distinct and include an explicit reason. Keyboard focus on Farewell has a small outline rather than a large button treatment.
+- **Image quality and assets:** No new raster assets are needed by this typography-led design. The live game remains visible through its dimmed, softly blurred backdrop. The sample fixture reused the repository gameplay image. No replacement character art was introduced.
+- **Copy and content:** Brann's dialogue and spoken responses match the selection. Other NPCs use the same numbered response structure with their own quest, healing, supply, and reward information. Prices, limits, and rewards are still enforced by the existing campaign actions. The legacy service labels and action IDs remain available to other consumers.
+
+## Interaction and validation
+
+- Initial focus enters the first available response; when all services are unavailable, the compact Farewell response receives focus.
+- Keys 1/2/3 activate the corresponding response; held number keys do not repeat purchases, unavailable choices remain inert, and handled keys stop before reaching combat bindings.
+- Arrow keys, Home/End, Tab wrapping, Enter, and Escape were checked. Existing shared-modal Tab behavior remains in use.
+- Fixture: 1 hones the weapon, charges 30 crowns, displays the next 60-crown price, and transfers focus to the affordable draught; 2 buys it, fills the belt, and transfers focus to Farewell. Fully honed/full-belt states explain both unavailable services.
+- Live game: approach Brann through normal movement, open the dialog, check unavailable shortcuts and Tab with only Farewell enabled; close, open Inventory, and verify its normal class and primary button; approach Rowan, accept The Last Toll using 1, verify the updated objective and focus on the remaining Farewell; approach Edda and use the free rest response; close via keyboard and return to Brann.
+- Browser error log: no errors.
+- Automated checks: 192 tests passed, zero failures; build passed. Added transaction/price consistency, response numbering/empty conversation, escaping, and keyboard interaction coverage. The final merge workflow reruns tests and build against current main.
+- Physical touch hardware was not tested; mobile checks used browser viewport overrides. Temporary overrides were reset.
+
+## Implementation checklist
+
+- [x] Implement the selected conversation in the production NPC modal.
+- [x] Preserve real game action paths, costs, caps, and quest progression.
+- [x] Preserve focus across authoritative service updates.
+- [x] Validate desktop and narrow-screen rendering, plus non-NPC modal restoration.
+- [x] Remove the temporary QA fixture and retain screenshot evidence.
+
+No remaining follow-up polish is required for this selection.
+
+---
+
 # Hallowmere inventory design QA
 
 final result: passed

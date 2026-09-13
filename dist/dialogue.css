@@ -1,0 +1,121 @@
+/* Selected study 02: the conversation is the surface, responses are the actions. */
+.modal-shade.npc-conversation {
+  background: #050c0de0;
+  backdrop-filter: blur(3px);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.modal.npc-modal {
+  width: min(600px, 100%);
+  min-width: 0;
+  padding: 20px 8px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  max-height: 100%;
+  overscroll-behavior: contain;
+}
+.npc-modal > .eyebrow {
+  font-size: 10px;
+  letter-spacing: 2.2px;
+  color: #b6a16d;
+}
+.npc-modal h2 {
+  font-size: 32px;
+  line-height: 1.25;
+  margin: 10px 0 26px;
+  color: #e0d3b0;
+}
+.npc-modal > .modal-actions { display: none; }
+.dialogue-rule {
+  height: 1px;
+  width: 80px;
+  background: var(--gold);
+  opacity: .5;
+  margin: 0 auto 18px;
+}
+.npc-modal .npc-speech {
+  font-family: Georgia, serif;
+  font-size: 19px;
+  line-height: 1.65;
+  font-weight: 400;
+  text-align: center;
+  color: #bac3b5;
+  max-width: 550px;
+  margin: 0 auto;
+}
+.npc-modal .dialogue-choices { margin: 32px 0 0; gap: 7px; }
+.npc-modal .dialogue-response {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 54px;
+  gap: 13px;
+  padding: 12px 16px 12px 14px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: none;
+  text-align: left;
+  color: #d5c49a;
+}
+.dialogue-number { font-family: Georgia, serif; font-size: 17px; color: #998963; }
+.dialogue-copy { flex: 1; min-width: 0; }
+.dialogue-reply { font-family: Georgia, serif; font-size: 17px; line-height: 1.5; }
+.dialogue-copy small { display: block; font-size: 11px; line-height: 1.5; color: #98a78e; margin: 3px 0 0 8px; }
+.dialogue-price { font-size: 12px; color: #d6c18f; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.npc-modal .dialogue-response:not(:disabled):hover,
+.npc-modal .dialogue-response:not(:disabled):focus-visible,
+.npc-modal .dialogue-choices:not(:has(button:hover)):not(:has(button:focus-visible)) .is-suggested {
+  background: linear-gradient(90deg, #bba36824, transparent);
+  border-left-color: #bba368;
+}
+.npc-modal .dialogue-response:focus-visible { outline: none; }
+.npc-modal .dialogue-response:disabled { opacity: .55; background: none; cursor: default; }
+.npc-modal .dialogue-farewell {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 16px;
+  min-height: 44px;
+  padding: 8px 0;
+  margin-left: 16px;
+  border: 0;
+  background: none;
+  color: #9aa295;
+  font-size: 12px;
+}
+.npc-modal .dialogue-farewell:hover { background: none; color: var(--gold-bright); }
+.npc-modal .dialogue-farewell:focus-visible { outline: 1px solid var(--gold); outline-offset: 3px; }
+.dialogue-farewell kbd { font-size: 9px; padding: 4px 5px; color: #9ca58f; background: none; }
+.dialogue-resources {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #9d8d6026;
+  font-size: 11px;
+  color: #99a18b;
+}
+.dialogue-crowns { color: #c2b181; font-size: 12px; }
+.dialogue-crowns strong { color: #d6c497; font-size: 14px; font-weight: 500; }
+@media (max-width: 600px) {
+  .modal-shade.npc-conversation { padding: 24px 18px; }
+  .modal.npc-modal { padding: 16px 0; }
+  .npc-modal h2 { font-size: 29px; margin-bottom: 22px; }
+  .npc-modal .npc-speech { font-size: 18px; }
+  .npc-modal .dialogue-response { gap: 8px; padding: 12px 8px 12px 6px; }
+  .dialogue-reply { font-size: 16px; }
+  .dialogue-copy small { margin-left: 0; }
+  .dialogue-price { font-size: 11px; }
+  .npc-modal .dialogue-farewell { margin-left: 8px; }
+}
+@media (max-height: 650px) {
+  .modal.npc-modal { padding-block: 10px; }
+  .npc-modal h2 { margin-bottom: 16px; }
+  .dialogue-rule { margin-bottom: 14px; }
+  .npc-modal .npc-speech { font-size: 17px; line-height: 1.55; }
+  .npc-modal .dialogue-choices { margin-top: 20px; }
+  .dialogue-resources { margin-top: 14px; padding-top: 12px; }
+}
