@@ -14,6 +14,8 @@
 
 ## Run
 
+Coding tasks use isolated worktrees and merge completed, validated changes into local `main`. See [the worktree workflow](docs/worktrees.md) for setup, development ports, and conflict recovery.
+
 Requires Node.js 22 or newer. Run `npm ci` once to install the multiplayer server dependency. The pinned Three.js 0.180.0 runtime is included locally.
 
 ```sh
