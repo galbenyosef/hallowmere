@@ -317,7 +317,7 @@ function networkEvent(event){
   const actor=event.playerId===network.id?{model:player,rig:heroRig}:multiplayerView.actors.get(event.playerId);if(!actor)return;
   const local=event.playerId===network.id,rig=actor.rig;
   const skill=abilityForEvent(event),color=event.color||classColor(event),classVisual=classEffects.ability(event,skill,actor.model);
-  if(skill?.kind==='melee'){rig.attack=.42;rig.attackKind=event.variant==='closeRange'?'paired':'attack';if(!classVisual)slash(pos,event.angle,color,skill.range,.3);audioAt('sword',pos,.6);}
+  if(skill?.kind==='melee'){rig.attack=.42;rig.attackKind=skill.hits===2?'paired':'attack';if(!classVisual)slash(pos,event.angle,color,skill.range,.3);audioAt('sword',pos,.6);}
   if(skill?.kind==='projectile'){
    rig.attack=.36;rig.attackKind='bolt';
    const hand=pos.clone().add(new T.Vector3(0,1.2,0)),direction=new T.Vector3(Math.sin(event.angle),0,Math.cos(event.angle));

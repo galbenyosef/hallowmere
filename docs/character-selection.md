@@ -18,7 +18,7 @@ choices is the Hallowmere character study gallery.
 | C01 | Sorcerer | Crystal-tipped staff | Spellbook |
 | C02 | Ranger | Elven longbow | Quiver & twin fighting knives |
 | C03 | Reaver | Two-handed war axe | Fury talisman |
-| C04 | Nightblade | Paired hooked daggers | Throwing knives |
+| C04 | Nightblade | Paired elven blades | Throwing knives |
 | C05 | Oathkeeper | Lantern mace | Kite shield |
 | C09 | Plague Alchemist | Hand crossbow | Alchemical flask |
 
