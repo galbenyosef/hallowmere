@@ -30,3 +30,15 @@ test('remote class changes replace the model and label while preserving location
   view.sync([a],'self');assert.equal(nodes.size,1);
  }finally{delete globalThis.document;}
 });
+
+
+test('party members on different maps retain party state but hide their actor, ring, and label',()=>{
+ globalThis.document={getElementById:()=>({append(){}}),createElement:()=>({style:{},remove(){}})};globalThis.innerWidth=1000;globalThis.innerHeight=700;
+ try{
+  const scene=new T.Scene(),player=new T.Group();scene.add(player);
+  const view=createMultiplayerView({scene,camera:new T.PerspectiveCamera(),cloneModel:()=>new T.Group(),getRig:()=>({}),animateRig(){},animateHeroAttack(){},player});
+  const self={id:'self',slot:0,color:'#55cce6',mapId:'drowned-wood',x:0,z:0},ally={id:'ally',slot:1,color:'#eda957',mapId:'overworld',x:1,z:1};
+  view.sync([self,ally],'self');view.update(.05,1);const actor=view.actors.get('ally');assert.equal(actor.model.visible,false);assert.equal(actor.ring.visible,false);assert.equal(actor.label.hidden,true);assert.equal(view.actors.size,2);
+  view.sync([self,{...ally,mapId:'drowned-wood'}],'self');view.update(.05,1);assert.equal(actor.model.visible,true);assert.equal(actor.ring.visible,true);
+ }finally{delete globalThis.document;delete globalThis.innerWidth;delete globalThis.innerHeight;}
+});
