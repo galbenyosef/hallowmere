@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101719">
+  <title>Predator — Hallowmere Enemy Study</title>
+  <meta name="description" content="A Predator-inspired enemy study with masked and unmasked appearances, wrist blades, shoulder cannon, and comparison with the Wild Hunt King.">
+  <link rel="icon" href="./assets/icons/favicon-32.png">
+  <link rel="stylesheet" href="./predator-study.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="./character-studies.html">Hallowmere</a>
+    <span class="edition">Enemy study <span class="edition-number">/ 05</span></span>
+  </header>
+  <main>
+    <div class="page-title">
+      <div><p class="eyebrow">Enemy / Trophy hunter</p><h1>Predator</h1></div>
+      <span class="review-note">Design review · Not yet in encounters</span>
+    </div>
+    <div class="study-layout">
+      <section class="viewer" aria-label="Predator 3D design sheet">
+        <div class="viewer-topline"><span id="view-label">Three-quarter view</span><span id="pose-label">Wrist blades extended</span></div>
+        <div class="model-stage" id="model-stage" tabindex="0" role="region" aria-label="Interactive Predator model. Drag horizontally or use left and right arrow keys to rotate." aria-describedby="rotation-hint">
+          <canvas id="character-canvas" aria-label="A Predator-inspired hunter with an armored mask, banded tendrils, netted skin, wrist blades, and a shoulder cannon"></canvas>
+          <div class="viewer-message" id="viewer-message" role="status">Preparing the character…</div>
+        </div>
+        <div class="viewer-bottomline"><span>Twin blades. Shoulder cannon.</span><span class="scale-indicator" id="scale-indicator">Character detail</span></div>
+        <div class="view-controls" aria-label="Camera views">
+          <button type="button" data-view="three-quarter" aria-pressed="true">¾ view</button>
+          <button type="button" data-view="front" aria-pressed="false">Front</button>
+          <button type="button" data-view="side" aria-pressed="false">Side</button>
+          <button type="button" data-view="back" aria-pressed="false">Back</button>
+          <button type="button" data-view="face" aria-pressed="false">Head</button>
+          <button type="button" data-view="game" aria-pressed="false">Game scale</button>
+          <button type="button" data-view="compare" aria-pressed="false">Beside the King</button>
+        </div>
+        <div class="rotation-row">
+          <button type="button" id="rotate-left" aria-label="Rotate character left">↶</button>
+          <p id="rotation-hint">Drag to turn <span>·</span> Arrow keys rotate</p>
+          <button type="button" id="rotate-right" aria-label="Rotate character right">↷</button>
+          <button type="button" id="reset-view">Reset</button>
+        </div>
+      </section>
+      <aside class="design-notes" aria-label="Appearance and equipment">
+        <section class="appearance-controls-section">
+          <div class="section-heading"><h2>Appearance</h2><span>02 views</span></div>
+          <div class="appearance-controls" aria-label="Head appearance">
+            <button type="button" data-appearance="masked" aria-pressed="true">Masked</button>
+            <button type="button" data-appearance="unmasked" aria-pressed="false">Unmasked</button>
+          </div>
+          <p class="appearance-caption" id="appearance-caption" aria-live="polite">Ridged metal mask, dark eye slits, and a narrow breathing grille.</p>
+        </section>
+        <section class="equipment-section">
+          <div class="section-heading"><h2>Hunter poses</h2><span>03 studies</span></div>
+          <div class="equipment-list" aria-label="Hunter poses">
+            <button type="button" class="equipment-button" data-pose="stalk" aria-pressed="false"><span class="weapon-number">01</span><span><strong>Stalking stance</strong><small>Blades retracted · full armor silhouette</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+            <button type="button" class="equipment-button" data-pose="blades" aria-pressed="true"><span class="weapon-number">02</span><span><strong>Wrist blades</strong><small>Twin blades extended from the gauntlet</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+            <button type="button" class="equipment-button" data-pose="aim" aria-pressed="false"><span class="weapon-number">03</span><span><strong>Shoulder cannon</strong><small>Raised cannon · charged plasma lens</small></span><span class="selected-mark" aria-hidden="true">✓</span></button>
+          </div>
+          <p class="equipment-caption" id="equipment-caption" aria-live="polite">Two long wrist blades extend from the right gauntlet. The other hand remains free.</p>
+        </section>
+        <section class="appearance-section">
+          <div class="section-heading"><h2>Character details</h2></div>
+          <dl class="appearance-list">
+            <div><dt>Mask & mandibles</dt><dd>A ridged bio-mask reveals an amber-eyed face with four tusked mandibles when removed.</dd></div>
+            <div><dt>Armor & tendrils</dt><dd>Layered metal plates, netted skin, bronze fittings, and long banded tendrils frame a broad hunter silhouette.</dd></div>
+          </dl>
+          <div class="palette" aria-label="Material palette: worn metal, dark armor, mottled skin, bronze fittings, and dark tendrils">
+            <span style="--swatch:#697875" title="Worn metal"></span><span style="--swatch:#354449" title="Dark armor"></span><span style="--swatch:#a19773" title="Mottled skin"></span><span style="--swatch:#978265" title="Bronze fittings"></span><span style="--swatch:#292e29" title="Banded tendrils"></span>
+            <span class="palette-label">Steel / bronze / hide</span>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <footer class="sheet-footer"><span>Hallowmere <span aria-hidden="true">/</span> Predator study</span><p>Appearance and equipment preview. Encounter design follows approval.</p><a href="./?preview=predator">Preview in game ↗</a><a href="./hunt-king-study.html">View Wild Hunt King ↗</a></footer>
+    <noscript><p class="noscript-note">Enable JavaScript to view and rotate the 3D character. The pose and appearance notes remain available above.</p></noscript>
+  </main>
+  <script type="module" src="./predator-study.js"></script>
+</body>
+</html>
