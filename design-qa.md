@@ -49,7 +49,7 @@ No unresolved P0, P1, or P2 findings.
 - Reduced motion: the inventory portrait is a cached still image (computed animation-name: none), and inventory has an explicit reduced-motion override disabling animation and transitions. OS-level reduced-motion emulation was not available through this browser interface; existing reduced-motion tests also pass.
 - Browser console: no errors or warnings in the live game or character gallery. Representative inventory images were checked for complete loads and nonzero natural dimensions. Build validation resolves local imports and asset URLs.
 - Final `npm run build`: passed.
-- Final `npm test`: 86 passed, 0 failed. The initial sandboxed test run could not bind localhost sockets; the complete suite passed with localhost access.
+- Final `npm test`: 110 passed, 0 failed after integrating current main. The initial sandboxed test run could not bind localhost sockets; the complete suite passed with localhost access.
 - `git diff --check`: passed.
 
 ## Implementation and handoff
@@ -60,3 +60,9 @@ Base: `8e8f6105a3d0b46e50034ca8d5a024aaa3be4020`.
 Preview: `http://127.0.0.1:5186/` (I opens inventory).
 
 Implementation and visual validation were completed in the requested isolated worktree. No deployment was performed. No remaining visual follow-up is required for the accepted scope.
+
+## Current-main compatibility
+
+Integrated main at `cee59465c851c47f8282f3a345595cf6481949a9`, retaining the foraging pouch and Arcane Bolt effects. The pouch appears beneath attributes with matching inventory colors, three Eat actions, and 44px button targets. Resource spans and snapshot updates preserve live vitality, essence, crowns, food counts, availability, focused controls, and scrolling. The resource updater includes the modal heading now that crowns live outside the scrolling content.
+
+The combined result passes all 110 tests and the build. Browser checks at 1440 × 1000 and 390 × 844 confirmed the pouch layout, keyboard focus and scroll into view, persistent footer, and no console warnings or errors. Additional captures: `screenshots/inventory-redesign/integrated-desktop.jpg` and `screenshots/inventory-redesign/integrated-mobile-pouch.jpg`.

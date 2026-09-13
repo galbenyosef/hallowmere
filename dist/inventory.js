@@ -1,3 +1,4 @@
+import {pouchMarkup} from './pouch.js';
 import {classFor,primaryDamage,classAppearance} from './classes.js';
 import {portraitFor,weaponPortraitFor,inventoryPortraitFor,inventoryPortraitStatus} from './character-art.js';
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -60,13 +61,14 @@ export function inventoryMarkup(state,selectedId){
         <div class="inventory-equipment" aria-label="Equipped gear">${slot('weapon')}${slot('charm')}</div>
       </section>
       <section class="inventory-attributes" aria-label="Character attributes"><h3>Attributes</h3><dl>
-        <div class="vitality-stat"><dt>Vitality</dt><dd>${Math.ceil(state.hp)} <small>/ ${state.maxHp}</small></dd></div>
-        <div class="essence-stat"><dt>Essence</dt><dd>${Math.floor(state.mana)} <small>/ ${state.maxMana}</small></dd></div>
+        <div class="vitality-stat"><dt>Vitality</dt><dd><span data-resource="hp">${Math.ceil(state.hp)}</span> <small>/ <span data-resource="maxHp">${state.maxHp}</span></small></dd></div>
+        <div class="essence-stat"><dt>Essence</dt><dd><span data-resource="mana">${Math.floor(state.mana)}</span> <small>/ <span data-resource="maxMana">${state.maxMana}</span></small></dd></div>
         <div><dt>${state.classId?'Primary hit':'Cleave'}</dt><dd>${primaryDamage(state)}</dd></div>
-        <div><dt>Level</dt><dd>${state.level}</dd></div>
-        <div><dt>Honing</dt><dd>${state.forgeLevel} <small>/ 3</small></dd></div>
-        <div><dt>Draughts</dt><dd>${state.potions} <small>/ 5</small></dd></div>
+        <div><dt>Level</dt><dd><span data-resource="level">${state.level}</span></dd></div>
+        <div><dt>Honing</dt><dd><span data-resource="forgeLevel">${state.forgeLevel}</span> <small>/ 3</small></dd></div>
+        <div><dt>Draughts</dt><dd><span data-resource="potions">${state.potions}</span> <small>/ 5</small></dd></div>
       </dl></section>
+      ${pouchMarkup(state)}
     </div>
     <div class="inventory-belongings">
       <section class="inventory-satchel" aria-label="Satchel">

@@ -105,6 +105,13 @@
 .inventory-attributes small { font-size: 12px; color: #879ba3; }
 .inventory-attributes .vitality-stat dd { color: #efada8; }
 .inventory-attributes .essence-stat dd { color: #8ed1e5; }
+.inventory-modal .inventory-pouch { margin-top: 22px; padding-top: 16px; border-color: var(--inventory-line); }
+.inventory-modal .pouch-food { gap: 9px; padding: 10px; background: var(--inventory-surface); border-color: #69808d40; }
+.inventory-modal .pouch-icon { width: 26px; height: 26px; }
+.inventory-modal .pouch-copy h4 { font-size: 14px; }
+.inventory-modal .pouch-copy p { font-size: 14px; color: var(--inventory-text); }
+.inventory-modal .pouch-copy small, .inventory-modal .pouch-guidance { color: var(--inventory-muted); }
+.inventory-modal .pouch-action button { min-width: 48px; min-height: 44px; padding: 7px 10px; border-color: #b6a06b80; background: #28302b; color: #e9d4a5; }
 .inventory-bag-heading { display: flex; justify-content: space-between; align-items: center; padding: 0 0 13px; }
 .inventory-bag-heading > span { font-size: 12px; color: var(--inventory-muted); }
 .inventory-satchel { container-type: inline-size; }

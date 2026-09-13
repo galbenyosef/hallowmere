@@ -12,6 +12,21 @@ function next(ws,predicate,timeout=3000){return new Promise((resolve,reject)=>{
 async function setup(t){const game=createGameServer({origins:['https://game.example'],log:()=>{}});await new Promise(r=>game.server.listen(0,'127.0.0.1',r));t.after(()=>game.close());return {...game,url:`ws://127.0.0.1:${game.server.address().port}/multiplayer`};}
 async function join(url,token){const ws=new WebSocket(url,{origin:'https://game.example'});const welcome=next(ws,m=>m.type==='welcome'||m.type==='error');ws.on('open',()=>ws.send(JSON.stringify({v,type:'join',token})));return {ws,message:await welcome};}
 
+test('foraging and eating round-trip through real sockets with personal snapshots and feedback',async t=>{
+ const game=await setup(t),a=await join(game.url),b=await join(game.url),initial=await next(a.ws,m=>m.type==='snapshot');
+ const patch=initial.forage.find(p=>p.id==='forage-1'),itemId=patch.itemId;
+ const harvested=next(a.ws,m=>m.type==='snapshot'&&m.state.pouch[itemId]===1);
+ a.ws.send(JSON.stringify({v,type:'forage',id:patch.id,worldId:initial.worldId,seq:1}));
+ const own=await harvested;assert.equal(own.forage.some(p=>p.id===patch.id),false);assert.ok(own.events.some(e=>e.operation==='forage'&&e.ok));
+ const other=await next(b.ws,m=>m.type==='snapshot');assert.equal(other.state.pouch[itemId],0);assert.ok(other.forage.some(p=>p.id===patch.id));assert.equal(other.events.some(e=>e.operation==='forage'),false);
+ game.world.players.get(a.message.id).state.hp=30;
+ const eaten=next(a.ws,m=>m.type==='snapshot'&&m.events.some(e=>e.operation==='consume'&&e.ok));
+ a.ws.send(JSON.stringify({v,type:'consume',itemId,worldId:initial.worldId,seq:2}));
+ const after=await eaten;assert.equal(after.state.hp,65);assert.equal(after.state.pouch[itemId],0);assert.ok(after.state.foodCooldown>0);
+ a.ws.close();await new Promise(r=>a.ws.once('close',r));const resumed=await join(game.url,a.message.token);
+ const fresh=await next(resumed.ws,m=>m.type==='snapshot');assert.equal(fresh.state.hp,65);assert.equal(fresh.forage.some(p=>p.id===patch.id),false);
+});
+
 test('selected classes synchronize between clients, acknowledge selection, cast, and resume',async t=>{
  const game=await setup(t),a=await join(game.url),b=await join(game.url),initial=await next(a.ws,m=>m.type==='snapshot');
  const confirmed=next(a.ws,m=>m.type==='snapshot'&&m.events.some(e=>e.operation==='class'&&e.ok));
