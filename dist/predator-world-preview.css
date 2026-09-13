@@ -1,0 +1,17 @@
+.predator-world-preview .quest{display:none}
+.predator-world-panel{position:absolute;top:150px;left:36px;z-index:4;width:244px;padding:18px;border:1px solid #b09d6840;background:linear-gradient(140deg,#17272bee,#0f1a1ede);border-radius:3px;box-shadow:0 8px 32px #0003}
+.predator-world-panel>.eyebrow{font-size:9px;color:#c3b28c}
+.predator-world-panel h2{font:500 23px var(--serif);color:#e0d7bd;margin:9px 0 12px}
+.predator-world-panel p{font-size:12px;line-height:1.7;color:#bbc4bf;margin:0 0 17px}
+.predator-world-options{display:grid;gap:13px}
+.predator-world-options button,.predator-world-options select{min-height:40px;border:1px solid #a99e7766;border-radius:3px;background:#26383c;color:#e1d8c0;font-size:12px;padding:8px 10px;width:100%}
+.predator-world-options label{display:grid;gap:7px;font-size:10px;letter-spacing:.5px;color:#aebbb4}
+.predator-world-options select:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
+.predator-world-panel>a{display:inline-block;color:#d5c49c;font-size:11px;text-decoration:none;margin-top:18px}
+.predator-preview-note{display:block;font-size:9px;line-height:1.5;color:#a4afa7;margin-top:13px}
+.predator-world-label{position:absolute;transform:translate(-50%,-100%);text-align:center;pointer-events:none;text-shadow:0 2px 6px #000;white-space:nowrap}
+.predator-world-label strong{display:block;font:500 15px var(--serif);color:#eedfc2}
+.predator-world-label span{display:block;font-size:8px;letter-spacing:1.6px;color:#b8c7c2;margin-top:5px}
+.predator-world-preview #arrival{display:none}
+@media(max-width:900px){.predator-world-panel{left:18px;width:210px;padding:14px}.predator-world-panel h2{font-size:20px}.predator-world-panel p{font-size:11px}}
+@media(max-width:650px){.predator-world-panel{top:12px;left:12px;right:12px;width:auto;padding:10px 12px}.predator-world-panel>.eyebrow,.predator-world-panel h2,.predator-world-panel p{display:none}.predator-world-options{grid-template-columns:1fr 1fr;gap:10px;align-items:end}.predator-world-options label{font-size:9px;gap:4px}.predator-world-options button,.predator-world-options select{min-height:36px;font-size:11px}.predator-world-panel>a{font-size:10px;margin-top:9px}.predator-preview-note{display:inline-block;margin:9px 0 0 12px;font-size:8px}.predator-world-preview .brand,.predator-world-preview .location,.predator-world-preview .map-panel:not(.expanded){display:none}.predator-world-label strong{font-size:12px}.predator-world-label span{font-size:7px}.predator-world-preview #multiplayer-status{top:auto;bottom:180px;left:12px;right:auto;transform:none;font-size:9px;max-width:calc(100vw - 24px)}}

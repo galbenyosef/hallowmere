@@ -1,0 +1,10 @@
+@import url('./hunt-king-study.css');
+
+.appearance-controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px}
+.appearance-controls button{min-height:42px;padding:8px 12px;font-size:.875rem}
+.appearance-caption{font-size:.875rem;color:var(--muted);line-height:1.65;margin:11px 0 24px;min-height:47px}
+.equipment-button{min-height:76px;padding:12px}
+.equipment-caption{min-height:70px;margin-bottom:24px}
+.viewer{background:radial-gradient(ellipse at 50% 43%,#2d3e40 0,#202f32 42%,#111d23 84%)}
+.view-controls button{padding:7px 10px}
+@media(max-width:760px){.appearance-caption{min-height:0}.equipment-caption{min-height:0}.equipment-button{min-height:77px}.view-controls button{padding:7px 10px}}
