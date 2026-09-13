@@ -101,7 +101,7 @@ test('authoritative snapshots identify secondary / volley projectiles and expose
  const shots=world.snapshot(viewer.id).projectiles;
  assert.equal(shots.filter(b=>b.action==='bolt'&&b.classId==='ranger').length,1);assert.equal(shots.filter(b=>b.action==='nova'&&b.classId==='ranger').length,3);
  assert.ok(shots.every(b=>!Object.hasOwn(b,'skill')&&!Object.hasOwn(b,'damage')));
- for(const classId of ['oathkeeper','geralt','reaver']){
+ for(const classId of ['geralt','reaver']){
   assert.ok(command('select-class',{classId}));player.state.cooldowns.bolt=player.state.cooldowns.nova=0;player.state.mana=100;
   assert.ok(command('ability',{action:classId==='geralt'?'nova':'bolt',angle:0}));
   const state=world.snapshot(viewer.id).players.find(p=>p.id===player.id);

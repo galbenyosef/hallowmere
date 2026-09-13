@@ -23,10 +23,11 @@ export const CLASSES={
   bolt:ability('Knife Fan','projectile',2.2,18,'Throw three knives in a narrow fan.',{damage:20,range:9,speed:21,projectile:'knife',count:3,spread:.18}),
   dodge:ability('Shadowstep','dodge',2.4,0,'Step behind a nearby enemy on a clear path, or evade in your movement direction.',{shadowstep:true,range:5.5}),
   nova:ability('Smoke Veil','zone',9,30,'Create four seconds of smoke that conceals allies and slows enemies.',{damage:0,radius:3.5,duration:4,interval:.3,conceal:true,slow:.5}),heal:draught}},
- oathkeeper:{id:'oathkeeper',concept:'C05',name:'Oathkeeper',role:'Melee · protection',description:'Hold the line with mace and shield. Protect yourself with Aegis and shelter your allies in Sanctuary.',hp:190,mana:100,regen:6,speed:4.2,color:'#e4cf8e',weapon:'Lantern mace',weaponType:'mace',focus:'Kite shield',abilities:{
-  attack:ability('Consecrated Strike','melee',.65,0,'Smite enemies in front of you, restoring 5 vitality per enemy struck.',{damage:30,range:2.7,arc:1.9,leech:5,magic:true}),
-  bolt:ability('Aegis','shield',6,20,'Raise a ward that absorbs 40 damage for four seconds.',{shield:40,duration:4}),dodge:evade('Pilgrim’s Step',2.3),
-  nova:ability('Sanctuary','zone',10,35,'Bless the ground for four seconds, healing allies and reducing damage by 20%.',{damage:5,heal:6,guard:.2,radius:4.2,duration:4,interval:.5,magic:true}),heal:draught}},
+ oathkeeper:{id:'oathkeeper',concept:'C05',name:'Oathkeeper',role:'Ranged · angelic support',description:'Take flight on radiant wings. Heal and empower allies with your staff, reach them with Guardian Angel, and revive the fallen with Valkyrie.',hp:135,mana:110,regen:8,speed:5,color:'#f3d68a',weapon:'Caduceus staff',weaponType:'staff',focus:'Radiant wings & Caduceus blaster',abilities:{
+  attack:ability('Caduceus Blaster','projectile',.38,0,'Fire a swift golden bolt from your sidearm.',{damage:19,range:14,speed:24,projectile:'radiant',magic:true}),
+  bolt:ability('Caduceus Staff','support',3,18,'Aim at an ally to tether for three seconds: heal 14 vitality every half-second, or grant 30% extra damage while healthy. With no reachable ally, heal yourself.',{heal:14,boost:.3,range:10,duration:3,interval:.5}),
+  dodge:ability('Guardian Angel','dodge',2.2,0,'Fly toward the ally nearest your aim, stopping beside them. With no ally, dash in your movement direction. Briefly evade damage.',{guardian:true,range:8}),
+  nova:ability('Valkyrie','zone',18,40,'Unfurl your wings for six seconds: move 25% faster, heal nearby allies, and grant 30% extra damage. On cast, resurrect the nearest fallen ally within six paces at half health.',{damage:0,heal:9,boost:.3,radius:4.5,duration:6,interval:.5,follow:true,valkyrie:true,resurrectRange:6}),heal:draught}},
  alchemist:{id:'alchemist',concept:'C09',name:'Plague Alchemist',role:'Ranged · affliction',description:'Coat the battlefield in poison, fire your hand crossbow, and shatter remedies to aid nearby allies.',hp:130,mana:110,regen:8,speed:4.8,color:'#c0d78e',weapon:'Hand crossbow',weaponType:'crossbow',focus:'Alchemical flask',abilities:{
   attack:ability('Virulent Bolt','projectile',.66,0,'Fire a bolt that poisons its target for three seconds.',{damage:19,range:10,speed:19,projectile:'venom',dot:{damage:4,duration:3,interval:.75,type:'poison'}}),
   bolt:ability('Bitter Remedy','burst',5,22,'Shatter a flask at your aim point, damaging enemies and healing allies for 25 vitality.',{damage:24,heal:25,radius:2.6,range:7,magic:true}),dodge:evade('Quickstep',1.9),
@@ -46,6 +47,8 @@ export function abilityForEvent(event){const skill=abilitiesFor(event)[event.act
 export const classAppearance=(classId,appearanceId)=>classId==='sorcerer'?(SORCERER_APPEARANCES[appearanceId]||SORCERER_APPEARANCES[DEFAULT_SORCERER_APPEARANCE]):null;
 export const conceptFor=(classId,appearanceId)=>classAppearance(classId,appearanceId)?.id||CLASSES[classId]?.concept||'warden';
 export const classColor=state=>classAppearance(state?.classId,state?.appearanceId)?.color||classFor(state).color;
+export const speedFor=state=>classFor(state).speed*(state.valkyrieTime>0?1.25:1);
+export const damageMultiplier=state=>1+(state.boostTime>0?state.damageBoost||0:0);
 export const primaryDamage=state=>classFor(state).abilities.attack.damage+(state.level||1)*2+(state.damageBonus||0);
 export function applyClass(state,classId,appearanceId){
  const definition=Object.hasOwn(CLASSES,classId)?CLASSES[classId]:null;if(!definition)return false;
@@ -53,7 +56,7 @@ export function applyClass(state,classId,appearanceId){
  if(classId==='sorcerer'&&!Object.hasOwn(SORCERER_APPEARANCES,appearanceId))return false;
  if(classId!=='sorcerer'&&appearanceId!==undefined&&appearanceId!==null&&appearanceId!==definition.concept)return false;
  const hpRatio=state.maxHp?state.hp/state.maxHp:1,manaRatio=state.maxMana?state.mana/state.maxMana:1;
- Object.assign(state,{classId,appearanceId:classId==='sorcerer'?appearanceId:definition.concept,baseHp:definition.hp,maxHp:definition.hp+((state.level||1)-1)*15+(state.healthBonus||0),maxMana:definition.mana,shield:0,shieldTime:0,guard:0,guardTime:0,concealed:0});
+ Object.assign(state,{classId,appearanceId:classId==='sorcerer'?appearanceId:definition.concept,baseHp:definition.hp,maxHp:definition.hp+((state.level||1)-1)*15+(state.healthBonus||0),maxMana:definition.mana,shield:0,shieldTime:0,guard:0,guardTime:0,concealed:0,damageBoost:0,boostTime:0,valkyrieTime:0});
  state.hp=Math.max(0,Math.min(state.maxHp,state.maxHp*hpRatio));state.mana=Math.min(state.maxMana,state.maxMana*manaRatio);return true;
 }
 export function weaponForClass(item,state){

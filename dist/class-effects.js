@@ -45,6 +45,11 @@ export function createClassProjectile(scene,projectile,{reducedMotion=false}={})
  const id=projectile.classId||(projectile.visual==='knife'?'nightblade':projectile.visual==='venom'?'alchemist':'ranger'),p=palette(id);
  const root=new T.Group();root.name=`${id}-${projectile.action||'attack'}-projectile`;root.position.set(projectile.x,1.15,projectile.z);root.rotation.y=projectile.angle;
  const empowered=projectile.action==='bolt'||projectile.action==='nova',knife=projectile.visual==='knife',venom=projectile.visual==='venom';
+ if(projectile.visual==='radiant'){
+  const core=mesh(root,new T.OctahedronGeometry(.095),effectMaterial('ward',p.color,p.hot));core.scale.z=2.1;
+  const tails=ribbons(root,p,1.6,.12);scene.add(root);let age=0;
+  return {mesh:root,light:{color:p.color,intensity:8},update(dt){age+=dt;animateMaterials(root,reducedMotion?0:age);for(const tail of tails)tail.scale.z=Math.min(1,age*(projectile.speed||24)/1.6);},dispose(){disposeClassEffect(root);}};
+ }
  const shaft=solid(root,new T.CylinderGeometry(.023,.023,knife?.42:.95,8),metal(knife?0x646477:0x705f40));shaft.rotation.x=Math.PI/2;
  const blade=solid(root,new T.OctahedronGeometry(1,0),metal(),0,0,knife?.22:.53);blade.scale.set(knife?.105:.072,.025,knife?.4:.22);
  if(knife){solid(root,new T.BoxGeometry(.27,.045,.055),metal(0x887895),0,0,-.08);}
@@ -82,7 +87,29 @@ function debris(root,p,count=9){
   pieces.instanceMatrix.needsUpdate=true;
  };
 }
-export function createClassZone(scene,zone,{reducedMotion=false}={}){
+function createSupportZone(scene,zone,{reducedMotion=false,actorFor=()=>null}={}){
+ const root=new T.Group();root.name='oathkeeper-staff-tether';
+ const p=palette('oathkeeper'),geometry=new T.BufferGeometry(),positions=new Float32Array(17*6*3),uvs=[],indices=[];
+ for(let i=0;i<=16;i++)for(let j=0;j<6;j++){uvs.push(i/16,j/6);if(i<16){const a=i*6+j,b=i*6+(j+1)%6;indices.push(a,b,a+6,b,b+6,a+6);}}
+ geometry.setAttribute('position',new T.BufferAttribute(positions,3));geometry.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));geometry.setIndex(indices);
+ const beam=mesh(root,geometry,effectMaterial('ward',p.color,p.hot));beam.frustumCulled=false;
+ const ground=plane(root,'ground',.65,p,.15,.55),start=new T.Vector3(),end=new T.Vector3();scene.add(root);
+ const effect={mesh:root,light:{color:p.color,intensity:9},update(data,time){
+  const source=actorFor(data.casterId),target=actorFor(data.targetId),tip=source?.getObjectByName('oathkeeper-staff-tip');
+  if(tip)tip.getWorldPosition(start);else start.set(data.x+.4,2.2,data.z);
+  if(target)end.copy(target.position).y+=1.2;else end.set(data.targetX??data.x,1.2,data.targetZ??data.z);
+  root.position.set(data.x,0,data.z);start.sub(root.position);end.sub(root.position);
+  const age=Math.max(0,time-data.start),fade=Math.min(1,age/.12,Math.max(0,data.until-time)/.25),boost=data.supportMode==='boost';
+  beam.material.uniforms.color.value.set(boost?0x69cfff:p.color);ground.material.uniforms.color.value.set(boost?0x69cfff:p.color);
+  const axis=end.clone().sub(start).normalize(),side=new T.Vector3(axis.z,0,-axis.x);if(side.lengthSq()<.001)side.set(1,0,0);side.normalize();const normal=new T.Vector3().crossVectors(axis,side).normalize();
+  for(let i=0;i<=16;i++){const t=i/16,center=start.clone().lerp(end,t);center.y+=Math.sin(t*Math.PI)*.28;
+   for(let j=0;j<6;j++){const angle=j/6*Math.PI*2,r=.032+(reducedMotion?0:Math.sin(t*15-age*8)*.007),point=center.clone().addScaledVector(side,Math.cos(angle)*r).addScaledVector(normal,Math.sin(angle)*r);positions.set(point.toArray(),(i*6+j)*3);}}
+  geometry.attributes.position.needsUpdate=true;geometry.computeVertexNormals();ground.position.set(end.x,.15,end.z);animateMaterials(root,reducedMotion?0:age,fade);effect.light.intensity=fade*9;
+ },dispose(){disposeClassEffect(root);}};effect.update(zone,zone.start);return effect;
+}
+
+export function createClassZone(scene,zone,{reducedMotion=false,actorFor}={}){
+ if(zone.kind==='support')return createSupportZone(scene,zone,{reducedMotion,actorFor});
  if(zone.classId==='sorcerer')return createLegacyZone(scene,zone);
  const root=new T.Group(),p=palette(zone.classId),radius=zone.radius;root.name=`${zone.classId}-zone`;root.position.set(zone.x,0,zone.z);
  const ground=plane(root,'ground',radius,p),shadow=shade(root,radius,.075,zone.classId==='nightblade'?.38:.19);
@@ -94,7 +121,7 @@ export function createClassZone(scene,zone,{reducedMotion=false}={}){
  }
  if(zone.classId==='oathkeeper'){
   const halo=mesh(root,new T.CylinderGeometry(radius*.97,radius*.97,.5,64,1,true),effectMaterial('ward',p.color,p.hot,{opacity:.25}),0,.38);
-  halo.name='sanctuary-boundary';
+  halo.name='valkyrie-aura';
  }
  scene.add(root);
  let renderTime=zone.start;
@@ -113,6 +140,7 @@ export function createClassZone(scene,zone,{reducedMotion=false}={}){
 // guard state, so breaking a shield removes its shell immediately on every client.
 export function createClassEffects(scene,{reducedMotion=false}={}){
  const bursts=new Set(),wards=new Map(),projectiles=new Set(),zones=new Set();
+ let actorLookup=()=>null;
  function transient(root,life,animate,light=null,actor=null){
   // Bound transient work even during eight-player volleys.
   if(bursts.size>=48){const oldest=bursts.values().next().value;oldest.dispose();}
@@ -165,13 +193,16 @@ export function createClassEffects(scene,{reducedMotion=false}={}){
   if(skill.kind==='burst')burst(event,event.classId,skill.radius,event.classId==='geralt'?.85:.75,{fire:event.classId==='geralt',heal:event.classId==='alchemist'});
   if(skill.kind==='zone')burst(event,event.classId,skill.radius,.45);
   if(skill.kind==='shield')burst(actor.position,event.classId,1.2,.45);
+  if(skill.kind==='support')burst(actor.position,event.classId,1,.45);
   if(skill.kind==='dodge')dodge(event,actor);
   if(skill.kind==='heal')burst(actor.position,event.classId,1.3,.85,{heal:true});
   return true;
  }
  function syncActors(players,actorFor,mapId){
+  actorLookup=actorFor;
   const active=new Set();
   for(const state of players){
+   const model=actorFor(state.id);if(model){model.userData.oathkeeperFlight=!state.ended&&(state.mapId||'overworld')===mapId&&state.classId==='oathkeeper'&&(state.valkyrieTime>0||state.dodge>0)?1:0;model.userData.oathkeeperReducedMotion=reducedMotion;}
    if(state.ended||(state.mapId||'overworld')!==mapId)continue;
    const shield=state.shield>0&&['oathkeeper','geralt'].includes(state.classId),guard=state.classId==='reaver'&&state.guard>0&&state.guardTime>0;
    if(!shield&&!guard)continue;const actor=actorFor(state.id);if(!actor)continue;
@@ -199,8 +230,8 @@ export function createClassEffects(scene,{reducedMotion=false}={}){
  function clear(){for(const collection of [bursts,projectiles,zones])for(const effect of [...collection])effect.dispose();for(const ward of [...wards.values()])ward.dispose();}
  return {ability,syncActors,update,clear,dispose:clear,
   projectile:data=>track(projectiles,createClassProjectile(scene,data,{reducedMotion})),
-  zone:data=>track(zones,createClassZone(scene,data,{reducedMotion})),
-  impact(event){const id=event.visual==='knife'?'nightblade':event.visual==='venom'?'alchemist':event.visual==='arrow'?'ranger':null;if(!id)return false;burst(event,id,event.visual==='venom'?1:.65,.38);return true;},
+  zone:data=>track(zones,createClassZone(scene,data,{reducedMotion,actorFor:id=>actorLookup(id)})),
+  impact(event){const id=event.visual==='knife'?'nightblade':event.visual==='venom'?'alchemist':event.visual==='arrow'?'ranger':event.visual==='radiant'?'oathkeeper':null;if(!id)return false;burst(event,id,event.visual==='venom'?1:.65,.38);return true;},
   lightSources:()=>[...bursts,...wards.values(),...projectiles,...zones].filter(e=>e.light&&e.light.intensity>0).map(e=>({position:new T.Vector3(e.mesh.position.x,1.1,e.mesh.position.z),...e.light}))
  };
 }

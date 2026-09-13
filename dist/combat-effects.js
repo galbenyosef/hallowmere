@@ -1,5 +1,6 @@
 import * as T from './vendor/three.core.js';
 import {updateRangerWeapons} from './ranger-character-model.js';
+import {updateOathkeeperPose} from './oathkeeper-character-model.js';
 
 // Combat-only additive layers stay bright without washing out the moonlit world.
 // Two persistent lights avoid recompiling scene materials for every cast / hit.
@@ -246,12 +247,17 @@ export function createCombatEffects(scene, glowTexture, {reducedMotion = false} 
 export function animateHeroAttack(rig, dt) {
  rig.attack=Math.max(0,(rig.attack||0)-dt);
  updateRangerWeapons(rig);
+ updateOathkeeperPose(rig,dt);
  const arm=rig.arms.find(a=>a.name==='armR'),shield=rig.arms.find(a=>a.name==='armL');
  rig.body.rotation.y=0;rig.body.position.z=0;
  for(const a of rig.arms){a.rotation.y=0;a.rotation.z=0;}
  if(!rig.attack||!arm)return;
  const duration=rig.attackKind==='bolt'?.36:.42,p=1-rig.attack/duration;
- if(rig.attackKind==='bolt'&&rig.rangerWeapons) {
+ if(rig.oathkeeper){
+  const lift=Math.sin(p*Math.PI);
+  if(rig.attackKind==='bolt'){arm.rotation.x=-.06;if(shield){shield.rotation.set(-1.05-lift*.12,0,.08);rig.oathkeeper.blaster.rotation.x=-shield.rotation.x;}}
+  else {arm.rotation.set(-.20-lift*.18,0,-.13);if(shield)shield.rotation.set(-.35-lift*.3,0,.3);}
+ } else if(rig.attackKind==='bolt'&&rig.rangerWeapons) {
   const draw=Math.sin(p*Math.PI),release=Math.max(0,(p-.6)/.4);
   arm.rotation.set(-.92-draw*.38,-.12,-.12);
   // Counter the arm lift so the longbow stays upright through the draw.

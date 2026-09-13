@@ -17,7 +17,7 @@ export const CLASS_FLAVOR = {
   ranger:{title:'The road leaves no trace.',tag:'THE FAR STRIDER',line:'An arrow finds what the eye cannot.',path:'distance'},
   reaver:{title:'Let the dark come closer.',tag:'THE BLOODBOUND',line:'Some oaths are written in iron.',path:'steel'},
   nightblade:{title:'A whisper. Then silence.',tag:'THE UNSEEN',line:'Shadows keep their own counsel.',path:'steel'},
-  oathkeeper:{title:'One light still stands.',tag:'THE LAST BULWARK',line:'Where others fall, you hold the line.',path:'protection'},
+  oathkeeper:{title:'Hope descends on golden wings.',tag:'THE GUARDIAN ANGEL',line:'Where others fall, you bring them back.',path:'protection'},
   alchemist:{title:'A remedy for the end.',tag:'THE BITTER HAND',line:'Poison and mercy share a vessel.',path:'distance'},
   geralt:{title:'Monsters know your name.',tag:'THE WHITE WOLF',line:'Steel for the hunt. Signs for the darkness.',path:'steel'}
 };

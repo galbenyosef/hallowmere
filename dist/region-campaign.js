@@ -25,7 +25,7 @@ export function discoverEntrances(world,p){
  }
 }
 export function clearTravelEffects(world,p){
- p.input={x:0,z:0};p.rootUntil=0;p.dodge=0;p.moving=false;p.lastInput=-1;p.state.concealed=0;
+ p.input={x:0,z:0};p.rootUntil=0;p.dodge=0;p.moving=false;p.lastInput=-1;p.state.concealed=0;p.state.boostTime=p.state.damageBoost=p.state.valkyrieTime=0;
  world.hits=world.hits.filter(h=>h.playerId!==p.id);world.projectiles=world.projectiles.filter(b=>b.ownerId!==p.id);world.zones=world.zones.filter(z=>z.ownerId!==p.id);
  for(const e of world.enemies)e.dots=(e.dots||[]).filter(d=>d.ownerId!==p.id);
 }
