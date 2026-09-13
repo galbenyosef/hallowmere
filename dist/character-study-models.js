@@ -1,4 +1,5 @@
 import * as T from './vendor/three.core.js';
+import {createReaverCharacter} from './reaver-character-model.js';
 
 // Native, low-poly mesh studies using the same primitives and material language
 // as scripts/generate-assets.mjs. Kept independent of the live Warden prefab.
@@ -138,6 +139,7 @@ function headwear(root,m,c){
   if(c.halo){const halo=torus(g,m.gold,0,.11,-.25,.37,.018,Math.PI*1.7);halo.rotation.z=-.7;}
 }
 export function createCharacter(c){
+  if(c.id==='C03')return createReaverCharacter();
   const root=new T.Group();root.name=c.id+' '+c.name;
   const m={cloth:material(c.cloth),gold:material(c.trim,.5),glow:material(c.color,.12,true),wood:material('#574638'),leather:material('#433b32'),dark:material('#182022'),bone:material('#c6c0a5'),steel:material('#8d9b9c',.7),skin:material(c.id==='W07'?'#a6a394':c.id==='W08'||c.id==='C08'?'#9e7154':'#b39a7e'),hair:material(c.beard?'#bfc1b4':'#493e34'),paper:material('#c5c3a7'),ink:material('#625f49'),stone:material('#42595c'),leaf:material('#697f4c')};
   const width=c.muscular?.37:.28;

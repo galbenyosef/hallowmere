@@ -10,6 +10,28 @@ const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
 const utilities=await readFile(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url),'utf8');
 const {mergeGeometries}=await import('data:text/javascript;base64,'+Buffer.from(utilities.replace("from 'three'",`from '${new URL('../dist/vendor/three.core.js',import.meta.url).href}'`)).toString('base64'));
 
+test('Reaver armor and axe survive gameplay batching and follow their animated joints',()=>{
+ const prefabs={},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs,mergeGeometries,Float32Array});
+ vm.runInContext(main.slice(main.indexOf('function optimizeModel'),main.indexOf('function spawnEnemy')),context);
+ const model=vm.runInContext("cloneModel('C03')",context),study=createPlayableCharacter('reaver');
+ const triangles=root=>{let count=0;root.traverse(n=>{if(n.isMesh)count+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;});return count;};
+ assert.equal(triangles(model),triangles(study));
+ assert.equal(model.userData.characterConcept,'C03');
+ assert.equal(model.getObjectByName('head').parent.name,'body');
+ const rig=context.getRig(model);assert.equal(rig.arms.length,2);assert.equal(rig.legs.length,2);assert.equal(rig.baseY,1.3);
+ for(const [piece,joint] of [['bulwark-pauldron','armL'],['gauntlet-1','armR'],['greave--1','legL'],['weapon','armR']]){
+  const part=model.getObjectByName(piece),pivot=model.getObjectByName(joint);
+  assert.ok(part,piece);
+  let ancestor=part.parent;while(ancestor&&ancestor!==pivot)ancestor=ancestor.parent;
+  assert.equal(ancestor,pivot,`${piece} must stay on ${joint}`);
+  const before=new T.Box3().setFromObject(part).getCenter(new T.Vector3());
+  pivot.rotation.x=-.7;model.updateMatrixWorld(true);
+  const after=new T.Box3().setFromObject(part).getCenter(new T.Vector3());
+  assert.ok(before.distanceTo(after)>.005,`${piece} must move with its joint`);
+  pivot.rotation.x=0;model.updateMatrixWorld(true);
+ }
+});
+
 test('gameplay optimization and actor cloning preserve Geralt face materials and attached equipment',()=>{
  const prefabs={},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs,mergeGeometries,Float32Array});
  vm.runInContext(main.slice(main.indexOf('function optimizeModel'),main.indexOf('function spawnEnemy')),context);

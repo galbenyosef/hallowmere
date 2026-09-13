@@ -90,11 +90,15 @@ test('Ranger piercing shots hit four enemies once and stop at walls',()=>{
  p.state.cooldowns.attack=0;w.obstacles=[{x:-40,z:6,w:4,d:.2}];cast(w,p,'attack');tick(w,10);assert.equal(pack[0].hp,950);
 });
 
-test('Reaver bleeds enemies, guards against damage, and carries Blood Whirl while moving',()=>{
+test('Reaver tanks the frontline, bleeds enemies, and carries Blood Whirl while moving',()=>{
  const {w,p,enemy}=fixture('reaver'),e=enemy(-40,7);
+ assert.equal(p.state.maxHp,220);assert.equal(w.snapshot(p.id).players[0].speed,4.3);
  cast(w,p,'attack');tick(w,3);assert.equal(e.hp,964);tick(w,16);assert.equal(e.hp,960);
- cast(w,p,'bolt');p.state.invulnerable=0;w.damagePlayer(p,20);assert.equal(p.state.hp,167);
+ cast(w,p,'bolt');p.state.invulnerable=0;w.damagePlayer(p,20);assert.equal(p.state.hp,209);
  cast(w,p,'nova');command(w,p,'input',{x:1,z:0,angle:0});tick(w);assert.equal(w.zones[0].x,p.x);assert.ok(e.hp<960);
+ w.enemies=[];command(w,p,'input',{x:0,z:0,angle:0});tick(w,100);
+ assert.equal(p.state.guardTime,0);const before=p.state.hp;p.state.invulnerable=0;
+ w.damagePlayer(p,20);assert.equal(p.state.hp,before-20);
 });
 
 test('Nightblade paired backstabs, knife fan, Shadowstep and smoke have separate effects',()=>{
