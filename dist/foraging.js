@@ -11,15 +11,16 @@ export const foodFor=id=>FOOD_LIST.find(food=>food.id===id);
 export const foodIcon=food=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${food.icon}"/></svg>`;
 export function createForagingState(){return {pouch:Object.fromEntries(FOOD_LIST.map(food=>[food.id,0])),foodCooldown:0,essenceRegen:0};}
 
-// Fixed outdoor patches: one of each in Ashwick, three on the road, two in Hallowmere.
+// Six fixed outdoor patches: one in Ashwick, three on the road, two in Hallowmere.
+// Retained patches keep their IDs, food types, and positions.
 export const FORAGE_PATCHES=Object.freeze([
- ['ashwick',-67.5,7.2],['ashwick',-68,10.5],['ashwick',-59,7],
- ['road',-53,2],['road',-50,8],['road',-47,3],
- ['road',-44,9],['road',-41,1],['road',-38,7],
- ['road',-35,2],['road',-31,9],['road',-27,6],
- ['hallowmere',-18,8],['hallowmere',-18,-10],['hallowmere',-6,12],
- ['hallowmere',5,9],['hallowmere',6,-6],['hallowmere',6,-22]
-].map(([zone,x,z],i)=>Object.freeze({id:`forage-${i+1}`,itemId:FOOD_LIST[i%3].id,zone,x,z})));
+ [1,'crimson-mushroom','ashwick',-67.5,7.2],
+ [4,'crimson-mushroom','road',-53,2],
+ [8,'moonleaf-herb','road',-41,1],
+ [12,'bramble-berries','road',-27,6],
+ [14,'moonleaf-herb','hallowmere',-18,-10],
+ [18,'bramble-berries','hallowmere',6,-22]
+].map(([id,itemId,zone,x,z])=>Object.freeze({id:`forage-${id}`,itemId,zone,x,z})));
 
 export function harvestFood(state,itemId){
  const food=foodFor(itemId);
