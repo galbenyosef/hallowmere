@@ -198,7 +198,7 @@ export class AudioEngine {
       this.nextDetail = 9 + this.random() * 13;
     }
     if (this.nextBell <= 0) {
-      if (!world.victory && world.zone !== 'ashwick' && (world.threat || 0) < .35) this.play('bell', .28, .94, {position: {x: 0, z: -9}});
+      if (!world.victory && ['road','hallowmere'].includes(world.zone) && (world.threat || 0) < .35) this.play('bell', .28, .94, {position: {x: 0, z: -9}});
       this.nextBell = 28 + this.random() * 23;
     }
   }

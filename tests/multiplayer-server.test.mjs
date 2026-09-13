@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {WebSocket} from 'ws';
 import {createGameServer} from '../server/server.mjs';
 import {PROTOCOL_VERSION as v} from '../dist/multiplayer-protocol.js';
+import {PORTALS,CHECKPOINTS} from '../dist/regions.js';
 
 function next(ws,predicate,timeout=3000){return new Promise((resolve,reject)=>{
  const timer=setTimeout(()=>{ws.off('message',message);reject(Error('Timed out waiting for game message'));},timeout);
@@ -11,6 +12,21 @@ function next(ws,predicate,timeout=3000){return new Promise((resolve,reject)=>{
 });}
 async function setup(t){const game=createGameServer({origins:['https://game.example'],log:()=>{}});await new Promise(r=>game.server.listen(0,'127.0.0.1',r));t.after(()=>game.close());return {...game,url:`ws://127.0.0.1:${game.server.address().port}/multiplayer`};}
 async function join(url,token){const ws=new WebSocket(url,{origin:'https://game.example'});const welcome=next(ws,m=>m.type==='welcome'||m.type==='error');ws.on('open',()=>ws.send(JSON.stringify({v,type:'join',token})));return {ws,message:await welcome};}
+
+test('regional travel and personal checkpoints synchronize through real sockets',async t=>{
+ const game=await setup(t),a=await join(game.url),b=await join(game.url),initial=await next(a.ws,m=>m.type==='snapshot');
+ const player=game.world.players.get(a.message.id),portal=PORTALS.find(p=>p.id==='wood-road');
+ Object.assign(player,{x:portal.x,z:portal.z});game.world.shared.victory=true;
+ const traveled=next(a.ws,m=>m.type==='snapshot'&&m.mapId==='drowned-wood');
+ a.ws.send(JSON.stringify({v,type:'travel',worldId:initial.worldId,seq:1,id:portal.id}));
+ const local=await traveled;assert.ok(local.enemies.every(e=>e.mapId==='drowned-wood'));assert.ok(local.interactions.checkpoints.length);
+ const other=await next(b.ws,m=>m.type==='snapshot');assert.equal(other.mapId,'overworld');assert.equal(other.players.find(p=>p.id===player.id).mapId,'drowned-wood');assert.ok(other.enemies.every(e=>e.mapId==='overworld'));
+ const checkpoint=CHECKPOINTS.find(c=>c.mapId==='drowned-wood');Object.assign(player,{x:checkpoint.x,z:checkpoint.z});
+ const rested=next(a.ws,m=>m.type==='snapshot'&&m.state.checkpointId===checkpoint.id);
+ a.ws.send(JSON.stringify({v,type:'checkpoint',worldId:initial.worldId,seq:2,id:checkpoint.id}));await rested;
+ a.ws.close();await new Promise(r=>a.ws.once('close',r));const resumed=await join(game.url,a.message.token);
+ const fresh=await next(resumed.ws,m=>m.type==='snapshot');assert.equal(fresh.mapId,'drowned-wood');assert.equal(fresh.state.checkpointId,checkpoint.id);
+});
 
 test('foraging and eating round-trip through real sockets with personal snapshots and feedback',async t=>{
  const game=await setup(t),a=await join(game.url),b=await join(game.url),initial=await next(a.ws,m=>m.type==='snapshot');

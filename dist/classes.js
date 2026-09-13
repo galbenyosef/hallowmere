@@ -50,6 +50,6 @@ export function applyClass(state,classId,appearanceId){
 export function weaponForClass(item,state){
  if(item.slot!=='weapon'||!CLASSES[state.classId])return item;
  const c=CLASSES[state.classId],appearance=classAppearance(state.classId,state.appearanceId);
- const prefix={'iron-falchion':'Roadwarden','cinder-blade':'Cindersteel','bellkeeper-edge':'Bellkeeper’s Requiem ·'}[item.template];
+ const prefix={'iron-falchion':'Roadwarden','cinder-blade':'Cindersteel','bellkeeper-edge':'Bellkeeper’s Requiem ·','rootbound-edge':'Rootbound ·','quarry-edge':'Blackvein ·','regent-edge':'Crownfall ·'}[item.template];
  return {...item,weaponType:c.weaponType,name:prefix?`${prefix} ${c.weaponType}`:appearance?.weapon||c.weapon,description:item.template==='wardens-sword'?`The ${c.name.toLowerCase()}’s starting weapon. ${appearance?.focus||c.focus} accompanies it.`:item.description};
 }

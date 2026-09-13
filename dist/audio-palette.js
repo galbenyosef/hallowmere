@@ -63,8 +63,8 @@ export function ambienceMix({zone = 'ashwick', threat = 0, interior = false, hea
   const bed = (interior ? .52 : 1) * (1 - danger * .35);
   return {
     ambience: zone === 'ashwick' ? bed * .65 : 0,
-    'ambience-road': zone === 'road' ? bed * .8 : 0,
-    'ambience-haunted': zone === 'hallowmere' ? bed * (victory ? .35 : .85) : 0,
+    'ambience-road': zone === 'road' ? bed * .8 : zone === 'drowned-wood' ? bed * .7 : zone === 'blackvein-quarry' ? bed * .35 : 0,
+    'ambience-haunted': zone === 'hallowmere' ? bed * (victory ? .35 : .85) : ['underways','crownfall-keep'].includes(zone) ? bed * .9 : zone === 'blackvein-quarry' ? bed * .6 : zone === 'drowned-wood' ? bed * .25 : 0,
     tension: danger * .66,
     heartbeat: !ended && health < .3 ? Math.min(.72, (.3 - health) * 3.2) : 0,
   };

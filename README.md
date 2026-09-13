@@ -4,7 +4,7 @@
 
   <img src="dist/assets/icons/app-icon.png" alt="Rounded Hallowmere app icon with the title below the shadowed Warden in cold steel, a dark cloak, and blue-green fog" width="160" height="160">
 
-  <p>A dark fantasy action RPG built with Three.js. Travel between two villages, speak to four characters, fight randomized wilderness packs, collect and equip loot, and silence the Bellkeeper in the haunted village of Hallowmere.</p>
+  <p>A dark fantasy action RPG built with Three.js. Travel between two villages, speak to four characters, fight randomized wilderness packs, collect and equip loot, silence the Bellkeeper in Hallowmere, then explore three harder regions connected by hidden underground passages.</p>
 
   <img src="screenshots/gameplay.jpg" alt="Hallowmere gameplay in Ashwick, with the Warden, torchlit village, quest tracker, minimap, and combat abilities">
 
@@ -26,7 +26,7 @@ Open **http://127.0.0.1:5182**. To play from another device on the same network,
 
 Development mode restarts the server when its code or imported gameplay modules change. A restart creates a new vigil, and open game tabs reconnect automatically. Use `npm start` to run without watching files.
 
-If the game stays on the connection screen with a WebSocket error, check **http://localhost:5182/health**. It should return JSON with `ok: true` and `version: 2`. A 404 means an older or static-only server is still using port 5182: stop that process and restart with `npm run dev` (or `npm run dev:network`). Reloading the browser alone cannot update a running server.
+If the game stays on the connection screen with a WebSocket error, check **http://localhost:5182/health**. It should return JSON with `ok: true` and `version: 3`. A 404 means an older or static-only server is still using port 5182: stop that process and restart with `npm run dev` (or `npm run dev:network`). Reloading the browser alone cannot update a running server.
 
 ## GitHub Pages
 
@@ -70,7 +70,7 @@ Open **Inventory (I)** to use the pouch above your equipment satchel. It holds *
 
 Foods share a two-second cooldown, separate from belt draughts. They never exceed maximum resources or raise your stats. Moonleaf cannot stack or refresh while active. Food is not consumed when all its affected resources are full; berries work if either resource is depleted. Inventory shows live resources, food availability, and moonleaf duration while the shared world keeps moving.
 
-Your pouch and personal harvest timers survive death, respawn, and the normal 60-second reconnect window. Death clears active moonleaf regeneration; disconnecting pauses personal food effects and cooldowns. Plants keep regrowing with the world. A new vigil empties the pouch and restores all plants. These rules and range/visibility checks are authoritative on the server. Protocol 2 adds personal `forage` snapshots and `forage {id}` / `consume {itemId}` commands; update the backend and frontend together.
+Your pouch and personal harvest timers survive death, respawn, and the normal 60-second reconnect window. Death clears active moonleaf regeneration; disconnecting pauses personal food effects and cooldowns. Plants keep regrowing with the world. A new vigil empties the pouch and restores all plants. These rules and range/visibility checks are authoritative on the server. Protocol 3 retains personal `forage` snapshots and `forage {id}` / `consume {itemId}` commands; update the backend and frontend together.
 
 ## Chosen roster
 
@@ -100,21 +100,45 @@ Defeat the twelve afflicted in **Hallowmere** to summon **the Bellkeeper**, a 72
 
 Each vigil is a shared session. “Vote for a new vigil” resets progress and rerolls the road only when all connected players agree. Votes expire after 30 seconds and cancel when membership changes. An empty world resets after ten minutes.
 
+## Beyond Hallowmere
+
+Defeating the Bellkeeper opens the eastern road at Hallowmere’s edge. His original relic and Rowan’s reward remain available independently of the new chapters.
+
+| Region | Landmarks | Guardian | Guaranteed weapon |
+| --- | --- | --- | --- |
+| Drowned Wood | Three corrupted shrines | The Rootbound | Rootbound class weapon · +24 damage |
+| Blackvein Quarry | Two broken lifts | The Quarry Warden | Blackvein class weapon · +30 damage |
+| Crownfall Keep | Two ward anchors | The Ash Regent | Crownfall class weapon · +36 damage |
+
+Clear a landmark’s original guards, then interact to begin two defense waves. The next wave arrives after the first is defeated. Interact again after the final wave to restore the landmark. Completing the region’s landmarks summons its guardian; defeating it opens the next region. Cleared enemies and completed landmarks stay cleared for the vigil. An unfinished boss resets when no living adventurer remains near its arena.
+
+Hunters flank, rootlings snare, miners charge, quarry mages call down rocks, sentinels protect their front, and pyromancers create flame lanes. Ground warnings precede damage; move into the gaps or evade. Bosses expose themselves during recovery. The Quarry Warden can destroy arena cover, which returns when his encounter resets. The Ash Regent combines hazards in three health-based phases. New enemies scale health once at engagement for nearby teammates; distant players do not increase encounter health or damage.
+
+Activate each region’s sanctuary lantern with **F**, click, or the touch interaction button to set your personal checkpoint, restore health and essence, and replenish at least three draughts. Class selection is available there. XP thresholds remain unchanged through level eight; subsequent levels require progressively more souls to keep later encounters threatening. Regional bosses also guarantee charms with +35 / +50 / +65 vitality.
+
+### The Underways
+
+Look for faint light, displaced stones, and overgrown rock openings in Hallowmere and each new region. Cave entrances appear on the map after proximity discovery, shared with all adventurers. Use the entrance to travel underground and its paired exit to return. Three connected cave chambers contain elite guards and personal caches; later passages remain sealed until the preceding surface guardian is defeated. Cave rewards are optional: each cache gives a regional charm and 25 / 50 / 75 crowns once per adventurer per vigil.
+
+Travel, checkpoints, cave discoveries, landmark waves, and rewards are server-authoritative. Protocol 3 adds map identity, regional progress, nearby-map snapshots, hazard warnings, interactions, and broken-cover state, with `travel`, `objective`, `checkpoint`, and `cache` commands accepting an `id`. Update server and client together. Map travel cancels pending attacks and movement; combat and support effects cannot cross map boundaries. There are no durable saves; a new vigil or server restart resets the expansion along with the original campaign.
+
+Regional playtime is a design target rather than a measured guarantee. Deterministic tests verify combat and traversal rules; a full player playthrough is still needed to calibrate the 15–20 minute first-visit target.
+
 ## Cooperative multiplayer
 
-The public link automatically joins one world with up to eight adventurers. Ground rings, numbered labels, and map markers identify each character. Movement and travel are independent: a player can enter the Mourning Road, Hallowmere, or an unlocked building while teammates remain elsewhere. This release retains the existing World I campaign; it does not add new maps or require party gathering at any boundary.
+The public link automatically joins one world with up to eight adventurers. Ground rings, numbered labels, and map markers identify each character. Movement and travel are independent: a player can enter the Mourning Road, Hallowmere, or an unlocked building while teammates remain elsewhere. After Hallowmere, adventurers can independently travel to Drowned Wood, Blackvein Quarry, Crownfall Keep, and the Underways. No party gathering is required at boundaries.
 
-Enemies, quest acceptance, objectives, the boss, relic recovery, and chapel access are shared. Each connected player gets personal enemy loot and experience, while health, mana, currency, equipment, services, and reward claims remain individual. Late joiners inherit the world’s current quest state without historical enemy drops. There is no friendly fire or player collision. Death offers a return to Ashwick with health and mana restored, retaining gear and currency.
+Enemies, quest acceptance, objectives, the boss, relic recovery, and chapel access are shared. Each connected player on the enemy’s map gets personal enemy loot and experience, while health, mana, currency, equipment, services, and reward claims remain individual. Late joiners inherit the world’s current quest state without historical enemy drops. There is no friendly fire or player collision. Death offers a return to the latest personally activated checkpoint (Ashwick by default) with health and mana restored, retaining gear and currency.
 
 The Node server owns all gameplay outcomes. It simulates at 20 Hz and broadcasts at 10 Hz; the browser predicts walking, reconciles acknowledgments, and interpolates other actors. Messages carry a protocol version, world ID, and sequence number. The server enforces collisions, costs, cooldowns, line of sight, ownership, and interaction distances. `/health` reports protocol and connected-player count. Allowed origins, 4 KiB messages, per-connection rate limits, a join timeout, heartbeat checks, and bounded outbound buffers protect the connection layer.
 
-A per-tab resume token restores the same character within 60 seconds of disconnection. Disconnected characters stop participating in combat and return safely to Ashwick when resumed. Connection loss blocks controls until a fresh snapshot arrives. World and character state are held in memory: deployment or server restart starts a new vigil, with an explicit in-game notice. There are no accounts or durable saves.
+A per-tab resume token restores the same character within 60 seconds of disconnection. Disconnected characters stop participating in combat and return safely to their activated checkpoint when resumed. Connection loss blocks controls until a fresh snapshot arrives. World and character state are held in memory: deployment or server restart starts a new vigil, with an explicit in-game notice. There are no accounts or durable saves.
 
 ### Public backend deployment
 
 1. Create a Render Blueprint from this repository using [render.yaml](render.yaml). The configured single always-on Node instance is a paid service; review the current cost before creating it. Keep the service at one instance, since multiple instances would create separate worlds. The declaration follows the [Render Blueprint reference](https://render.com/docs/blueprint-spec).
 2. `ALLOWED_ORIGINS` defaults to `https://miguelsolorio.github.io`. Add any Sites frontend origin as a comma-separated value when serving the game there. Origins contain no paths. Keep automatic backend deployment off so a frontend push cannot unexpectedly reset an active adventure.
-3. Deploy the backend and verify `https://<backend-host>/health`. Its response must include `ok: true` and `version: 2`. Render provides secure [WebSocket connections](https://render.com/docs/websocket).
+3. Deploy the backend and verify `https://<backend-host>/health`. Its response must include `ok: true` and `version: 3`. Render provides secure [WebSocket connections](https://render.com/docs/websocket).
 4. Set the GitHub repository variable `MULTIPLAYER_SERVER_URL` to `wss://<backend-host>/multiplayer`, then run the Pages workflow. The workflow installs dependencies, tests, validates, checks the backend, and writes the public endpoint into the deployment artifact.
 5. For another static host, run `MULTIPLAYER_SERVER_URL=wss://<backend-host>/multiplayer npm run configure:multiplayer` before uploading `dist/`. An empty endpoint uses the current origin, which is suitable for the included local server. Do not publish an empty endpoint to a static-only host.
 

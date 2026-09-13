@@ -2,9 +2,9 @@ import {PROTOCOL_VERSION,PLAYER_SPEED} from './multiplayer-protocol.js';
 import {resolveMove,distance} from './combat.js';
 import {WORLD_BOUNDS} from './campaign.js';
 
-export function predictedPosition(position,pending,ack,obstacles){
+export function predictedPosition(position,pending,ack,obstacles,bounds=WORLD_BOUNDS){
  let result={x:position.x,z:position.z};
- for(const input of pending)if(input.seq>ack){const travel=input.stopAt?Math.min((position.speed||PLAYER_SPEED)*.05,distance(result,input.stopAt)):(position.speed||PLAYER_SPEED)*.05;result=resolveMove(result,input.x*travel,input.z*travel,obstacles,.42,WORLD_BOUNDS);}
+ for(const input of pending)if(input.seq>ack){const travel=input.stopAt?Math.min((position.speed??PLAYER_SPEED)*.05,distance(result,input.stopAt)):(position.speed??PLAYER_SPEED)*.05;result=resolveMove(result,input.x*travel,input.z*travel,obstacles,.42,bounds);}
  return result;
 }
 export class MultiplayerClient {
@@ -38,8 +38,9 @@ export class MultiplayerClient {
    }
    if(m.type==='snapshot'){
     clearTimeout(timeout);const changed=!!this.worldId&&this.worldId!==m.worldId;
-    if(changed){this.pending=[];this.input={x:0,z:0,angle:0};}
-    this.worldId=m.worldId;try{sessionStorage.setItem('hallowmere-world',m.worldId);}catch{}this.lastSnapshot=performance.now();this.connected=true;this.attempt=0;
+    const mapId=m.mapId||m.state?.mapId||m.players?.find(p=>p.id===m.you)?.mapId||'overworld';
+    if(changed||this.mapId&&this.mapId!==mapId){this.pending=[];this.input={x:0,z:0,angle:0};}
+    this.mapId=mapId;this.worldId=m.worldId;try{sessionStorage.setItem('hallowmere-world',m.worldId);}catch{}this.lastSnapshot=performance.now();this.connected=true;this.attempt=0;
     this.pending=this.pending.filter(p=>p.seq>m.ack);this.onSnapshot(m,changed);
    }
   };
