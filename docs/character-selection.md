@@ -75,3 +75,19 @@ The authoritative server owns damage, projectiles, poison and bleed ticks,
 roots, slows, shields, concealment, and cooperative healing. Class definitions
 and live ability descriptions are in `dist/classes.js`; the gallery remains a
 separate archive of the original concepts and their proposed skills.
+
+## Reaver tank redesign
+
+Reaver (C03) now wears a broad, layered steel cuirass, an oversized left
+pauldron, fur-lined bracers and greaves, and articulated armored boots. Short
+dark hair, an angular face, exposed upper arms, a leather satchel, and a fury
+talisman follow the supplied armored-warrior reference in the roster’s native
+faceted 3D style. The forged two-handed axe keeps the existing combat identity.
+The shared model appears in the study gallery, class picker, inventory, and
+live local and multiplayer actors.
+
+![Reaver model from the front, three-quarter view, and rear](../screenshots/reaver-redesign/model-turnaround.png)
+
+The tank tuning raises base vitality from 180 to 220 and War Cry’s four-second
+damage reduction from 35% to 45%, while lowering movement speed from 4.6 to
+4.3. Rend, Rush, and Blood Whirl retain their existing behavior.
