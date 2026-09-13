@@ -59,55 +59,51 @@
 .chronicle-shell .text-button { color:#b4c0bd;font-size:13px;min-height:44px; }
 .chronicle-label { display:block;color:#c2ae7d;font:10px/1.5 var(--sans);letter-spacing:2.5px; }
 
-/* Character and belongings share an open sheet; inspection stays below it. */
+/* Character and belongings share an open sheet with floating item inspection. */
 .modal.inventory-modal { --inventory-line:var(--chronicle-line);--inventory-text:#d5dddd;--inventory-muted:#a8babd; }
 .inventory-modal .chronicle-heading { padding-right:110px; }
 .inventory-modal .inventory-crowns { right:0;top:24px; }
 .inventory-crowns strong { font-size:27px;color:#e0c989; }
 .inventory-crowns span { font-size:10px;letter-spacing:2px; }
-.inventory-layout { grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:34px; }
-.inventory-modal .equipment-view { background:radial-gradient(ellipse at 50% 40%,#52778525,transparent 70%);border:0;box-shadow:none; }
+.inventory-layout { grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:34px; }
+.inventory-modal .equipment-view { padding:16px 12px 0;background:radial-gradient(ellipse at 50% 50%,#52778525,transparent 75%),#10202955;border:1px solid #7994a52e;box-shadow:none; }
 .inventory-identity { padding:0;text-align:center; }
 .inventory-modal .inventory-identity h3 { color:#eee2c5;font-size:23px; }
 .inventory-modal .inventory-identity p { font-size:11px;margin-top:4px; }
-.inventory-portrait-stage { height:clamp(165px,25dvh,270px); }
-.inventory-equipment { gap:16px;padding:7px 0 11px;border:0;border-bottom:1px solid var(--chronicle-line);background:none; }
-.inventory-modal .equipment-slot .gear-tile,.inventory-modal .empty-equipment { width:40px;height:46px;flex-basis:40px; }
+.inventory-loadout { display:grid;grid-template-columns:68px minmax(0,1fr) 68px;align-items:center;gap:8px; }
+.inventory-equipment { display:contents; }
+.inventory-loadout .inventory-portrait-stage { grid-column:2;grid-row:1;height:clamp(230px,36dvh,320px); }
+.inventory-modal .equipment-slot { flex-direction:column;gap:9px;align-self:center;text-align:center; }
+.inventory-equipment .weapon { grid-column:1;grid-row:1; }
+.inventory-equipment .charm { grid-column:3;grid-row:1; }
+.inventory-modal .equipment-slot .gear-tile,.inventory-modal .empty-equipment { width:60px;height:70px;flex:none; }
 .equipment-slot span { font-size:9px; }
-.equipment-slot strong { font-size:11px;margin-top:3px; }
-.inventory-attributes { margin-top:12px; }
+.equipment-slot strong { font-size:10px;margin-top:5px;line-height:1.5; }
+.inventory-attributes { margin-top:18px; }
 .inventory-modal h3 { color:#d6c8a6;font-size:16px; }
-.inventory-attributes h3 { display:none; }
-.inventory-attributes dl { margin:0;column-gap:20px; }
-.inventory-attributes dl>div { padding:4px 0;font-size:12px; }
+.inventory-attributes h3 { display:block; }
+.inventory-attributes dl { margin:8px 0 0;column-gap:20px; }
+.inventory-attributes dl>div { padding:6px 0;font-size:12px; }
 .inventory-attributes small { font-size:10px; }
 .inventory-bag-heading { padding-bottom:11px; }
 .inventory-bag-heading>span { font-size:11px; }
 .inventory-grid { grid-template-columns:repeat(8,minmax(0,1fr));padding:0;gap:6px;max-height:250px;border:0;background:none;box-shadow:none; }
-.inventory-grid>* { max-height:65px; }
 .inventory-modal .gear-tile,.inventory-modal .empty-cell { background:#15232bb3;border:1px solid #7994a52e;border-radius:0;box-shadow:none; }
 .inventory-modal .empty-cell { background:#11202b70;border-color:#7994a520; }
 .inventory-modal .gear-tile:hover,.inventory-modal .gear-tile.selected { border-color:#e0c989;background-color:#35424a;box-shadow:inset 0 0 0 1px #e0c98933; }
 .inventory-pouch { margin-top:23px; }
-.inventory-pouch .inventory-grid>* { max-height:52px; }
 .pouch-icon svg { fill:currentColor; }
 .inventory-modal .pouch-regen,.inventory-modal .pouch-guidance { font-size:11px;line-height:1.6;margin-top:8px; }
-.inventory-modal .inventory-detail { position:static;inset:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);column-gap:35px;align-content:start;width:auto;max-height:none;margin:18px 0 0;padding:15px 0 0;overflow:visible;background:none;border:0;border-top:1px solid var(--chronicle-line);box-shadow:none; }
-.inventory-detail>.item-detail-heading,.inventory-detail>h3,.inventory-detail>p,.inventory-detail>.item-bonus { grid-column:1; }
+.inventory-modal .inventory-detail { width:min(340px,calc(100vw - 16px));padding:19px;background:linear-gradient(145deg,#172832,#0d1b24);border:1px solid #c6b58c88;box-shadow:0 18px 60px #0009; }
 .inventory-detail .item-rarity,.inventory-detail .item-equipped-status { font-size:10px;letter-spacing:1px; }
-.inventory-modal .inventory-detail h3 { margin:5px 0 0;font-size:20px; }
-.inventory-modal .inventory-detail p { font-size:12px;line-height:1.6;margin:5px 0; }
+.inventory-modal .inventory-detail h3 { margin:10px 0 0;font-size:21px; }
+.inventory-modal .inventory-detail p { font-size:13px;line-height:1.7;margin:10px 0 14px; }
 .inventory-detail .item-bonus { font-size:12px; }
-.inventory-detail .item-comparison { grid-column:2;grid-row:1/5;margin:0;padding:0 0 0 24px;border:0;border-left:1px solid var(--chronicle-line); }
+.inventory-detail .item-comparison { margin-top:18px;padding-top:16px;border-color:var(--chronicle-line); }
 .item-comparison h4 { font-size:12px; }
-.item-comparison dl { gap:6px;margin-top:10px; }
+.item-comparison dl { gap:9px;margin-top:13px; }
 .item-stat-change { font-size:12px; }
 .inventory-modal .item-comparison .item-compared-with { font-size:11px; }
-.inventory-detail>[data-preview-food] { grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:0 30px; }
-.inventory-detail [data-preview-food]>.item-rarity,.inventory-detail [data-preview-food]>h3,.inventory-detail [data-preview-food]>p:first-of-type { grid-column:1; }
-.inventory-detail [data-preview-food]>.item-bonus { grid-column:2;grid-row:1; }
-.inventory-detail [data-food-status] { grid-column:2;grid-row:2; }
-.inventory-detail [data-preview-food]>.pouch-guidance { grid-column:2;grid-row:3; }
 .modal.inventory-modal .inventory-hint { margin:0 auto 0 0;text-align:left;width:auto;color:#94a8ac;font-size:10px;line-height:1.7; }
 .modal.inventory-modal .primary-button { width:auto;background:#c3a85a20;border-color:#d4bd7880;box-shadow:none;font:14px/1.5 var(--serif);padding:12px 23px; }
 
@@ -182,20 +178,16 @@
 #restart-vote p { margin-bottom:15px;color:#d4dedd;font-size:13px;line-height:1.7; }
 #restart-vote button { border-radius:0;border-color:#c6b58c66;background:#c6b58c12;color:#e6d4a7;margin:0 6px 0 0;min-height:44px;font-size:12px; }
 
-@media(min-width:1500px) { .chronicle-sidebar nav { margin-top:68px; }.inventory-layout { gap:45px; }.inventory-grid>* { max-height:78px; }.inventory-portrait-stage { height:270px; } }
+@media(min-width:1500px) { .chronicle-sidebar nav { margin-top:68px; }.inventory-layout { gap:45px; } }
 @media(min-width:761px) and (max-height:820px) {
  .inventory-modal .chronicle-heading { padding-bottom:16px; }
- .inventory-portrait-stage { height:132px; }
- .inventory-grid>* { max-height:48px; }
+ .inventory-loadout .inventory-portrait-stage { height:235px; }
  .inventory-pouch { margin-top:17px; }
- .inventory-pouch .inventory-grid>* { max-height:42px; }
- .inventory-modal .inventory-detail { margin-top:14px;padding-top:12px; }
 }
 @media(max-width:1050px) {
  .modal.chronicle-shell,.roster-dialog.chronicle-shell,.modal.npc-modal.has-npc-portrait { grid-template-columns:140px minmax(0,1fr);gap:26px;padding:25px; }
  .chronicle-sidebar nav button { font-size:12px;padding-inline:7px; }.chronicle-sidebar kbd { display:none; }.chronicle-brand span { font-size:8px; }
- .inventory-layout { gap:22px; }.inventory-grid { grid-template-columns:repeat(6,minmax(0,1fr));max-height:250px; }.inventory-pouch .empty-cell:nth-child(n+7) { display:none; }
- .inventory-grid>* { max-height:55px; }.inventory-equipment { gap:8px; }.equipment-slot strong { font-size:10px; }
+ .inventory-layout { grid-template-columns:1fr;gap:28px; }.inventory-character { width:100%;max-width:480px;margin:auto; }.inventory-grid { grid-template-columns:repeat(6,minmax(0,1fr));max-height:250px; }.inventory-pouch .empty-cell:nth-child(n+7) { display:none; }
  .journal-copy,.chronicle-controls { gap:25px; }
  .roster-layout { gap:24px; }.roster-stats { gap:24px; }
  .map-panel.expanded { grid-template-columns:140px minmax(0,1fr) 175px;gap:22px;padding:25px; }
@@ -212,9 +204,8 @@
  .chronicle-sidebar nav button { white-space:nowrap;min-height:44px;padding:8px 0;border-left:0;border-bottom:2px solid transparent; }.chronicle-sidebar nav button[aria-current=page] { border-bottom-color:#e0c989;background:none; }
  .chronicle-sidebar .chronicle-sidebar-note { display:none; }.chronicle-heading,.roster-header { padding-top:0;padding-bottom:23px; }.chronicle-heading>.eyebrow,.roster-header>.eyebrow { font-size:9px;letter-spacing:2px; }
  .modal .chronicle-heading h2,.roster-header h2,.map-panel.expanded h2 { font-size:29px; }.modal .chronicle-heading>p,.roster-header>p { font-size:12px; }
- .inventory-layout { grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); }.inventory-portrait-stage { height:210px; }.inventory-modal .inventory-identity h3 { font-size:20px; }
- .inventory-equipment { grid-template-columns:1fr; }.inventory-attributes dl { column-gap:12px; }.inventory-attributes dl>div { font-size:11px; }
- .inventory-modal .inventory-detail { column-gap:20px; }.inventory-detail .item-comparison { padding-left:16px; }
+ .inventory-modal .inventory-identity h3 { font-size:20px; }
+ .inventory-attributes dl { column-gap:12px; }
  .modal.chronicle-shell .modal-actions { padding:15px 0;margin-top:22px;flex-wrap:wrap; }.modal.inventory-modal .inventory-hint { width:100%;text-align:left; }
  .roster-layout { gap:22px; }.roster-name { font-size:28px; }.roster-stats { gap:24px; }
  .chronicle-controls { grid-template-columns:1fr; }
@@ -223,10 +214,10 @@
  .map-panel.expanded #map-navigation { grid-column:1/-1;grid-row:1; }.map-panel.expanded .chronicle-heading { grid-column:1/-1;grid-row:2; }.map-panel.expanded .map-frame { grid-column:1;grid-row:3;width:100%; }.map-panel.expanded .map-legend { grid-column:2;grid-row:3; }.map-panel.expanded .map-caption { grid-column:1/-1;grid-row:4; }.map-panel.expanded .chronicle-sidebar nav { margin-bottom:0; }
 }
 @media(max-width:540px) {
+ .inventory-loadout .inventory-portrait-stage { height:235px; }
  .modal.chronicle-shell,.roster-dialog.chronicle-shell,.modal.npc-modal.has-npc-portrait { padding:16px 18px; }.chronicle-brand span { font-size:7px;letter-spacing:1.5px; }.chronicle-heading>.eyebrow { max-width:75%; }
- .inventory-layout { grid-template-columns:1fr;gap:27px; }.inventory-portrait-stage { height:240px; }.inventory-equipment { grid-template-columns:1fr 1fr;gap:15px; }.inventory-attributes dl>div { font-size:13px;padding:5px 0; }.equipment-slot strong { font-size:11px; }
+ .inventory-layout { grid-template-columns:1fr;gap:27px; }.inventory-attributes dl>div { font-size:13px;padding:5px 0; }
  .inventory-modal .inventory-crowns { top:21px; }.inventory-crowns strong { font-size:22px; }.inventory-crowns span { font-size:8px; }.inventory-modal .chronicle-heading { padding-right:75px; }
- .inventory-grid>* { max-height:none; }.inventory-modal .inventory-detail { display:block;margin-top:24px; }.inventory-detail .item-comparison { margin-top:16px;padding:16px 0 0;border-left:0;border-top:1px solid var(--chronicle-line); }.inventory-modal .inventory-detail p { font-size:13px; }.inventory-detail>[data-preview-food] { display:block; }
  .modal.inventory-modal .primary-button { width:100%; }.modal.chronicle-shell .modal-actions { gap:12px; }.modal.chronicle-shell .modal-actions>.primary-button { flex:1; }
  .roster-layout { gap:28px; }
  .journal-copy { grid-template-columns:1fr;gap:26px; }.journal-progress { border-left:0;border-top:1px solid var(--chronicle-line);padding:24px 0 0; }

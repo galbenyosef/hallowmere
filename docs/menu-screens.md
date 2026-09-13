@@ -64,11 +64,15 @@ character details move below the wheel. Desktop and mobile captures in
 `screenshots/circular-character-selector/` show the actual selector rendered
 without starting a game session.
 
-Inventory inspection stays beneath the character and satchel. Hovering or
-focusing a tile changes the visible details; clicking or pressing Enter retains
-the existing equip/eat action. Inspection survives inventory refreshes, preserves
-equipped semantics, and never changes equipment by itself. The map retains its
-live canvas, markers, discovery data, and keyboard shortcut.
+Inventory uses the earlier hover/focus preview interaction inside the Open
+Chronicle shell. A single floating card shows gear comparisons and food effects
+beside the inspected tile. It remains readable while hovered or focused; Escape
+dismisses the card before the inventory, and clicking elsewhere clears it.
+Weapon and charm slots flank the character portrait, and the satchel and pouch
+use square tiles. Clicking or pressing Enter retains the existing equip/eat
+action. Inspection survives inventory refreshes, preserves equipped semantics,
+and never changes equipment by itself. The map retains its live canvas,
+markers, discovery data, and keyboard shortcut.
 
 `dist/chronicle.css` owns this shared presentation and its responsive rules. The
 loading and game-mode selection screens retain the Twin Paths presentation.
@@ -105,3 +109,21 @@ Settings switches and the keyboard-operated slider were checked with an isolated
 renderer adapter. Full gameplay transitions and rendering remain for merge-time
 validation; automated tests/build were deferred. The fixture was removed after
 review.
+
+## Restored inventory interactions
+
+The preview controller and positioning logic in `dist/inventory.js` reuse the
+inventory implementation from before Open Chronicle (commit `5046064`). The card
+uses a manual popover so menu scrolling cannot clip it. It flips and clamps to
+viewport edges; scrolling a focused tile keeps its card positioned, while
+scrolling a hover-only tile dismisses it. The new menu's typography, palette,
+sidebar, and footer are retained in `dist/chronicle.css`.
+
+Screenshots in `screenshots/inventory-hover-layout/` show the actual inventory
+renderer and character art with isolated sample inventory data at 1280×720 and
+390×844. Manual checks covered hover and keyboard focus, Escape dismissal without
+closing inventory, comparison without equipping, equipping a charm and refreshing
+its slot/card, and mobile positioning. No live game session was changed during
+review. Existing hover-preview regression coverage was restored and adjusted for
+focused scrolling; automated tests and build validation remain deferred until
+an authorized merge. The temporary layout fixture was removed after review.

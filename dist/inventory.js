@@ -27,26 +27,83 @@ export function inventoryDetailMarkup(state,id){
  return `<div class="item-detail-heading"><span class="item-rarity">${escape(item.rarity)} ${escape(item.slot)}</span>${equipped?'<span class="item-equipped-status">Equipped</span>':''}</div><h3>${escape(item.name)}</h3><p>${escape(item.description)}</p><span class="item-bonus">${item.power?'+'+item.power+(item.slot==='weapon'?' primary damage':' maximum vitality'):'Starting weapon · No bonus damage'}</span><div class="item-comparison"><h4>${equipped?'Current equipment stats':'Stat changes if equipped'}</h4>${equipped?'':`<p class="item-compared-with">Compared with ${current?escape(current.name):'an empty '+escape(item.slot)+' slot'}</p>`}<dl>${rows}</dl></div>`;
 }
 
-// Keep the inspected item in the ledger beneath the grids. Snapshot refreshes
-// retain the selected tile without moving focus or covering adjacent equipment.
+export function inventoryTooltipPosition(anchor,tooltip,viewport){
+ const gap=8,clamp=(value,max)=>Math.max(gap,Math.min(value,max-gap));
+ let left=anchor.right+gap,top=anchor.top;
+ if(left+tooltip.width>viewport.width-gap){
+  left=anchor.left-tooltip.width-gap;
+  if(left<gap){
+   left=anchor.left;
+   top=anchor.bottom+gap+tooltip.height<=viewport.height-gap?anchor.bottom+gap:anchor.top-tooltip.height-gap;
+  }
+ }
+ return {left:clamp(left,viewport.width-tooltip.width),top:clamp(top,viewport.height-tooltip.height)};
+}
+
+// A single floating preview keeps both grids stable while inspecting their tiles.
 export function bindInventoryPreviews(container,getState,isConnected=()=>true){
- const selector='[data-select-item], [data-consume]';
- let anchor=null;
- const hide=()=>{anchor?.classList.remove('selected');anchor?.removeAttribute('aria-details');anchor=null;};
+ const doc=container.ownerDocument,view=doc.defaultView,selector='[data-select-item], [data-consume]';
+ let anchor=null,hideTimer;
+ const detail=()=>container.querySelector('.inventory-detail');
+ const hide=()=>{
+  view.clearTimeout(hideTimer);
+  anchor?.classList.remove('selected');anchor?.removeAttribute('aria-describedby');anchor=null;
+  const preview=detail();if(!preview)return;
+  if(preview.matches(':popover-open'))preview.hidePopover();
+  preview.hidden=true;
+ };
+ const position=()=>{
+  const preview=detail();if(!anchor?.isConnected||!preview||preview.hidden)return;
+  const bounds=anchor.getBoundingClientRect();
+  if(bounds.bottom<=0||bounds.top>=view.innerHeight){hide();return;}
+  const point=inventoryTooltipPosition(bounds,preview.getBoundingClientRect(),{width:view.innerWidth,height:view.innerHeight});
+  preview.style.left=`${point.left}px`;preview.style.top=`${point.top}px`;
+ };
  const show=tile=>{
-  const preview=container.querySelector('.inventory-detail');if(!tile||!preview)return;
-  if(anchor!==tile)hide();anchor=tile;
+  const preview=detail();if(!tile||!preview)return;
+  view.clearTimeout(hideTimer);
+  if(anchor!==tile){anchor?.classList.remove('selected');anchor?.removeAttribute('aria-describedby');}
+  anchor=tile;
   const state=getState(),item=state.inventory.find(item=>item.id===tile.dataset.selectItem);
   preview.className=`inventory-detail ${item?.rarity||''}`;
   preview.innerHTML=item?inventoryDetailMarkup(state,item.id):pouchDetailMarkup(state,tile.dataset.consume,isConnected());
-  tile.classList.add('selected');tile.setAttribute('aria-details',preview.id);
+  preview.hidden=false;
+  if(!preview.matches(':popover-open'))preview.showPopover();
+  tile.classList.add('selected');tile.setAttribute('aria-describedby',preview.id);
+  position();
  };
- container.addEventListener('pointerover',event=>{if(event.pointerType!=='touch'){const tile=event.target.closest(selector);if(tile&&tile!==anchor)show(tile);}});
- for(const type of ['focusin','click'])container.addEventListener(type,event=>{const tile=event.target.closest(selector);if(tile)show(tile);});
+ const scheduleHide=()=>{
+  view.clearTimeout(hideTimer);
+  hideTimer=view.setTimeout(()=>{
+   if(anchor?.matches(':hover')||detail()?.matches(':hover')||doc.activeElement===anchor)return;
+   hide();
+  },120);
+ };
+ container.addEventListener('pointerover',event=>{
+  if(event.pointerType==='touch')return;
+  const tile=event.target.closest(selector);
+  if(tile&&!tile.contains(event.relatedTarget))show(tile);
+  else if(event.target.closest('.inventory-detail'))view.clearTimeout(hideTimer);
+ });
+ container.addEventListener('pointerout',scheduleHide);
+ container.addEventListener('focusin',event=>{const tile=event.target.closest(selector);if(tile)show(tile);});
+ container.addEventListener('click',event=>{const tile=event.target.closest(selector);if(tile)show(tile);});
+ container.addEventListener('focusout',scheduleHide);
+ doc.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&anchor){event.preventDefault();event.stopPropagation();hide();}
+ });
+ doc.addEventListener('scroll',event=>{
+  if(!anchor||event.target.closest?.('.inventory-detail'))return;
+  // Keyboard focus may scroll a tile into view before its preview is measured.
+  doc.activeElement===anchor?position():hide();
+ },true);
+ doc.addEventListener('pointerdown',event=>{if(!event.target.closest(selector+', .inventory-detail'))hide();});
+ view.addEventListener('resize',position);
  return {hide,refresh(){
+  if(!anchor)return;
   const previous=anchor;
-  const replacement=previous&&[...container.querySelectorAll(selector)].find(tile=>tile.dataset.selectItem===previous.dataset.selectItem&&tile.dataset.consume===previous.dataset.consume&&!!tile.closest('.equipment-slot')===!!previous.closest('.equipment-slot'));
-  show(replacement||container.querySelector('[data-select-item]')||container.querySelector('[data-consume]'));
+  const replacement=[...container.querySelectorAll(selector)].find(tile=>tile.dataset.selectItem===previous.dataset.selectItem&&tile.dataset.consume===previous.dataset.consume&&!!tile.closest('.equipment-slot')===!!previous.closest('.equipment-slot'));
+  replacement?show(replacement):hide();
  }};
 }
 
@@ -66,8 +123,10 @@ export function inventoryMarkup(state){
     <div class="inventory-character">
       <section class="equipment-view" aria-label="Equipped character">
         <div class="inventory-identity"><h3>${escape(appearance?.name||calling.name)}</h3><p>${escape(calling.role)}</p></div>
-        <div class="inventory-portrait-stage">${portrait?`<img class="warden-portrait" src="${portrait}" alt="${escape(appearance?.name||calling.name)} with their in-game equipment" draggable="false">`:`<p class="inventory-portrait-placeholder" role="status">${portraitStatus==='error'?'Character preview unavailable':'Preparing character preview…'}</p>`}</div>
-        <div class="inventory-equipment" aria-label="Equipped gear">${slot('weapon')}${slot('charm')}</div>
+        <div class="inventory-loadout">
+          <div class="inventory-equipment" role="group" aria-label="Equipped gear">${slot('weapon')}${slot('charm')}</div>
+          <div class="inventory-portrait-stage">${portrait?`<img class="warden-portrait" src="${portrait}" alt="${escape(appearance?.name||calling.name)} with their in-game equipment" draggable="false">`:`<p class="inventory-portrait-placeholder" role="status">${portraitStatus==='error'?'Character preview unavailable':'Preparing character preview…'}</p>`}</div>
+        </div>
       </section>
       <section class="inventory-attributes" aria-label="Character attributes"><h3>Attributes</h3><dl>
         <div class="vitality-stat"><dt>Vitality</dt><dd><span data-resource="hp">${Math.ceil(state.hp)}</span> <small>/ <span data-resource="maxHp">${state.maxHp}</span></small></dd></div>
@@ -86,5 +145,5 @@ export function inventoryMarkup(state){
       </section>
       ${pouchMarkup(state)}
     </div>
-  </div><section id="inventory-item-detail" class="inventory-detail" aria-label="Item details"></section>`;
+  </div><div id="inventory-item-detail" class="inventory-detail" role="tooltip" popover="manual" hidden></div>`;
 }
