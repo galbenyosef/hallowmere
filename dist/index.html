@@ -63,7 +63,10 @@
  <footer class="hud">
   <button class="character-meta" id="character-button" title="Choose class (C)"><span class="rank">01</span><div><strong id="character-name">Choose your calling</strong><span id="level-label">CHARACTER · LEVEL 1</span></div></button>
   <div class="combat-dock">
-   <div class="orb-group health-group"><div class="orb-frame"><div class="orb health"><div class="liquid" id="health-liquid"></div><div class="orb-glass"></div><div class="orb-value" id="health-value">140<span>/ 140</span></div></div><span class="orb-cap">◆</span></div><span class="orb-label">VITALITY</span></div>
+   <div class="orb-group health-group"><div class="orb-frame"><div class="orb health" role="meter" aria-label="Vitality" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+    <svg class="orb-ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="resource-track" cx="50" cy="50" r="46"/><circle class="resource-fill" cx="50" cy="50" r="46" pathLength="100"/></svg>
+    <div class="orb-value" id="health-value">140<span>/ 140</span></div>
+   </div></div><span class="orb-label">VITALITY</span></div>
    <div class="abilities-wrap"><div class="ability-caption"><span id="class-caption">THE VIGIL</span><i></i><span id="souls-counter">0 SOULS</span></div><div class="abilities">
     <button class="ability" id="attack-button" data-action="attack" title="Cleave · Hold left mouse to attack"><kbd>LMB</kbd><span class="ability-icon steel" data-icon="sword"></span><span class="ability-name">Cleave</span><span class="cooldown"></span></button>
     <button class="ability" id="bolt-button" data-action="bolt" title="Emberbolt · Right mouse · 18 essence"><kbd>RMB</kbd><span class="ability-icon ember" data-icon="flame"></span><span class="ability-name">Emberbolt</span><span class="cooldown"></span></button>
@@ -71,7 +74,10 @@
     <button class="ability" id="nova-button" data-action="nova" title="Cinder nova · 2 · 35 essence"><kbd>2</kbd><span class="ability-icon ember" data-icon="sun"></span><span class="ability-name">Cinder nova</span><span class="cooldown"></span></button>
     <span class="slot-divider"></span><button class="ability potion" id="heal-button" data-action="heal" title="Healing draught · 3 · restores 65 vitality"><kbd>3</kbd><span class="ability-icon ruby" data-icon="potion"></span><span class="potion-count" id="potion-count">3</span><span class="ability-name">Draught</span><span class="cooldown"></span></button>
    </div><div class="experience-track"><i id="experience-fill"></i><span>◆</span></div></div>
-   <div class="orb-group mana-group"><div class="orb-frame"><div class="orb mana"><div class="liquid" id="mana-liquid"></div><div class="orb-glass"></div><div class="orb-value" id="mana-value">100<span>/ 100</span></div></div><span class="orb-cap">◆</span></div><span class="orb-label">ESSENCE</span></div>
+   <div class="orb-group mana-group"><div class="orb-frame"><div class="orb mana" role="meter" aria-label="Essence" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+    <svg class="orb-ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="resource-track" cx="50" cy="50" r="46"/><circle class="resource-fill" cx="50" cy="50" r="46" pathLength="100"/></svg>
+    <div class="orb-value" id="mana-value">100<span>/ 100</span></div>
+   </div></div><span class="orb-label">ESSENCE</span></div>
   </div><div class="footer-right"><span id="gold-counter">0 CROWNS</span><button id="inventory-button" class="inventory-button" title="Equipment (I)">Belongings <kbd>I</kbd></button><button id="fullscreen-button" aria-label="Toggle fullscreen" title="Fullscreen"><span data-icon="expand"></span></button></div>
  </footer>
  <div id="touch-controls"><div id="joystick" aria-label="Movement joystick"><i id="joystick-thumb"></i></div></div>
