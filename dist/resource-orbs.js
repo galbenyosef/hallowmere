@@ -1,104 +1,67 @@
-// Small, self-contained GPU surfaces; CSS liquid remains available if WebGL fails.
-const vertex = `attribute vec2 position;
-varying vec2 uv;
-void main(){uv=position*.5+.5;gl_Position=vec4(position,0.,1.);}`;
-const fragment = `precision mediump float;
-varying vec2 uv;
-uniform float time, fill, energy;
-uniform vec3 deepColor, brightColor;
-float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
-float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
-float flow(vec2 p){return noise(p)*.57+noise(p*2.03)*.28+noise(p*4.01)*.15;}
-void main(){
- vec2 p=uv*2.-1.;float r=length(p);
- float lens=sqrt(max(0.,1.-dot(p,p)));
- vec2 q=uv+ p*(1.-lens)*.08;
- float t=time*.58;
- // Leave a little headroom at capacity so the free surface is always visible.
- float wave=(sin(q.x*7.5+t*2.6)*.026+sin(q.x*16.-t*1.8)*.009)*(1.+energy*2.);
- float level=mix(-.06,.91,fill)+wave;
- float depth=level-q.y;
- float liquid=(1.-smoothstep(-.004,.004,-depth))*step(.001,fill);
- // Broad, advected currents with refracted light rather than fine smoky veins.
- vec2 current=vec2(sin(q.y*5.+t)*.18,cos(q.x*6.-t*.8)*.12);
- vec2 drift=q*2.8+current+vec2(t*.18,-t*.26);
- float silk=flow(drift+flow(drift+2.)*.65);
- float caustic=pow(1.-abs(sin((q.x+current.x)*9.+(q.y+current.y)*6.+t)),9.);
- vec3 color=mix(deepColor,brightColor,.28+silk*.65);
- color*=.65+.65*lens;
- color+=brightColor*caustic*.16*smoothstep(.02,.18,depth);
- color+=brightColor*exp(-length((p-vec2(-.2,-.48))*vec2(1.5,1.8))*2.)*.85;
- // A curved, translucent surface and a crisp wet edge catch the light.
- float surfaceWidth=.018+.046*sqrt(max(0.,1.-p.x*p.x));
- float surface=exp(-pow((depth-surfaceWidth*.35)/surfaceWidth,2.))*liquid;
- float meniscus=exp(-abs(depth)*220.)*step(.001,fill);
- color=mix(color,brightColor*.85+vec3(.13,.17,.2),surface*.48);
- color+=brightColor*exp(-abs(depth)*28.)*.3;
- color+=(brightColor*.7+vec3(.4,.45,.5))*meniscus*.8;
- for(int i=0;i<10;i++){
-  float seed=float(i);float speed=.055+hash(vec2(seed,2.))*.075;
-  vec2 b=vec2(.12+hash(vec2(seed,8.))*.76,fract(hash(vec2(seed,4.))+time*speed));
-  b.x+=sin(time*.9+seed*3.+b.y*8.)*.025;
-  float size=.009+hash(vec2(seed,6.))*.014;
-  float d=length(q-b);
-  float bubble=exp(-abs(d-size)*550.)*.32+exp(-length(q-b-vec2(-.004,.006))*400.)*.7;
-  color+=brightColor*bubble*(1.-smoothstep(level-.04,level,b.y));
- }
- vec3 empty=vec3(.014,.022,.031)+vec3(.025,.035,.043)*lens;
- empty+=brightColor*exp(-abs(depth)*24.)*.12*step(.001,fill);
- color=mix(empty,color,liquid);
- float rim=pow(r,9.)*.4;
- color+=mix(vec3(.28,.36,.4),brightColor,.3)*rim;
- float gleam=exp(-length((p-vec2(-.38,.52))*vec2(5.,2.8))*2.);
- color+=vec3(.8,.9,1.)*gleam*.5;
- gl_FragColor=vec4(color,1.-smoothstep(.985,1.,r));
-}`;
+// Tidal glass, selected from study 01. Canvas 2D keeps the effect independent
+// of the game's WebGL context; the existing CSS liquid is the fallback.
+const TAU=Math.PI*2,RADIUS=81;
+const clamp=value=>Number.isFinite(value)?Math.max(0,Math.min(1,value)):0;
+const random=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value);};
+const color=(hue,lightness=55,alpha=1)=>`hsla(${hue},90%,${lightness}%,${alpha})`;
+function circle(ctx,x,y,r,fill){ctx.beginPath();ctx.arc(x,y,r,0,TAU);if(fill){ctx.fillStyle=fill;ctx.fill();}}
+function line(ctx,points,stroke,width){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}
+function glow(ctx,x,y,r,hue,alpha){const gradient=ctx.createRadialGradient(x,y,0,x,y,r);gradient.addColorStop(0,color(hue,77,alpha));gradient.addColorStop(.3,color(hue,56,alpha*.65));gradient.addColorStop(1,color(hue,38,0));circle(ctx,x,y,r,gradient);}
 
-export function createResourceOrbs() {
- const motion=matchMedia('(prefers-reduced-motion: reduce)');
- const surfaces=[];
- for(const [selector,deep,bright] of [
-  ['.orb.health',[.19,.007,.035],[1.,.16,.23]],
-  ['.orb.mana',[.008,.045,.17],[.12,.7,1.]],
- ]) {
-  const host=document.querySelector(selector),canvas=document.createElement('canvas');
-  canvas.className='orb-shader';canvas.setAttribute('aria-hidden','true');
-  canvas.width=canvas.height=256;
-  host.parentElement.style.setProperty('--potion-strength','1');
-  const gl=canvas.getContext('webgl',{alpha:true,antialias:false,depth:false,stencil:false,premultipliedAlpha:false});
-  if(!gl)continue;
-  try {
-   const compile=(type,source)=>{const shader=gl.createShader(type);gl.shaderSource(shader,source);gl.compileShader(shader);if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(shader));return shader;};
-   const program=gl.createProgram(),vs=compile(gl.VERTEX_SHADER,vertex),fs=compile(gl.FRAGMENT_SHADER,fragment);
-   gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);gl.deleteShader(vs);gl.deleteShader(fs);
-   if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
-   gl.useProgram(program);const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
-   const position=gl.getAttribLocation(program,'position');gl.enableVertexAttribArray(position);gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
-   const uniform=name=>gl.getUniformLocation(program,name);
-   gl.uniform3fv(uniform('deepColor'),deep);gl.uniform3fv(uniform('brightColor'),bright);
-   const surface={gl,host,canvas,time:uniform('time'),fill:uniform('fill'),energy:uniform('energy'),value:null,kick:0,lost:false};
-   canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();surface.lost=true;host.classList.remove('shader-ready');});
-   canvas.addEventListener('webglcontextrestored',()=>{ // Retain the readable CSS fallback after a context reset.
-    surface.lost=true;host.classList.remove('shader-ready');
-   });
-   host.prepend(canvas);surfaces.push(surface);
-  } catch(error) {console.warn('Resource shader unavailable; using CSS liquid.',error);gl.getExtension('WEBGL_lose_context')?.loseContext();}
+function drawTidalGlass({ctx,canvas,hue,value:fill,kick},time){
+ const r=RADIUS;
+ ctx.setTransform(canvas.width/(r*2),0,0,canvas.height/(r*2),0,0);
+ ctx.clearRect(0,0,r*2,r*2);ctx.save();ctx.translate(r,r);
+ circle(ctx,0,0,r);ctx.clip();
+ const glass=ctx.createRadialGradient(-25,-35,5,0,0,r);glass.addColorStop(0,'#233038');glass.addColorStop(1,'#070b12');circle(ctx,0,0,r,glass);
+ // Move the wave completely beyond the lens at 0% and 100%.
+ const level=fill<=.001?r+12:fill>=.999?-r-12:r-2*r*fill,points=[];
+ for(let x=-r-2;x<=r+2;x+=2)points.push([x,level+(Math.sin(x*.045+time*2.1)+Math.sin(x*.087-time*1.5)*.4)*(2+kick*5)]);
+ ctx.save();ctx.beginPath();ctx.moveTo(-r-2,r+2);points.forEach(point=>ctx.lineTo(...point));ctx.lineTo(r+2,r+2);ctx.closePath();ctx.clip();
+ const fluid=ctx.createLinearGradient(-r,-r,r,r);fluid.addColorStop(0,color(hue,59));fluid.addColorStop(.4,color(hue,35));fluid.addColorStop(1,color(hue,10));ctx.fillStyle=fluid;ctx.fillRect(-r,-r,2*r,2*r);glow(ctx,-22,35,95,hue,.5);
+ ctx.globalCompositeOperation='screen';
+ for(let j=0;j<5;j++){const curve=[];for(let x=-r;x<=r;x+=3)curve.push([x,20+j*15+Math.sin(x*.027+time*.8+j)*14]);line(ctx,curve,color(hue,67,.11),9);}
+ for(let j=0;j<18;j++){
+  const x=(random(j+9)-.5)*145+Math.sin(time+j)*5,y=r-((time*(8+random(j)*12)+random(j+20)*160)%170),size=1+random(j+5)*3;
+  circle(ctx,x,y,size);ctx.strokeStyle=color(hue,85,.4);ctx.lineWidth=.7;ctx.stroke();circle(ctx,x-1,y-1,.65,color(hue,92,.7));
+ }
+ ctx.restore();
+ if(fill>.001&&fill<.999){line(ctx,points,color(hue,84,.65),1);line(ctx,points,color(hue,60,.16),5);}
+ const shade=ctx.createRadialGradient(-18,-22,30,0,0,r);shade.addColorStop(0,'#0000');shade.addColorStop(.77,'#0000');shade.addColorStop(1,'#000a');circle(ctx,0,0,r,shade);
+ const glint=ctx.createRadialGradient(-26,-52,0,-26,-52,31);glint.addColorStop(0,'#ffffff60');glint.addColorStop(1,'#ffffff00');ctx.beginPath();ctx.ellipse(-26,-52,25,9,-.45,0,TAU);ctx.fillStyle=glint;ctx.fill();
+ ctx.strokeStyle='#dceef325';ctx.lineWidth=1;circle(ctx,0,0,r-2);ctx.stroke();ctx.restore();
+}
+
+export function createResourceOrbs(){
+ const motion=matchMedia('(prefers-reduced-motion: reduce)'),surfaces=[];
+ for(const [index,selector,hue]of [[0,'.orb.health',350],[1,'.orb.mana',201]]){
+  const host=document.querySelector(selector);if(!host)continue;
+  const canvas=document.createElement('canvas');canvas.className='orb-effect tidal-glass';canvas.setAttribute('aria-hidden','true');canvas.width=canvas.height=256;
+  const surface={index,host,canvas,hue,ctx:null,value:null,target:null,kick:0,lost:false};
+  try{surface.ctx=canvas.getContext('2d');}catch{/* Retain the CSS liquid if canvas is unavailable. */}
+  if(surface.ctx){
+   canvas.addEventListener('contextlost',event=>{event.preventDefault();surface.lost=true;host.classList.remove('effect-ready');});
+   canvas.addEventListener('contextrestored',()=>{surface.lost=false;});
+   host.prepend(canvas);
+  }
+  surfaces.push(surface);
  }
  let elapsed=0;
- return {
-  update(dt,health,mana) {
-   if(!motion.matches)elapsed+=dt;
-   surfaces.forEach((surface,index)=>{
-    const target=Math.max(0,Math.min(1,index===0?health:mana));
-    surface.host.parentElement.style.setProperty('--potion-strength',String(.15+target*.85));
-    if(surface.lost)return;
-    if(surface.value===null)surface.value=target;
-    surface.kick=Math.max(surface.kick,Math.abs(target-surface.value)*2.);
-    surface.value=motion.matches?target:surface.value+(target-surface.value)*(1-Math.exp(-dt*8));
-    surface.kick*=Math.exp(-dt*3);
-    const gl=surface.gl;gl.uniform1f(surface.time,motion.matches?0:elapsed+index*13);gl.uniform1f(surface.fill,surface.value);gl.uniform1f(surface.energy,motion.matches?0:surface.kick);
-    gl.drawArrays(gl.TRIANGLES,0,6);surface.host.classList.add('shader-ready');
-   });
-  },
- };
+ return {update(dt,health,mana){
+  const step=Number.isFinite(dt)?Math.max(0,Math.min(dt,.1)):0,reduced=motion.matches;
+  if(!reduced)elapsed+=step;
+  for(const surface of surfaces){
+   const target=clamp(surface.index===0?health:mana);
+   surface.host.parentElement.style.setProperty('--potion-strength',String(.15+target*.85));
+   if(surface.value===null||reduced||step===0){surface.value=target;surface.kick=0;}
+   else{
+    if(target!==surface.target)surface.kick=Math.min(1,Math.max(surface.kick,Math.abs(target-surface.value)*2.8));
+    surface.value+=(target-surface.value)*(1-Math.exp(-step*6));surface.kick*=Math.exp(-step*4);
+   }
+   surface.target=target;
+   if(!surface.ctx||surface.lost)continue;
+   try{drawTidalGlass(surface,reduced?0:elapsed);surface.host.classList.add('effect-ready');}
+   catch{surface.lost=true;surface.host.classList.remove('effect-ready');}
+  }
+ }};
 }
