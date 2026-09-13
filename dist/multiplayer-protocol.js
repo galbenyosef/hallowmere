@@ -1,4 +1,4 @@
-export const PROTOCOL_VERSION=1;
+export const PROTOCOL_VERSION=2;
 export const TICK_SECONDS=.05;
 export const PLAYER_SPEED=4.9;
 export const PLAYER_COLORS=['#55cce6','#eda957','#af93f5','#70d59b','#ef83b1','#e2d873','#93b3ff','#f08b72'];
