@@ -66,7 +66,7 @@ export function castClassAbility(world,p,m){
   const angle=a+(i-((skill.count||1)-1)/2)*(skill.spread||0);
   // Start at the caster and sweep the entire first segment; muzzle offsets
   // must not allow a bolt to originate on the far side of a wall.
-  world.projectiles.push({id:randomUUID(),mapId:p.mapId,x:p.x,z:p.z,angle,speed:skill.speed,damage,hostile:false,ownerId:p.id,life:skill.range/skill.speed,remainingHits:skill.pierce||1,hitIds:[],skill,visual:skill.projectile,color:skill.color||classColor(p.state)});
+  world.projectiles.push({id:randomUUID(),mapId:p.mapId,x:p.x,z:p.z,angle,speed:skill.speed,damage,hostile:false,ownerId:p.id,life:skill.range/skill.speed,remainingHits:skill.pierce||1,hitIds:[],skill,visual:skill.projectile,classId:p.state.classId,action:m.action,color:skill.color||classColor(p.state)});
  }
  if(skill.kind==='burst')affectArea(world,p,center,skill);
  if(skill.guard&&skill.kind!=='zone'){p.state.guard=skill.guard;p.state.guardTime=skill.duration;}

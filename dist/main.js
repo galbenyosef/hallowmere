@@ -10,7 +10,7 @@ import {createRosterPicker} from './roster-picker.js';
 import {prepareCharacterPortraits} from './character-portraits.js';
 import {prepareInventoryPortrait} from './inventory-portraits.js';
 import {inventoryPortraitStatus} from './character-art.js';
-import {createClassProjectile,createClassZone} from './class-effects.js';
+import {createClassEffects} from './class-effects.js';
 import {MultiplayerClient,predictedPosition} from './multiplayer-client.js';
 import {createMultiplayerView,disposeActor} from './multiplayer-view.js';
 import {MovementCorrection,predictDodge} from './multiplayer-motion.js';
@@ -40,7 +40,7 @@ const resourceOrbs=createResourceOrbs();
 const audio=new AudioEngine();let state=Object.assign(createState(),createCampaign(crypto.getRandomValues(new Uint32Array(1))[0])),scene,camera,renderer,environment,player,heroRig,clock,ready=false,started=false,paused=false,backgrounded=document.hidden,mapExpanded=false,modalKind='',angle=0,moveTarget=null,movePath=[],lockedEnemy=null,attackHeld=false,aimActive=false,shake=0,dodgeTime=0,lastMove=new T.Vector3(0,0,-1),targetWorld=new T.Vector3(0,0,-5),accumulated=0,lastStep=0,uiTimer=0,audioTimer=0,audioInterior=null,toastTimer;
 const pointer=new T.Vector2(0,0),raycaster=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0),keys=new Set(),enemies=[],effects=[],floaters=[],prefabs={},cameraOffset=new T.Vector3(17,25,26),cameraTarget=new T.Vector3(0,0,1.6),reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
 let sessionMode=null,assetsReady=false,sessionGeneration=0;
-let worldPreview,rosterPicker,multiplayerView,network,networkDirection={x:0,z:0},lastSnapshot=null,lastNetworkEvent=0,networkProjectiles=new Map(),networkZones=new Map(),life,combatEffects,moonLight,currentNpc=null,victoryShown=false,victoryTimer,playerLight,spellLight,selection,joystickValue={x:0,y:0},joystickPointer=null,previousFocus=null;
+let worldPreview,rosterPicker,multiplayerView,network,networkDirection={x:0,z:0},lastSnapshot=null,lastNetworkEvent=0,networkProjectiles=new Map(),networkZones=new Map(),life,combatEffects,classEffects,moonLight,currentNpc=null,victoryShown=false,victoryTimer,playerLight,spellLight,selection,joystickValue={x:0,y:0},joystickPointer=null,previousFocus=null;
 let renderedMap='overworld',overworldEnvironment,overworldObjects=[],landmarks,pendingRegionInteraction=null;const regionLabels=new Map(),networkHazards=new Map();
 const worldBounds=()=>mapFor(renderedMap).bounds;
 const movementCorrection=new MovementCorrection();let resetMovement=true,dodgeAngle=0;
@@ -54,7 +54,7 @@ async function init(){let loadingFailed=false;try{
  renderer=new T.WebGLRenderer({canvas:$('world'),antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
  scene=new T.Scene();scene.background=new T.Color(0x101c2b);scene.fog=new T.FogExp2(0x14283a,.017);camera=new T.OrthographicCamera(-20,20,15,-15,.1,150);camera.position.copy(cameraTarget).add(cameraOffset);camera.lookAt(cameraTarget);resize();
  scene.add(new T.HemisphereLight(0x9eb8d0,0x493629,1.3));const moon=moonLight=new T.DirectionalLight(0x86b5ed,2.35);moon.position.set(-16,29,9);moon.castShadow=true;moon.shadow.mapSize.set(2048,2048);Object.assign(moon.shadow.camera,{left:-38,right:38,top:38,bottom:-38,near:.5,far:90});moon.shadow.bias=-.00025;moon.shadow.normalBias=.035;moon.shadow.radius=2;scene.add(moon,moon.target);const rim=new T.DirectionalLight(0x4aa7ce,1.25);rim.position.set(14,12,-22);scene.add(rim);
- const beforeEnvironment=new Set(scene.children);environment=overworldEnvironment=createEnvironment(scene);landmarks=createRegionLandmarks(scene,'overworld');overworldObjects=scene.children.filter(o=>!beforeEnvironment.has(o));combatEffects=createCombatEffects(scene,environment.glowTexture,{reducedMotion});$('load-fill').style.width='28%';
+ const beforeEnvironment=new Set(scene.children);environment=overworldEnvironment=createEnvironment(scene);landmarks=createRegionLandmarks(scene,'overworld');overworldObjects=scene.children.filter(o=>!beforeEnvironment.has(o));combatEffects=createCombatEffects(scene,environment.glowTexture,{reducedMotion});classEffects=createClassEffects(scene,{reducedMotion});$('load-fill').style.width='28%';
  const loader=new GLTFLoader(),models=['warden','hollow','grave-hound','revenant','bellkeeper','elder','healer','smith'];let loaded=0;$('loading-message').textContent=`Loading assets… ${loaded} / ${models.length}`;await Promise.all(models.map(async name=>{const result=await loader.loadAsync(new URL(`./assets/models/${name}.glb`,import.meta.url).href);optimizeModel(result.scene);prefabs[name]=result.scene;loaded++;if(!loadingFailed){$('loading-message').textContent=`Loading assets… ${loaded} / ${models.length}`;$('load-fill').style.width=`${28+loaded/models.length*62}%`;}}));
  $('loading-message').textContent='Preparing characters…';await loadingFrame();
  player=new T.Group();player.add(cloneModel('warden'));player.userData.characterKey='warden';player.position.set(START.x,0,START.z);cameraTarget.set(START.x,0,START.z-3.4);scene.add(player);heroRig=getRig(player);selection=new T.Mesh(new T.RingGeometry(.43,.475,48),new T.MeshBasicMaterial({color:0xd2c79c,transparent:true,opacity:.55,depthWrite:false}));selection.rotation.x=-Math.PI/2;selection.position.y=.095;scene.add(selection);playerLight=new T.PointLight(0xffdfaa,10,6,2);scene.add(playerLight);spellLight=new T.PointLight(0xff7733,0,10,2);scene.add(spellLight);
@@ -154,7 +154,7 @@ function updatePlayer(dt,t){networkDirection={x:0,z:0};if(state.ended){player.ro
  network.input={...networkDirection,angle};player.rotation.y=angle;animateRig(heroRig,t,moving);animateHeroAttack(heroRig,dt);if(moving&&t-lastStep>.29){audio.play(footstepCue(),.48);lastStep=t;}selection.position.set(player.position.x,.1,player.position.z);selection.material.opacity=dodgeTime>0?.2:.55;playerLight.position.copy(player.position).add(new T.Vector3(0,2.7,0));}
 function updateEffects(dt){
  for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.time+=dt;const p=e.time/e.life;if(p>=1){removeObject(e.mesh);effects.splice(i,1);continue;}e.mesh.material.opacity=(1-p)*.85;if(e.type==='ring'){const r=T.MathUtils.lerp(e.from,e.to,1-(1-p)*(1-p));e.mesh.scale.setScalar(r);}if(e.type==='slash'){e.mesh.rotation.z=e.angle-.35+p*.9;e.mesh.scale.setScalar(.8+p*.3);}if(e.type==='sparks'){const data=e.mesh.geometry.attributes.position.array;for(let j=0;j<data.length;j+=6){const v=j/2;for(let axis=0;axis<3;axis++){data[j+axis]+=e.velocity[v+axis]*dt;data[j+3+axis]=data[j+axis]-e.velocity[v+axis]*.022;}e.velocity[v+1]-=dt*9;}e.mesh.geometry.attributes.position.needsUpdate=true;}if(e.type==='particles'){const data=e.mesh.geometry.attributes.position.array;for(let j=0;j<data.length;j+=3){data[j]+=e.velocity[j]*dt;data[j+1]+=e.velocity[j+1]*dt;data[j+2]+=e.velocity[j+2]*dt;e.velocity[j+1]-=dt*6;}e.mesh.geometry.attributes.position.needsUpdate=true;}}
- combatEffects.update(dt);spellLight.intensity=Math.max(0,spellLight.intensity-dt*160);}
+ classEffects.update(dt);combatEffects.update(dt,classEffects.lightSources());spellLight.intensity=Math.max(0,spellLight.intensity-dt*160);}
 function floatText(text,pos,kind=''){const element=document.createElement('div');element.className=`damage-number ${kind}`;element.textContent=text;$('float-layer').append(element);floaters.push({element,pos:new T.Vector3(pos.x,1.9,pos.z),time:0,life:kind==='small'?1.4:.85,offset:(Math.random()-.5)*20});}
 function updateFloaters(dt){for(let i=floaters.length-1;i>=0;i--){const f=floaters[i];f.time+=dt;if(f.time>=f.life){f.element.remove();floaters.splice(i,1);continue;}const projected=f.pos.clone().project(camera);const x=(projected.x*.5+.5)*innerWidth,y=(-projected.y*.5+.5)*innerHeight;f.element.style.transform=`translate(${x+f.offset}px,${y-f.time*55}px) translate(-50%,-50%)`;f.element.style.opacity=String(Math.min(1,(f.life-f.time)*3));}}
 let hudClass=null,portraitsRequested=false;
@@ -248,7 +248,7 @@ function applySnapshot(snapshot,changed){
  const initialSnapshot=!lastSnapshot,wasDead=state.ended,oldLevel=state.level,beforeServices=JSON.stringify([state.gold,state.potions,state.forgeLevel,state.questAccepted,state.questRewarded,state.victory,state.bossLootClaimed,state.rookSupplies]),beforeInventory=JSON.stringify([state.inventory,state.equipped]);
  const nextMap=snapshot.mapId||snapshot.state.mapId||snapshot.players.find(p=>p.id===snapshot.you)?.mapId||'overworld',mapChanged=nextMap!==renderedMap;
  if(mapChanged)switchMap(nextMap);
- if(changed||mapChanged){releaseInput();network.pending=[];if(changed){victoryShown=false;lastNetworkEvent=0;clearTimeout(victoryTimer);}for(const effect of effects)removeObject(effect.mesh);effects.length=0;for(const floater of floaters)floater.element.remove();floaters.length=0;for(const e of enemies){cancelAttack(e);disposeActor(e.model);removeObject(e.bar);e.barTexture.dispose();}enemies.length=0;life.syncLoot([]);life.syncForage([]);for(const b of networkProjectiles.values())b.visual?b.visual.dispose():removeObject(b.mesh);networkProjectiles.clear();if(changed)toast(sessionMode==='single-player'?'A new vigil begins.':'A new vigil begins · The shared world has restarted.');else toast(mapFor(nextMap).name);}
+ if(changed||mapChanged){classEffects.clear();for(const visual of networkZones.values())visual.dispose();networkZones.clear();releaseInput();network.pending=[];if(changed){victoryShown=false;lastNetworkEvent=0;clearTimeout(victoryTimer);}for(const effect of effects)removeObject(effect.mesh);effects.length=0;for(const floater of floaters)floater.element.remove();floaters.length=0;for(const e of enemies){cancelAttack(e);disposeActor(e.model);removeObject(e.bar);e.barTexture.dispose();}enemies.length=0;life.syncLoot([]);life.syncForage([]);for(const b of networkProjectiles.values())b.visual?b.visual.dispose():removeObject(b.mesh);networkProjectiles.clear();if(changed)toast(sessionMode==='single-player'?'A new vigil begins.':'A new vigil begins · The shared world has restarted.');else toast(mapFor(nextMap).name);}
  // Fresh server sessions omit the old class; clear it before merging so the
  // client cannot show Sorcerer skills while the server awaits a new choice.
  Object.assign(state,{classId:undefined,appearanceId:undefined,baseHp:undefined},snapshot.state);lastSnapshot=snapshot;started=true;syncPlayerCharacter();
@@ -283,19 +283,19 @@ function networkEvent(event){
  if(event.type==='ability'){
   const actor=event.playerId===network.id?{model:player,rig:heroRig}:multiplayerView.actors.get(event.playerId);if(!actor)return;
   const local=event.playerId===network.id,rig=actor.rig;
-  const skill=abilityForEvent(event),color=event.color||classColor(event);
-  if(skill?.kind==='melee'){rig.attack=.42;rig.attackKind=event.variant==='closeRange'?'paired':'attack';slash(pos,event.angle,color,skill.range,.3);audioAt('sword',pos,.6);}
+  const skill=abilityForEvent(event),color=event.color||classColor(event),classVisual=classEffects.ability(event,skill,actor.model);
+  if(skill?.kind==='melee'){rig.attack=.42;rig.attackKind=event.variant==='closeRange'?'paired':'attack';if(!classVisual)slash(pos,event.angle,color,skill.range,.3);audioAt('sword',pos,.6);}
   if(skill?.kind==='projectile'){
    rig.attack=.36;rig.attackKind='bolt';
    const hand=pos.clone().add(new T.Vector3(0,1.2,0)),direction=new T.Vector3(Math.sin(event.angle),0,Math.cos(event.angle));
    if(skill.projectile==='ember')combatEffects.cast(hand,direction);
    else if(skill.projectile==='arcane')combatEffects.arcaneCast(hand,direction);
-   else particles(hand,color,9,1.8);
+   else if(!classVisual)particles(hand,color,9,1.8);
    audioAt(['arrow','knife'].includes(skill.projectile)?'sword':'ember',pos,.5);
   }
-  if(skill?.kind==='burst'||skill?.kind==='zone'){rig.attack=.36;rig.attackKind='bolt';ringEffect(pos,color,.3,skill.radius||3,.65);particles(pos,color,24,3);audioAt('nova',pos,.55);}
-  if(skill?.kind==='shield'){ringEffect(pos,color,.8,1.2,skill.duration);audioAt('heal',pos,.6);}
-  if(event.action==='heal'){ringEffect(pos,0x97cba5,.2,1.5,.7);audioAt('heal',pos,.6);}
+  if(skill?.kind==='burst'||skill?.kind==='zone'){rig.attack=.36;rig.attackKind='bolt';if(!classVisual){ringEffect(pos,color,.3,skill.radius||3,.65);particles(pos,color,24,3);}audioAt('nova',pos,.55);}
+  if(skill?.kind==='shield'){if(!classVisual)ringEffect(pos,color,.8,1.2,skill.duration);audioAt('heal',pos,.6);}
+  if(event.action==='heal'){if(!classVisual)ringEffect(pos,0x97cba5,.2,1.5,.7);audioAt('heal',pos,.6);}
   if(event.action==='dodge'){audioAt('dodge',pos,.5);if(local){moveTarget=null;movePath=[];lockedEnemy=null;}}
  }
  if(event.type==='hit'){
@@ -303,8 +303,9 @@ function networkEvent(event){
   const impact=pos.clone().add(new T.Vector3(0,1,0));
   if(event.visual==='ember')combatEffects.emberImpact(impact);
   else if(event.visual==='arcane')combatEffects.arcaneImpact(impact);
-  else if(event.magic)particles(impact,event.color||'#88cfdb',12,2.8);
-  else steelImpact(impact);
+  else if(!classEffects.impact(event)){
+   if(event.magic)particles(impact,event.color||'#88cfdb',12,2.8);else steelImpact(impact);
+  }
   audioAt(event.magic?'ember-hit':'impact',pos,.55);
  }
  if(event.type==='hurt'){floatText(String(event.damage),pos,'enemy-damage');if(event.playerId===network.id){audio.play('hurt',.6);$('damage-vignette').style.opacity='.75';setTimeout(()=>$('damage-vignette').style.opacity='0',210);}}
@@ -317,7 +318,7 @@ function networkEvent(event){
  if(event.type==='loot')lootCollected(event.drop,{collected:true});
  if(event.type==='result'){if(event.ok&&['forage','consume'].includes(event.operation))audio.play(event.operation==='forage'?'pickup':'heal',.55);if(event.message||event.reason)toast(event.message||event.reason);}
 }
-function renderSharedWorld(dt,t){renderHazards();
+function renderSharedWorld(dt,t){renderHazards();classEffects.syncActors(lastSnapshot?.players||[],id=>id===network?.id?player:multiplayerView?.actors.get(id)?.model,renderedMap);
  for(const e of enemies){const n=e.net;if(!n)continue;const blend=1-Math.exp(-dt*14);e.model.position.x=T.MathUtils.lerp(e.model.position.x,n.x,blend);e.model.position.z=T.MathUtils.lerp(e.model.position.z,n.z,blend);e.model.rotation.y=angleLerp(e.model.rotation.y,n.angle,blend);
   if(e.dead){e.model.rotation.z=T.MathUtils.lerp(e.model.rotation.z,1.45,dt*7);e.model.position.y=Math.max(-1,e.model.position.y-dt*.5);e.model.visible=e.model.position.y>-.9;e.bar.visible=false;continue;}
   if(e.barHealth>e.hp){e.barHealth=Math.max(e.hp,e.barHealth-dt*e.maxHp*1.6);updateEnemyBar(e);}animateRig(e.rig,t,n.moving,n.phase==='windup'?1-n.timer/e.data.windup:0,enemyModelType(e.type));e.bar.position.copy(e.model.position).add(new T.Vector3(0,bossType(e.type)?4.8:enemyModelType(e.type)==='hound'?1.5:2.25,0));e.bar.visible=distance(player.position,e.model.position)<12;
@@ -328,7 +329,7 @@ function renderSharedWorld(dt,t){renderHazards();
  for(const b of lastSnapshot?.projectiles||[]){let visual=networkProjectiles.get(b.id);if(!visual){
   const pos=new T.Vector3(b.x,b.hostile?.8:1.1,b.z),dir=new T.Vector3(Math.sin(b.angle),0,Math.cos(b.angle));
   if(!b.hostile){
-   const bolt=b.visual==='arcane'?combatEffects.arcaneBolt(pos,dir,b.speed):b.visual&&b.visual!=='ember'?createClassProjectile(scene,b):combatEffects.emberbolt(pos,dir);
+   const bolt=b.visual==='arcane'?combatEffects.arcaneBolt(pos,dir,b.speed):b.visual&&b.visual!=='ember'?classEffects.projectile(b):combatEffects.emberbolt(pos,dir);
    visual={mesh:bolt.mesh,visual:bolt};
   }else{const mesh=new T.Mesh(new T.SphereGeometry(.15,8,6),new T.MeshBasicMaterial({color:0xef7051}));mesh.position.copy(pos);scene.add(mesh);visual={mesh};}
   networkProjectiles.set(b.id,visual);
@@ -337,7 +338,7 @@ function renderSharedWorld(dt,t){renderHazards();
  }
  const zoneIds=new Set(lastSnapshot?.zones?.map(z=>z.id)||[]);
  for(const [id,visual] of networkZones)if(!zoneIds.has(id)){visual.dispose();networkZones.delete(id);}
- for(const data of lastSnapshot?.zones||[]){let visual=networkZones.get(data.id);if(!visual){visual=createClassZone(scene,data);networkZones.set(data.id,visual);}visual.update(data,lastSnapshot.time);}
+ for(const data of lastSnapshot?.zones||[]){let visual=networkZones.get(data.id);if(!visual){visual=classEffects.zone(data);networkZones.set(data.id,visual);}visual.update(data,lastSnapshot.time,dt);}
  selection.position.set(player.position.x,.1,player.position.z);playerLight.position.copy(player.position).add(new T.Vector3(0,2.7,0));
 }
 

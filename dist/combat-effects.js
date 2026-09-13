@@ -228,12 +228,12 @@ export function createCombatEffects(scene, glowTexture, {reducedMotion = false} 
    for(const layer of layers){layer.mesh.material.uniforms.progress.value=Math.min(1.14,.2+p*3.2);layer.mesh.material.uniforms.opacity.value=layer.opacity*(1-p)**.8;}
   });
  }
- function update(dt) {
+ function update(dt, externalLights=[]) {
   for(let i=bursts.length-1;i>=0;i--) {
    const burst=bursts[i];burst.age+=dt;
    if(burst.age>=burst.life){dispose(burst.root);bursts.splice(i,1);}else burst.animate(burst.age/burst.life,burst.age);
   }
-  const sources=[...bolts].map(b=>({position:b.mesh.position,...b.light}));
+  const sources=[...externalLights,...[...bolts].map(b=>({position:b.mesh.position,...b.light}))];
   for(const b of bursts)if(b.light)sources.push({position:b.root.position,color:b.light.color,intensity:b.light.intensity*(1-b.age/b.life)**2});
   sources.sort((a,b)=>b.intensity-a.intensity);
   lights.forEach((light,i)=>{const source=sources[i];light.intensity=source?.intensity||0;if(source){light.position.copy(source.position);light.color.setHex(source.color);}});
