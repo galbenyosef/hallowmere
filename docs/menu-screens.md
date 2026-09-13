@@ -4,10 +4,11 @@ The selected September 13, 2026 direction uses two cinematic paths: a lone
 adventurer and a party approaching Ashwick. The menu logo is only the HALLOWMERE
 lettering, with the existing subtitle below it.
 
-Choose Single player or Multiplayer, then select **Start game**. Arrow
-keys change the selected path; Tab reaches the primary action. The selected
-path has gold corner brackets, a selection marker, and an explicit checked
-state for assistive technology. Loading progress reports the actual asset
+Click Single player or Multiplayer to start that mode and proceed to character
+selection. Hovering highlights the card with gold corner brackets and a marker,
+without starting a session. Both cards are native buttons: Tab or arrow keys
+move keyboard focus, and Enter or Space activates the focused card directly.
+Loading progress reports the actual asset
 preparation stages. Connection and retry screens share the solo scene.
 
 The pause menu includes **Open main menu** and **Change character**. The main menu keeps

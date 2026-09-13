@@ -190,7 +190,7 @@
   right:-1px;
   border-left:0;
 }
-.mode-option[aria-checked=true] .mode-corners i {
+.mode-option[data-highlighted=true] .mode-corners i {
   opacity:1;
 }
 #loading #mode-choice .mode-selected {
@@ -212,13 +212,13 @@
   stroke:currentColor;
   stroke-width:1;
 }
-.mode-option[aria-checked=true] .mode-corners {
+.mode-option[data-highlighted=true] .mode-corners {
   border-color:#d8c18566;
 }
-.mode-option[aria-checked=true] .mode-corners:before,.mode-option[aria-checked=true] .mode-corners:after,.mode-option[aria-checked=true] .mode-selected {
+.mode-option[data-highlighted=true] .mode-corners:before,.mode-option[data-highlighted=true] .mode-corners:after,.mode-option[data-highlighted=true] .mode-selected {
   opacity:1!important;
 }
-.mode-option[aria-checked=true] .mode-picture>img,.mode-option:hover .mode-picture>img {
+.mode-option[data-highlighted=true] .mode-picture>img {
   opacity:1;
 }
 #loading #mode-choice strong {
@@ -254,9 +254,6 @@
   margin-left:22px;
   vertical-align:-1px;
 }
-#begin-vigil {
-  margin:20px 0 0;
-}
 .title-secondary {
   background:#0c1920cc;
   border:1px solid #a38b5870;
@@ -280,8 +277,9 @@
   outline:2px solid #f0dba3;
   outline-offset:5px;
 }
+/* Gold card brackets are the focus indicator, shared with hover highlighting. */
 #loading .mode-option:focus-visible {
-  outline-offset:8px;
+  outline:none;
 }
 #main-menu-actions {
   display:flex;
@@ -537,9 +535,6 @@
     font-size:15px;
     min-height:54px;
   }
-  #begin-vigil {
-    margin-top:26px;
-  }
   #loading[data-screen=loading] {
     padding:32px 26px;
   }
@@ -595,11 +590,6 @@
   }
   #loading #loading-message {
     font-size:13px;
-  }
-  #begin-vigil {
-    width:100%;
-    min-width:0;
-    margin-top:24px;
   }
   #loading[data-screen=loading] .title-content {
     flex:none;
@@ -660,12 +650,6 @@
   #loading #mode-choice .mode-description {
     font-size:12px;
     margin-top:3px;
-  }
-  #begin-vigil {
-    margin-top:12px;
-    min-height:44px;
-    padding:10px 24px;
-    font-size:14px;
   }
   .title-primary {
     min-height:44px;
