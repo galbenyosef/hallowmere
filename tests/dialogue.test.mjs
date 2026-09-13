@@ -30,7 +30,7 @@ test('dialogue prices and availability follow the actual merchant transaction at
   assert.match(choices[1].disabledReason,/4 more crowns/);
 });
 
-test('every conversation numbers its services and Farewell, including conversations with no services', () => {
+test('every conversation numbers its services and close action, including conversations with no services', () => {
   const state = game();
   for (const id of ['rowan','edda','brann','rook']) {
     const data=npcDialogue(state,id), markup=dialogueMarkup(data,state);

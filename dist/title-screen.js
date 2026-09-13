@@ -61,13 +61,13 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
   selectMode,
   showModes() {
    show('modes');
-   q('loading-title').textContent = 'Choose your path';
-   q('loading-message').textContent = 'Different roads. A shared purpose.';
+   q('loading-title').textContent = 'Choose game mode';
+   q('loading-message').textContent = 'Play solo or join a multiplayer game.';
    selectMode(selectedMode, true);
   },
   showMainMenu(session) {
    show('main');
-   q('loading-title').textContent = 'Your vigil continues';
+   q('loading-title').textContent = 'Main menu';
    updateSession(session);
    q('menu-resume').focus();
   },
@@ -82,7 +82,7 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
   },
   showError() {
    show('loading');
-   q('loading-title').textContent = 'The village could not load';
+   q('loading-title').textContent = 'The game could not load';
    q('loading-message').textContent = 'Please reload to try again.';
    q('loading-status').hidden = true;
    q('loading-retry').hidden = false;

@@ -57,7 +57,7 @@ large fireball, fiery trail, cast flash, and impact burst on right mouse
 | Plague Alchemist | Virulent Bolt | Bitter Remedy | Quickstep | Miasma |
 | Geralt | Steel Strike | Igni | Witcher’s Roll | Quen |
 
-Press **C**, click the character name, or choose **Change class** from the game
+Press **C**, click the character name, or choose **Change character** from the game
 menu while in a sanctuary. Switching retains quest progress, crowns, equipment
 IDs, upgrades, and health/essence percentages. Weapons adapt to the chosen class;
 cooldowns cannot be reset by switching. A per-tab reconnect retains the class,

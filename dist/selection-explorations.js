@@ -23,7 +23,7 @@ function stats(c){return `<dl class="stats"><div><dt>Vitality</dt><dd>${c.hp}</d
 function kit(c,compact=false){return `<div class="kit ${compact?'compact':''}">${['attack','bolt','dodge','nova'].map((key,i)=>`<div class="skill"><kbd>${['LMB','RMB','1','2'][i]}</kbd><div><strong>${c.abilities[key].name}</strong>${compact?'':`<p>${c.abilities[key].description}</p>`}</div></div>`).join('')}</div>`;}
 function equipment(c){return `<dl class="equipment"><div><dt>WEAPON</dt><dd>${c.weapon}</dd></div><div><dt>OFF HAND</dt><dd>${c.focus}</dd></div></dl>`;}
 function identity(c,{story=true,attributes=true,skills=false}={}){return `<div class="identity"><span class="eyebrow class-role">${c.role}</span><h2>${c.name}</h2>${story?`<p class="class-description">${c.description}</p>`:''}${attributes?stats(c):''}${skills?kit(c):''}</div>`;}
-function enter(){return '<button class="primary enter" data-action="enter">Enter the vigil <span aria-hidden="true">→</span></button>';}
+function enter(){return '<button class="primary enter" data-action="enter">Preview selection <span aria-hidden="true">→</span></button>';}
 function pageHeading(title='Choose your calling',caption='THE ASHEN VIGIL'){return `<header class="screen-heading"><span class="eyebrow">${caption}</span><h2>${title}</h2><div class="ornament" aria-hidden="true"></div></header>`;}
 function stepButtons(){return `<div class="class-arrows"><button data-action="class-prev" aria-label="Previous character">←</button><span>${number(CLASS_LIST.findIndex(c=>c.id===chosen)+1)} <i>/ 07</i></span><button data-action="class-next" aria-label="Next character">→</button></div>`;}
 
@@ -100,7 +100,7 @@ $('#screen').addEventListener('click',event=>{
   const route=event.target.closest('[data-path]');if(route){path=route.dataset.path;chosen=CLASS_LIST.find(c=>CLASS_FLAVOR[c.id].path===path).id;renderScreen({restoreFocus:true});writeURL();return;}
   const action=event.target.closest('[data-action]')?.dataset.action;
   if(action==='enter'){
-    $('#confirmation-title').textContent=`${CLASSES[chosen].name} answers the call.`;
+    $('#confirmation-title').textContent=`${CLASSES[chosen].name} selected`;
     $('#confirmation-body').textContent=`This previews the selection in ${DIRECTIONS[direction].name}. Save this direction as a favorite if you want to revisit it.`;
     $('#confirmation').showModal();
   }
