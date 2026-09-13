@@ -1,6 +1,7 @@
 import {MAPS,PORTALS,CHECKPOINTS,mapFor,sameMap,availablePortal,createRegionProgress} from './regions.js';
 import {distance,hasLineOfSight,pointBlocked} from './combat.js';
 import {START} from './campaign.js';
+import {insideBuilding} from './buildings.js';
 
 export function initializeRegions(world){
  world.shared.regionProgress=createRegionProgress();world.shared.discoveries=[];world.shared.campaignComplete=false;world.hazards=[];world.regionHazardCycles=new Map();
@@ -38,6 +39,7 @@ export function regionCommand(world,p,message){
  if(type==='travel'){
   const portal=PORTALS.find(portal=>portal.id===id);
   if(!reachable(world,p,portal)||portal.hidden&&!world.shared.discoveries.includes(id))return false;
+  if(portal.buildingId&&!world.buildings.some(b=>b.id===portal.buildingId&&insideBuilding(b,p)))return false;
   if(!unlocked(world,portal)){world.result(p,{ok:false,reason:'The way is sealed. Defeat the preceding guardian.'});return false;}
   const destination={mapId:portal.toMapId,x:portal.toX,z:portal.toZ},bounds=world.boundsFor(destination);
   if(!MAPS[destination.mapId]||destination.x<bounds.minX||destination.x>bounds.maxX||destination.z<bounds.minZ||destination.z>bounds.maxZ||pointBlocked(destination,world.obstaclesFor(destination),.42))return false;

@@ -1,3 +1,4 @@
+import {FIRST_LEVEL_CAVES,CAVE_ENTRANCES} from './caves.js';
 const WORLD_BOUNDS={minX:-81,maxX:26,minZ:-27,maxZ:27};
 const START={x:-66,z:5};
 
@@ -7,6 +8,7 @@ const objective=(id,name,x,z)=>({id,name,x,z,requiresKills:true});
 const encounter=(id,type,x,z,objectiveId)=>({id,type,x,z,...(objectiveId?{objectiveId}:{})});
 const cluster=(id,x,z,types,objectiveId)=>types.map((type,i)=>encounter(`${id}-${i+1}`,type,x+(i%2)*2,z+Math.floor(i/2)*2,objectiveId));
 export const MAPS={
+ ...Object.fromEntries(FIRST_LEVEL_CAVES.map(map=>[map.id,map])),
  overworld:{id:'overworld',name:'Hallowmere',bounds:WORLD_BOUNDS,start:START,checkpoint:checkpoint('overworld','Ashwick sanctuary',START.x,START.z),objectives:[],encounters:[],boss:null,caches:[],obstacles:[],hazards:[],tier:0},
  'drowned-wood':{id:'drowned-wood',name:'Drowned Wood',subtitle:'THE SUNKEN SHRINES',tier:1,bounds:{...bounds},start:{x:0,z:23},checkpoint:checkpoint('drowned-wood','Wayfarer’s lantern'),
  objectives:[objective('willow-shrine','Cleanse the Willow Shrine',-17,11),objective('reed-shrine','Cleanse the Reed Shrine',16,0),objective('thorn-shrine','Cleanse the Thorn Shrine',-14,-10)],
@@ -45,6 +47,7 @@ const pair=(id,mapId,x,z,toMapId,toX,toZ,requires=null,hidden=false,name='Passag
  {id:`${id}-return`,mapId:toMapId,x:toX,z:toZ,toMapId:mapId,toX:x,toZ:z,requires,hidden:false,name:`Return to ${MAPS[mapId].name}`}
 ];
 export const PORTALS=[
+ ...CAVE_ENTRANCES.flatMap(entrance=>pair(entrance.id,'overworld',entrance.x,entrance.z,entrance.caveId,MAPS[entrance.caveId].start.x,MAPS[entrance.caveId].start.z,null,false,entrance.name).map((portal,i)=>({...portal,appearance:i?'cave':entrance.appearance,...(!i&&entrance.buildingId?{buildingId:entrance.buildingId}:{})}))),
  ...pair('wood-road','overworld',23,5,'drowned-wood',0,27,'boss',false,'Road to Drowned Wood'),
  ...pair('quarry-road','drowned-wood',0,-28,'blackvein-quarry',0,27,'rootbound',false,'Road to Blackvein Quarry'),
  ...pair('keep-road','blackvein-quarry',0,-28,'crownfall-keep',0,27,'quarry-warden',false,'Road to Crownfall Keep'),
@@ -53,7 +56,7 @@ export const PORTALS=[
  ...pair('quarry-cave','blackvein-quarry',26,15,'underways',0,12,'rootbound',true,'Abandoned mine adit'),
  ...pair('keep-cave','crownfall-keep',26,14,'underways',24,11,'quarry-warden',true,'Forgotten crypt')
 ];
-for(const map of Object.values(MAPS))for(const cache of map.caches){cache.mapId=map.id;cache.enemyId=map.encounters.find(e=>e.elite&&e.tier===cache.tier)?.id;}
+for(const map of Object.values(MAPS))for(const cache of map.caches){cache.mapId=map.id;cache.enemyId??=map.encounters.find(e=>e.elite&&e.tier===cache.tier)?.id;}
 export const CHECKPOINTS=Object.values(MAPS).map(m=>m.checkpoint).filter(Boolean);
 export const mapFor=id=>MAPS[id]||MAPS.overworld;
 export const sameMap=(a,b)=>(a?.mapId||'overworld')===(b?.mapId||'overworld');

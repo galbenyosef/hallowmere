@@ -4,6 +4,7 @@ export function regionActionName(record){
  if(record.operation==='objective'&&record.active)return `${record.name} · Defend · Wave ${record.wave||1} / ${record.waves||2}`;
  if(record.locked)return `${record.name} · ${record.operation==='travel'?'Sealed':'Enemies nearby'}`;
  if(record.completed)return `${record.name} · Complete`;
+ if(record.operation==='travel'&&record.name.startsWith('Return to '))return record.name;
  return `${({travel:'Enter',objective:'Activate',checkpoint:'Rest at',cache:'Open'})[record.operation]} ${record.name}`;
 }
 

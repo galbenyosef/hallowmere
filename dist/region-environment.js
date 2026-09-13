@@ -5,11 +5,12 @@ const palettes={
  'drowned-wood':{ground:0x273d37,stone:0x4e6052,dark:0x243129,trim:0x8b9564,glow:0x8fc4a1},
  'blackvein-quarry':{ground:0x3b3835,stone:0x666058,dark:0x302b29,trim:0xa4916b,glow:0xffb06b},
  'crownfall-keep':{ground:0x35353a,stone:0x67676c,dark:0x303039,trim:0xa99b75,glow:0xee9b61},
+ cave:{ground:0x252b2a,stone:0x505956,dark:0x171e20,trim:0x6b8171,glow:0xa4c7a0},
  underways:{ground:0x292d31,stone:0x4b4e54,dark:0x20252a,trim:0x7a9295,glow:0x8bbac5},
  overworld:{ground:0x39423b,stone:0x646c63,dark:0x263530,trim:0xa59a70,glow:0x92bea4}
 };
 function kit(scene,mapId){
- const group=new T.Group();group.name=`region-${mapId}`;scene.add(group);const p=palettes[mapId]||palettes.overworld;
+ const group=new T.Group();group.name=`region-${mapId}`;scene.add(group);const p=palettes[mapFor(mapId).theme]||palettes[mapId]||palettes.overworld;
  const materials={};for(const [key,color] of Object.entries(p))materials[key]=new T.MeshStandardMaterial({color,roughness:.95,...(key==='glow'?{emissive:color,emissiveIntensity:1.6}:{})});
  const geometries={box:new T.BoxGeometry(1,1,1),rock:new T.DodecahedronGeometry(1,0),cylinder:new T.CylinderGeometry(1,1,1,8),cone:new T.ConeGeometry(1,1,7),ring:new T.TorusGeometry(1,.06,5,32)};
  function mesh(shape,mat,x,y,z,sx=1,sy=1,sz=1){const m=new T.Mesh(geometries[shape],materials[mat]);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.receiveShadow=true;m.castShadow=true;group.add(m);return m;}
@@ -19,13 +20,17 @@ function kit(scene,mapId){
 export function createRegionLandmarks(scene,mapId){
  const k=kit(scene,mapId),{mesh,group}=k,map=mapFor(mapId),animated=[],portalMarks=[],objectives=[],seal=[],cacheMarks=[];
  for(const p of PORTALS.filter(p=>p.mapId===mapId)){
-  const pieces=[];
-  if(p.hidden||mapId==='underways'){
+  const pieces=[],mouthZ=p.z-(p.appearance==='cave'?1.2:0);
+  if(p.appearance==='stairs'){
+   pieces.push(mesh('box','dark',p.x,.135,p.z,1.25,.025,1.65));
+   for(let i=0;i<5;i++)pieces.push(mesh('box','stone',p.x,.15+i*.025,p.z-.6+i*.3,1.05,.045,.25));
+   for(const dx of [-.65,.65])pieces.push(mesh('box','trim',p.x+dx,.24,p.z,.12,.26,1.8));
+  }else if(p.appearance==='cave'||p.hidden||mapId==='underways'){
    // A dark, low opening remains readable from the isometric camera without a roof.
-   pieces.push(mesh('box','dark',p.x,.5,p.z,2.6,1,.9));
-   for(const dx of [-1.5,1.5])pieces.push(mesh('rock','stone',p.x+dx,.8,p.z, .65,1.2,.7));
-   pieces.push(mesh('rock','stone',p.x,1.65,p.z,1.8,.45,.65));
-   for(let i=0;i<3;i++)mesh('rock','trim',p.x-2+i*.35,.15,p.z+1+i*.15,.28,.15,.24);
+   pieces.push(mesh('box','dark',p.x,.5,mouthZ,2.6,1,.9));
+   for(const dx of [-1.5,1.5])pieces.push(mesh('rock','stone',p.x+dx,.8,mouthZ, .65,1.2,.7));
+   pieces.push(mesh('rock','stone',p.x,1.65,mouthZ,1.8,.45,.65));
+   for(let i=0;i<3;i++)mesh('rock','trim',p.x-2+i*.35,.15,mouthZ+1+i*.15,.28,.15,.24);
   }else{
    for(const dx of [-1.4,1.4])mesh('box','stone',p.x+dx,1.4,p.z,.55,2.8,.55);
    mesh('box','trim',p.x,2.8,p.z,3.4,.35,.7);
@@ -55,11 +60,18 @@ export function createRegionEnvironment(scene,mapId){
  let seed=mapId.length*977;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  mesh('box','ground',(b.minX+b.maxX)/2,-.21,(b.minZ+b.maxZ)/2,b.maxX-b.minX,.4,b.maxZ-b.minZ);
  // Worn lanes run through every chamber, with cross-paths to side objectives.
- const lane=mesh('box','dark',0,.005,0,mapId==='underways'?58:4,.035,mapId==='underways'?4:58);lane.castShadow=false;
+ if(map.theme!=='cave'){const lane=mesh('box','dark',0,.005,0,mapId==='underways'?58:4,.035,mapId==='underways'?4:58);lane.castShadow=false;}
  for(const o of map.objectives){mesh('box','dark',o.x/2,.008,o.z,Math.abs(o.x)+2,.04,2.6);}
  for(const obstacle of obstacles){
-  const h=obstacle.requires?2.5:mapId==='crownfall-keep'?2.8:mapId==='drowned-wood'?1.1:1.7;
+  const h=map.theme==='cave'?.55:obstacle.requires?2.5:mapId==='crownfall-keep'?2.8:mapId==='drowned-wood'?1.1:1.7;
   const solid=mesh('box',obstacle.requires?'trim':'stone',obstacle.x,h/2,obstacle.z,obstacle.w,h,obstacle.d);
+  if(map.theme==='cave'){
+   // Faceted caps stay within the same rock footprint as the low solid wall.
+   const count=Math.max(1,Math.ceil(Math.max(obstacle.w,obstacle.d)/2));
+   for(let i=0;i<count;i++){const along=(i+.5)/count-.5,wide=obstacle.w>=obstacle.d;
+    mesh('rock','stone',obstacle.x+(wide?along*obstacle.w:0),.85,obstacle.z+(wide?0:along*obstacle.d),wide?obstacle.w/count*.5:obstacle.w*.5,.8+rand()*.3,wide?obstacle.d*.5:obstacle.d/count*.5);
+   }
+  }
   if(obstacle.requires)gates.push({obstacle,solid});
   const coverParts=[solid];if(obstacle.destructible)cover.push({obstacle,parts:coverParts});
   if(mapId==='drowned-wood'){for(let i=0;i<3;i++){const x=obstacle.x+(rand()-.5)*obstacle.w*.7,z=obstacle.z+(rand()-.5)*obstacle.d*.7;mesh('cylinder','dark',x,1.8,z,.24,3.6,.24);const crown=mesh('cone','stone',x,3.5,z,1.5,2.5,1.5);crown.castShadow=false;}}
@@ -75,6 +87,10 @@ export function createRegionEnvironment(scene,mapId){
   const detail=new T.InstancedMesh(k.geometries.rock,k.materials[material],count);
   for(let i=0;i<count;i++){detailTransform.position.set(b.minX+rand()*(b.maxX-b.minX),.016,b.minZ+rand()*(b.maxZ-b.minZ));detailTransform.scale.set(.12+rand()*.3,.025,.12+rand()*.25);detailTransform.updateMatrix();detail.setMatrixAt(i,detailTransform.matrix);}
   detail.receiveShadow=true;group.add(detail);
+ }
+ if(map.theme==='cave'){
+  for(const o of obstacles.filter(o=>o.w<8&&o.d<8)){mesh('cone','trim',o.x,.65,o.z,.3,1.3,.3);}
+  for(const [x,z]of [[b.minX+2,b.minZ+3],[b.maxX-2,b.minZ+3]]){mesh('rock','glow',x,.35,z,.18,.35,.18);}
  }
  if(mapId==='drowned-wood')for(const [x,z]of[[-16,19],[16,16],[-17,-18],[20,-19]]){const pool=mesh('cylinder','dark',x,.025,z,4,.025,3);pool.castShadow=false;}
  if(mapId==='blackvein-quarry')for(const x of[-.9,.9])mesh('box','trim',x,.07,2,.08,.08,32);
