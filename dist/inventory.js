@@ -54,7 +54,9 @@ export function bindInventoryPreviews(container,getState,isConnected=()=>true){
  };
  const position=()=>{
   const preview=detail();if(!anchor?.isConnected||!preview||preview.hidden)return;
-  const point=inventoryTooltipPosition(anchor.getBoundingClientRect(),preview.getBoundingClientRect(),{width:view.innerWidth,height:view.innerHeight});
+  const bounds=anchor.getBoundingClientRect();
+  if(bounds.bottom<=0||bounds.top>=view.innerHeight){hide();return;}
+  const point=inventoryTooltipPosition(bounds,preview.getBoundingClientRect(),{width:view.innerWidth,height:view.innerHeight});
   preview.style.left=`${point.left}px`;preview.style.top=`${point.top}px`;
  };
  const show=tile=>{
@@ -90,7 +92,11 @@ export function bindInventoryPreviews(container,getState,isConnected=()=>true){
  doc.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&anchor){event.preventDefault();event.stopPropagation();hide();}
  });
- container.addEventListener('scroll',event=>{if(!event.target.closest('.inventory-detail'))hide();},true);
+ doc.addEventListener('scroll',event=>{
+  if(!anchor||event.target.closest?.('.inventory-detail'))return;
+  // Keyboard focus may scroll a tile into view before its preview is measured.
+  doc.activeElement===anchor?position():hide();
+ },true);
  doc.addEventListener('pointerdown',event=>{if(!event.target.closest(selector+', .inventory-detail'))hide();});
  view.addEventListener('resize',position);
  return {hide,refresh(){
@@ -117,8 +123,10 @@ export function inventoryMarkup(state){
     <div class="inventory-character">
       <section class="equipment-view" aria-label="Equipped character">
         <div class="inventory-identity"><h3>${escape(appearance?.name||calling.name)}</h3><p>${escape(calling.role)}</p></div>
-        <div class="inventory-portrait-stage">${portrait?`<img class="warden-portrait" src="${portrait}" alt="${escape(appearance?.name||calling.name)} with their in-game equipment" draggable="false">`:`<p class="inventory-portrait-placeholder" role="status">${portraitStatus==='error'?'Character preview unavailable':'Preparing character preview…'}</p>`}</div>
-        <div class="inventory-equipment" aria-label="Equipped gear">${slot('weapon')}${slot('charm')}</div>
+        <div class="inventory-loadout">
+          <div class="inventory-equipment" role="group" aria-label="Equipped gear">${slot('weapon')}${slot('charm')}</div>
+          <div class="inventory-portrait-stage">${portrait?`<img class="warden-portrait" src="${portrait}" alt="${escape(appearance?.name||calling.name)} with their in-game equipment" draggable="false">`:`<p class="inventory-portrait-placeholder" role="status">${portraitStatus==='error'?'Character preview unavailable':'Preparing character preview…'}</p>`}</div>
+        </div>
       </section>
       <section class="inventory-attributes" aria-label="Character attributes"><h3>Attributes</h3><dl>
         <div class="vitality-stat"><dt>Vitality</dt><dd><span data-resource="hp">${Math.ceil(state.hp)}</span> <small>/ <span data-resource="maxHp">${state.maxHp}</span></small></dd></div>

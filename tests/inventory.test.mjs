@@ -98,6 +98,7 @@ test('item previews appear on hover, focus and tap, dismiss with Escape, and sur
  preview.hovered=true;listeners.get('pointerout')({});flush();assert.equal(preview.hidden,false,'Tooltip stays readable when the pointer enters it');
  preview.hovered=false;listeners.get('pointerout')({});flush();assert.equal(preview.hidden,true);assert.equal(gear.attrs['aria-describedby'],undefined);
  doc.activeElement=gear;listeners.get('focusin')({target:gear});assert.equal(preview.hidden,false);
+ documentListeners.get('scroll')({target:{closest:()=>null}});assert.equal(preview.hidden,false,'Scrolling a focused tile into view keeps its preview available');
  const key={key:'Escape',preventDefault(){this.prevented=true;},stopPropagation(){this.stopped=true;}};
  documentListeners.get('keydown')(key);assert.equal(preview.hidden,true);assert.ok(key.prevented&&key.stopped,'Escape dismisses the tooltip before the inventory');
  doc.activeElement=null;listeners.get('pointerover')({target:gear,pointerType:'mouse'});documentListeners.get('keydown')(key);assert.equal(preview.hidden,true,'Escape also dismisses a hover preview when its tile is not focused');
