@@ -7,14 +7,14 @@ export function dialogueMarkup(data, state) {
     const price = choice.cost === undefined ? choice.priceLabel : `${choice.cost} crowns`;
     return `<button class="dialogue-response${index === firstAvailable ? ' is-suggested' : ''}" data-service="${escapeHtml(choice.action)}" data-response-number="${index + 1}"${choice.disabled ? ' disabled' : ''}>
       <span class="dialogue-number" aria-hidden="true">${index + 1}.</span>
-      <span class="dialogue-copy"><span class="dialogue-reply">“${escapeHtml(choice.response || choice.label)}”</span>${detail ? `<small>${escapeHtml(detail)}</small>` : ''}</span>
+      <span class="dialogue-copy"><span class="dialogue-reply">${escapeHtml(choice.response || choice.label)}</span>${detail ? `<small>${escapeHtml(detail)}</small>` : ''}</span>
       ${price ? `<span class="dialogue-price">${escapeHtml(price)}</span>` : ''}
     </button>`;
   }).join('');
   return `<div class="dialogue-rule" aria-hidden="true"></div>
     <p class="npc-speech">“${escapeHtml(data.text)}”</p>
-    <div class="dialogue-choices" aria-label="Your responses">${responses}
-      <button class="dialogue-farewell" data-dialogue-close data-response-number="${data.choices.length + 1}"><span class="dialogue-number" aria-hidden="true">${data.choices.length + 1}.</span><span>“Farewell.”</span><kbd>Esc</kbd></button>
+    <div class="dialogue-choices" aria-label="Available actions">${responses}
+      <button class="dialogue-farewell" data-dialogue-close data-response-number="${data.choices.length + 1}"><span class="dialogue-number" aria-hidden="true">${data.choices.length + 1}.</span><span>Close conversation</span><kbd>Esc</kbd></button>
     </div>
     <div class="dialogue-resources"><span>${state.potions} / 5 draughts${state.potions >= 5 ? ' · Belt full' : ''}</span><span class="dialogue-crowns"><strong>${state.gold}</strong> crowns</span></div>`;
 }
