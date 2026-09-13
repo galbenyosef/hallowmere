@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
 import {CLASS_LIST,CLASSES,classAppearance} from '../dist/classes.js';
 import {createPlayableCharacter} from '../dist/playable-characters.js';
+import {menuNavigationMarkup,updateMenuNavigation} from '../dist/menu-chrome.js';
 
 const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
 const utilities=await readFile(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url),'utf8');
@@ -60,14 +61,18 @@ function pickerHarness(state={classId:'sorcerer',appearanceId:'W10'}){
  const nodes=new Map(),handlers={},choices=[];let saved=JSON.stringify({classId:'sorcerer',appearanceId:'W06'});
  const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{style:{},attributes:{},setAttribute(key,value){this.attributes[key]=value;},focus(){this.focused=true;},addEventListener(event,handler){handlers[`${selector}:${event}`]=handler;}});return nodes.get(selector);};
  const buttons=CLASS_LIST.map(c=>Object.assign(node(`[data-class-choice="${c.id}"]`),{dataset:{classChoice:c.id},querySelector:()=>node(`portrait:${c.id}`)}));
- const dialog={setAttribute(){},querySelector:node,querySelectorAll:()=>buttons,addEventListener:(event,handler)=>{handlers[event]=handler;},showModal(){this.open=true;},close(){this.open=false;}};
- const context=vm.createContext({CLASS_LIST,CLASSES,classAppearance,document:{createElement:()=>dialog,body:{append(){}}},localStorage:{getItem:()=>saved,setItem:(_key,value)=>{saved=value;}},prepareCharacterPortraits:async()=>{},portraitFor:(id,look)=>`${id}/${look}.png`,getState:()=>state,onChoose:choice=>{choices.push(choice);return true;},onClose(){}});
+ const navigation=[...menuNavigationMarkup().matchAll(/data-menu="([^"]+)"/g)].map(([,menu])=>Object.assign(node(`[data-menu="${menu}"]`),{dataset:{menu}}));
+ const classes=new Set(),classList={toggle(name,enabled){enabled?classes.add(name):classes.delete(name);},contains:name=>classes.has(name)};
+ const dialog={classList,setAttribute(){},querySelector:node,querySelectorAll:selector=>selector==='[data-menu]'?navigation:buttons,addEventListener:(event,handler)=>{handlers[event]=handler;},showModal(){this.open=true;},close(){this.open=false;}};
+ const context=vm.createContext({CLASS_LIST,CLASSES,classAppearance,menuNavigationMarkup,updateMenuNavigation,document:{createElement:()=>dialog,body:{append(){}}},localStorage:{getItem:()=>saved,setItem:(_key,value)=>{saved=value;}},prepareCharacterPortraits:async()=>{},portraitFor:(id,look)=>`${id}/${look}.png`,getState:()=>state,onChoose:choice=>{choices.push(choice);return true;},onClose(){}});
  vm.runInContext(pickerSource+'\nvar picker=createRosterPicker({getState,onChoose,onClose});',context);
  return {context,node,handlers,choices,dialog,buttons,saved:()=>JSON.parse(saved)};
 }
 test('picker removes skin controls, replaces old Sorcerer preferences, and submits playable Geralt',async()=>{
  const {context,node,handlers,choices,dialog,saved}=pickerHarness();
  await context.picker.show();
+ assert.equal(node('.chronicle-sidebar').hidden,false);
+ assert.equal(dialog.classList.contains('roster-initial'),false);
  assert.doesNotMatch(dialog.innerHTML,/Sorcerer skins|roster-appearances|data-appearance-choice/);
  assert.match(node('.roster-classes').innerHTML,/data-class-choice="geralt"/);
  assert.equal(node('.roster-portrait img').src,'sorcerer/W07.png');
@@ -82,6 +87,8 @@ test('picker removes skin controls, replaces old Sorcerer preferences, and submi
 test('radial picker cycles and wraps in both directions, follows keyboard focus, and locks selection while joining',async()=>{
  const {context,node,handlers,choices,buttons,dialog}=pickerHarness({});
  await context.picker.show();
+ assert.equal(node('.chronicle-sidebar').hidden,true);
+ assert.equal(dialog.classList.contains('roster-initial'),true);
  node('.roster-previous').onclick();assert.equal(node('.roster-name').textContent,CLASS_LIST.at(-1).name);
  node('.roster-next').onclick();assert.equal(node('.roster-name').textContent,CLASS_LIST[0].name);
  for(let i=1;i<=CLASS_LIST.length;i++){
