@@ -85,3 +85,9 @@
 .forage-label{display:flex;align-items:center;gap:6px;font-family:var(--sans);font-size:12px;color:var(--food-color);border:1px solid #71887877;background:#101d19e6;padding:5px 8px}
 .forage-icon{width:17px;height:17px;flex:none}.forage-label.in-reach,.forage-label:focus-visible{border-color:var(--food-color)}
 @media(max-width:560px){.pouch-food{gap:8px;padding:9px 8px}.pouch-icon{width:26px;height:26px}.pouch-action button{min-width:52px;min-height:44px}.pouch-copy h4{font-size:14px}}
+
+/* Soundtrack controls share the game menu's quiet, worn-gold palette. */
+.soundtrack-settings{margin-top:1.25rem;padding-top:1rem;border-top:1px solid #63573b55}
+.soundtrack-settings p{font-size:.875rem;line-height:1.7;margin:.65rem 0 0}
+.soundtrack-settings a{color:#cdb47c;text-underline-offset:3px}
+.soundtrack-settings a:focus-visible{outline:2px solid #d6c397;outline-offset:4px}

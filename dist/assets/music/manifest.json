@@ -1,0 +1,66 @@
+{
+  "downloaded": "2026-09-12",
+  "licenseTerms": "https://www.scottbuckley.com.au/library/using-this-music/",
+  "tracks": [
+    {
+      "id": "balefire",
+      "title": "Balefire",
+      "artist": "Scott Buckley",
+      "sourcePage": "https://www.scottbuckley.com.au/library/balefire/",
+      "sourceDownload": "https://www.scottbuckley.com.au/library/wp-content/uploads/2023/06/Balefire.mp3",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceSha256": "1546693f6381dc44c2cc90e8934aad32fd325bbc7ee26419ca3f2fb78f0809ad",
+      "sha256": "308a8d98168e263ffac9629adb9df36042b383765021f6ec5e1c9788b2d85369",
+      "bytes": 6800341,
+      "duration": 339.945601,
+      "sourceIntegratedLufs": -14.8,
+      "gainDb": -3.2,
+      "processing": "Constant gain adjustment; re-encoded to 160 kbps stereo MP3 at 44.1 kHz. No composition edits."
+    },
+    {
+      "id": "descent",
+      "title": "Descent",
+      "artist": "Scott Buckley",
+      "sourcePage": "https://www.scottbuckley.com.au/library/descent/",
+      "sourceDownload": "https://www.scottbuckley.com.au/library/wp-content/uploads/2018/04/descent.mp3",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceSha256": "f94d1bc51651c5a4e4e81da032a2eae15df726857fce5a14babcfa9227cdb5dd",
+      "sha256": "3739b8f150b7ab2b3f7a9cd3da4d8136111ba63d3c23480089ac62e95c011ac8",
+      "bytes": 2755540,
+      "duration": 137.693152,
+      "sourceIntegratedLufs": -14.2,
+      "gainDb": -3.8,
+      "processing": "Constant gain adjustment; re-encoded to 160 kbps stereo MP3 at 44.1 kHz. No composition edits."
+    },
+    {
+      "id": "the-old-ones",
+      "title": "The Old Ones",
+      "artist": "Scott Buckley",
+      "sourcePage": "https://www.scottbuckley.com.au/library/the-old-ones/",
+      "sourceDownload": "https://www.scottbuckley.com.au/library/wp-content/uploads/2018/10/sb_theoldones.mp3",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceSha256": "6f933a86122fade9ac69b848edf101a1dd286fac788488466b1b77f0e89721ec",
+      "sha256": "c7139787ca53d7888b8b1debdd3a2e9e038d2f62deb40e50682d68fdf6ccfd06",
+      "bytes": 6042793,
+      "duration": 302.071429,
+      "sourceIntegratedLufs": -18.1,
+      "gainDb": -0.9,
+      "processing": "Constant gain adjustment; re-encoded to 160 kbps stereo MP3 at 44.1 kHz. No composition edits."
+    },
+    {
+      "id": "incantation",
+      "title": "Incantation",
+      "artist": "Scott Buckley",
+      "sourcePage": "https://www.scottbuckley.com.au/library/incantation/",
+      "sourceDownload": "https://www.scottbuckley.com.au/library/wp-content/uploads/2024/09/Incantation.mp3",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceSha256": "e50eb62e720fc21b8a31133bff8ad397beb3a137b5b979b90130c6e74316b289",
+      "sha256": "c3926f41d4774d46ba5719d8da4f8b2a9ec4e99dcb16cc36747c8e2fd461ce0d",
+      "bytes": 8662352,
+      "duration": 433.033469,
+      "sourceIntegratedLufs": -13.62,
+      "gainDb": -4.38,
+      "processing": "Constant gain adjustment; re-encoded to 160 kbps stereo MP3 at 44.1 kHz. No composition edits."
+    }
+  ]
+}

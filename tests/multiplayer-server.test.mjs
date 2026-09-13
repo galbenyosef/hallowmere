@@ -4,6 +4,7 @@ import {WebSocket} from 'ws';
 import {createGameServer} from '../server/server.mjs';
 import {PROTOCOL_VERSION as v} from '../dist/multiplayer-protocol.js';
 import {PORTALS,CHECKPOINTS} from '../dist/regions.js';
+import {readFile} from 'node:fs/promises';
 
 function next(ws,predicate,timeout=3000){return new Promise((resolve,reject)=>{
  const timer=setTimeout(()=>{ws.off('message',message);reject(Error('Timed out waiting for game message'));},timeout);
@@ -12,6 +13,25 @@ function next(ws,predicate,timeout=3000){return new Promise((resolve,reject)=>{
 });}
 async function setup(t){const game=createGameServer({origins:['https://game.example'],log:()=>{}});await new Promise(r=>game.server.listen(0,'127.0.0.1',r));t.after(()=>game.close());return {...game,url:`ws://127.0.0.1:${game.server.address().port}/multiplayer`};}
 async function join(url,token){const ws=new WebSocket(url,{origin:'https://game.example'});const welcome=next(ws,m=>m.type==='welcome'||m.type==='error');ws.on('open',()=>ws.send(JSON.stringify({v,type:'join',token})));return {ws,message:await welcome};}
+
+test('music streams with correct MIME, content length, byte ranges, and HEAD support',async t=>{
+ const game=await setup(t),url=game.url.replace('ws:','http:').replace('/multiplayer','/assets/music/descent.mp3');
+ const file=await readFile(new URL('../dist/assets/music/descent.mp3',import.meta.url));
+ const head=await fetch(url,{method:'HEAD'});assert.equal(head.status,200);assert.equal(head.headers.get('content-type'),'audio/mpeg');
+ assert.equal(Number(head.headers.get('content-length')),file.length);assert.equal(head.headers.get('accept-ranges'),'bytes');assert.equal((await head.arrayBuffer()).byteLength,0);
+ for(const [range,start,end] of [['bytes=0-511',0,511],['bytes=-128',file.length-128,file.length-1],['bytes=1024-',1024,file.length-1]]){
+  const response=await fetch(url,{headers:{Range:range}});assert.equal(response.status,206);
+  assert.equal(response.headers.get('content-range'),`bytes ${start}-${end}/${file.length}`);
+  assert.deepEqual(Buffer.from(await response.arrayBuffer()),file.subarray(start,end+1));
+ }
+ const partialHead=await fetch(url,{method:'HEAD',headers:{Range:'bytes=0-99'}});
+ assert.equal(partialHead.status,206);assert.equal(partialHead.headers.get('content-length'),'100');assert.equal((await partialHead.arrayBuffer()).byteLength,0);
+ for(const range of [`bytes=${file.length}-`,'bytes=9-2','bytes=-0','bytes=0-1,8-9']){
+  const response=await fetch(url,{headers:{Range:range}});assert.equal(response.status,416);
+  assert.equal(response.headers.get('content-range'),`bytes */${file.length}`);await response.arrayBuffer();
+ }
+ const full=await fetch(url);assert.equal(full.status,200);assert.deepEqual(Buffer.from(await full.arrayBuffer()),file);
+});
 
 test('regional travel and personal checkpoints synchronize through real sockets',async t=>{
  const game=await setup(t),a=await join(game.url),b=await join(game.url),initial=await next(a.ws,m=>m.type==='snapshot');

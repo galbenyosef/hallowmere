@@ -1,9 +1,11 @@
 import {SOUND_BANKS, AUDIO_FILES, MAX_VOICES, spatialMix, ambienceMix} from './audio-palette.js';
+import {MusicPlayer} from './music.js';
 
 export class AudioEngine {
-  constructor({random = Math.random, fetcher = (...args) => fetch(...args), contextFactory} = {}) {
+  constructor({random = Math.random, fetcher = (...args) => fetch(...args), contextFactory, mediaFactory} = {}) {
     this.contextFactory = contextFactory || (() => new (globalThis.AudioContext || globalThis.webkitAudioContext)());
     this.random = random; this.fetcher = fetcher;
+    this.mediaFactory = mediaFactory; this.musicEnabled = true; this.music = null;
     this.context = null; this.buffers = {}; this.failed = new Set(); this.inflight = new Map();
     this.muted = false; this.ready = false; this.paused = false; this.backgrounded = false;
     this.volume = .72; this.last = {}; this.bags = {}; this.previous = {};
@@ -13,6 +15,7 @@ export class AudioEngine {
 
   async unlock() {
     if (this.ready) {
+      this.music?.unlock();
       if (!this.backgrounded && this.context.state === 'suspended') await this.context.resume().catch(() => {});
       return;
     }
@@ -34,6 +37,12 @@ export class AudioEngine {
     this.compressor.connect(highpass); highpass.connect(this.master); this.master.connect(ceiling); ceiling.connect(context.destination);
     this.worldBus = context.createGain(); this.worldBus.gain.value = this.paused ? .12 : 1;
     this.worldBus.connect(this.compressor);
+    if (this.mediaFactory || typeof globalThis.Audio === 'function') {
+      try {
+        this.music = new MusicPlayer(context, this.worldBus, {mediaFactory: this.mediaFactory});
+        this.music.setState({enabled: this.musicEnabled, muted: this.muted, backgrounded: this.backgrounded});
+      } catch (error) { console.warn('Music unavailable; effects remain enabled.', error); }
+    }
     this.buses = {};
     for (const name of ['sfx', 'ui', 'ambience']) {
       const gain = context.createGain(); gain.gain.value = name === 'ambience' ? .65 : name === 'ui' ? .8 : 1;
@@ -59,6 +68,7 @@ export class AudioEngine {
   async init() {
     try {
       if (!this.context) this.createGraph(this.contextFactory());
+      this.music?.unlock();
       if (!this.backgrounded) await this.context.resume();
       const first = ['sword', 'impact', 'ember', 'dodge', 'hurt', 'heal', 'step'].flatMap(cue => SOUND_BANKS[cue].files);
       await this.loadFiles(first);
@@ -160,6 +170,7 @@ export class AudioEngine {
   }
 
   duck(now) {
+    this.music?.duck(now);
     const gain = this.buses.ambience.gain;
     gain.cancelScheduledValues(now); gain.setValueAtTime(gain.value, now);
     gain.linearRampToValueAtTime(.36, now + .035); gain.setTargetAtTime(.65, now + .22, .22);
@@ -209,6 +220,13 @@ export class AudioEngine {
     this.master.gain.cancelScheduledValues(now);
     this.master.gain.setTargetAtTime(this.muted || this.backgrounded ? 0 : this.volume, now, .04);
     this.worldBus.gain.setTargetAtTime(this.paused ? .12 : 1, now, .1);
+    this.music?.setState({enabled: this.musicEnabled, muted: this.muted, backgrounded: this.backgrounded});
+  }
+
+  toggleMusic() {
+    this.musicEnabled = !this.musicEnabled; this.applyState();
+    if (this.musicEnabled) this.music?.unlock();
+    return this.musicEnabled;
   }
 
   toggle() {
@@ -237,6 +255,7 @@ export class AudioEngine {
     return {ready: this.ready, muted: this.muted, state: this.context?.state ?? 'not-started',
       effects: Object.keys(this.buffers).length, expected: AUDIO_FILES.length, failed: [...this.failed],
       voices: this.voices.size, beds: this.loops.size, zone: this.world.zone ?? 'ashwick',
-      mix: {...this.targets}, master: this.master?.gain.value ?? 0};
+      mix: {...this.targets}, master: this.master?.gain.value ?? 0,
+      music: this.music?.getState() ?? {enabled: this.musicEnabled, playing: false, track: null}};
   }
 }

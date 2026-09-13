@@ -1,19 +1,37 @@
 import http from 'node:http';
 import {readFile,stat} from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
 import {resolve,extname,sep} from 'node:path';
 import {WebSocketServer,WebSocket} from 'ws';
 import {World} from './world.mjs';
 import {PROTOCOL_VERSION,TICK_SECONDS} from '../dist/multiplayer-protocol.js';
 
 export function createGameServer({world=new World(),origins=[],staticRoot=resolve('dist'),log=console.log}={}){
- const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.glb':'model/gltf-binary','.wav':'audio/wav','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg'};
+ const types={'.html':'text/html','.txt':'text/plain; charset=utf-8','.js':'text/javascript','.css':'text/css','.json':'application/json','.glb':'model/gltf-binary','.wav':'audio/wav','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg'};
  const server=http.createServer(async(req,res)=>{
   try{
    const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
    if(pathname==='/health'){res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({ok:true,version:PROTOCOL_VERSION,players:world.connected().length}));return;}
    if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}
    let file=resolve(staticRoot,'.'+pathname);if(file!==staticRoot&&!file.startsWith(staticRoot+sep)){res.writeHead(403);res.end();return;}
-   if((await stat(file)).isDirectory())file=resolve(file,'index.html');const body=await readFile(file);
+   if((await stat(file)).isDirectory())file=resolve(file,'index.html');
+   if(extname(file)==='.mp3'){
+    const {size}=await stat(file),headers={'Content-Type':'audio/mpeg','Accept-Ranges':'bytes','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'};
+    let start=0,end=size-1,status=200;
+    if(req.headers.range){
+     const match=/^bytes=(\d*)-(\d*)$/.exec(req.headers.range);
+     if(match&&(match[1]||match[2])){
+      start=match[1]?Number(match[1]):Math.max(0,size-Number(match[2]));
+      end=match[1]&&match[2]?Math.min(size-1,Number(match[2])):size-1;
+     }else start=size;
+     if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>=size||start>end){res.writeHead(416,{...headers,'Content-Range':`bytes */${size}`});res.end();return;}
+     status=206;headers['Content-Range']=`bytes ${start}-${end}/${size}`;
+    }
+    res.writeHead(status,{...headers,'Content-Length':end-start+1});
+    if(req.method==='HEAD'){res.end();return;}
+    const stream=createReadStream(file,{start,end});stream.on('error',()=>res.destroy());res.on('close',()=>stream.destroy());stream.pipe(res);return;
+   }
+   const body=await readFile(file);
    res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});res.end(req.method==='HEAD'?undefined:body);
   }catch{res.writeHead(404);res.end('Not found');}
  });

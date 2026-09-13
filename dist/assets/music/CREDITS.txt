@@ -1,0 +1,31 @@
+HALLOWMERE SOUNDTRACK
+
+Music by Scott Buckley - released under CC-BY 4.0.
+https://www.scottbuckley.com.au
+License: https://creativecommons.org/licenses/by/4.0/
+Composer's terms: https://www.scottbuckley.com.au/library/using-this-music/
+
+Balefire
+https://www.scottbuckley.com.au/library/balefire/
+
+Descent
+https://www.scottbuckley.com.au/library/descent/
+
+The Old Ones
+https://www.scottbuckley.com.au/library/the-old-ones/
+
+Incantation
+https://www.scottbuckley.com.au/library/incantation/
+
+Changes for this game: constant volume adjustments and conversion to 160 kbps
+stereo MP3. Playback applies fades and overlaps between tracks. The compositions
+are otherwise unedited. This use does not imply the composer's endorsement.
+Source download URLs, source/output hashes, durations, and gain adjustments are
+recorded in manifest.json alongside these files.
+
+For videos featuring this music, include this attribution in the video description:
+Music by Scott Buckley - released under CC-BY 4.0. https://www.scottbuckley.com.au
+
+These tracks are included as part of Hallowmere. The composer's terms prohibit
+reselling them in isolation, reuploading them to music streaming platforms, or
+registering them with audio fingerprinting services such as Content ID.
