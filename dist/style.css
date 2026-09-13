@@ -72,19 +72,8 @@
 @media(prefers-reduced-motion:reduce){.connection-spinner{animation:none}}
 #restart-vote{position:fixed;z-index:80;top:54px;left:50%;transform:translateX(-50%);width:min(92vw,430px);padding:14px;background:#13232cf5;border:1px solid #9b9474;border-radius:6px;color:#e6e4cf;font:14px/1.5 Inter,sans-serif;text-align:center}#restart-vote p{margin:0 0 10px}#restart-vote button{font:14px Inter,sans-serif;padding:10px;margin:0 4px;border:1px solid #7b8b88;border-radius:4px;background:#23383f;color:#e8e8d9}#restart-vote button:disabled{opacity:.5}
 @media(max-width:650px){#multiplayer-status{top:5px;font-size:12px;padding:4px 8px}.player-label{font-size:12px}#restart-vote{top:35px}}
-.inventory-pouch{margin-top:16px;text-align:left;border-top:1px solid var(--line)}
-.pouch-foods{display:grid;gap:7px}
-.pouch-food{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #66756166;background:#101b1bd9}
-.pouch-icon{flex:none;width:34px;height:34px;color:var(--food-color)}
-.pouch-copy{flex:1;min-width:0}.pouch-copy h4{font-family:var(--serif);font-size:15px;font-weight:500;color:var(--food-color);margin:0 0 4px}
-.modal .pouch-copy p{font-size:13px;line-height:1.4;margin:0;color:#d2d4c5}.pouch-copy small{display:block;font-size:12px;color:#9aa99e;line-height:1.4;margin-top:4px}
-.pouch-action{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none;font-size:12px;font-variant-numeric:tabular-nums;color:#bcc8ba}
-.pouch-action button{font-size:14px;min-width:64px;min-height:40px;padding:7px 12px;border:1px solid #839276;background:#25352c;color:#e0dcc1;border-radius:2px}
-.pouch-action button:hover,.pouch-action button:focus-visible{border-color:var(--food-color);outline:1px solid var(--food-color);outline-offset:2px}.pouch-action button[aria-disabled=true]{opacity:.5;cursor:default}
-.modal .pouch-regen,.modal .pouch-guidance{font-size:12px;line-height:1.5;margin:10px 2px;color:#9fb4a8}.modal .pouch-regen{color:#94d4ca}
 .forage-label{display:flex;align-items:center;gap:6px;font-family:var(--sans);font-size:12px;color:var(--food-color);border:1px solid #71887877;background:#101d19e6;padding:5px 8px}
 .forage-icon{width:17px;height:17px;flex:none}.forage-label.in-reach,.forage-label:focus-visible{border-color:var(--food-color)}
-@media(max-width:560px){.pouch-food{gap:8px;padding:9px 8px}.pouch-icon{width:26px;height:26px}.pouch-action button{min-width:52px;min-height:44px}.pouch-copy h4{font-size:14px}}
 
 /* Explicit session choice uses the loading screen's existing palette. */
 #loading{padding:24px;text-align:center}#loading #loading-title{font-size:clamp(24px,4vw,42px);letter-spacing:2px;max-width:720px;line-height:1.3}
