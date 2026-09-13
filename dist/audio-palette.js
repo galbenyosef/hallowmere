@@ -38,10 +38,11 @@ export const SOUND_BANKS = {
   'boss-slam': bank('boss-slam', 2, {wet: .3, priority: 5, voices: 2}),
   whisper: bank('whisper', 3, {bus: 'ambience', gain: .6, wet: .3, priority: 0, voices: 1, cooldown: 5}),
   creak: bank('creak', 3, {bus: 'ambience', gain: .6, wet: .24, priority: 0, voices: 1, cooldown: 5}),
-  ambience: bank('ambience', 1, {bus: 'ambience', gain: .42, wet: 0, loop: true, pitch: 0}),
-  'ambience-road': bank('ambience-road', 1, {bus: 'ambience', gain: .42, wet: 0, loop: true, pitch: 0}),
-  'ambience-haunted': bank('ambience-haunted', 1, {bus: 'ambience', gain: .42, wet: 0, loop: true, pitch: 0}),
-  tension: bank('tension', 1, {bus: 'ambience', gain: .32, wet: 0, loop: true, pitch: 0}),
+  // Continuous wind/noise beds play at one-third of their original level.
+  ambience: bank('ambience', 1, {bus: 'ambience', gain: .42 / 3, wet: 0, loop: true, pitch: 0}),
+  'ambience-road': bank('ambience-road', 1, {bus: 'ambience', gain: .42 / 3, wet: 0, loop: true, pitch: 0}),
+  'ambience-haunted': bank('ambience-haunted', 1, {bus: 'ambience', gain: .42 / 3, wet: 0, loop: true, pitch: 0}),
+  tension: bank('tension', 1, {bus: 'ambience', gain: .32 / 3, wet: 0, loop: true, pitch: 0}),
   heartbeat: bank('heartbeat', 1, {bus: 'ambience', gain: .4, wet: 0, loop: true, pitch: 0}),
 };
 
