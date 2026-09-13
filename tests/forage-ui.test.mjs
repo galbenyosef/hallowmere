@@ -42,23 +42,29 @@ test('plant labels approach and request harvest, wait for server confirmation, d
  life.syncForage([record]);assert.notEqual(life.forage[0],patch);assert.equal(life.forage.length,1);life.syncForage([]);
 });
 
-test('pouch has three explicit Eat actions above the satchel and live updates preserve gear, focus and scrolling',()=>{
+test('pouch has three food tiles below the satchel and live updates preserve gear, focus and scrolling',()=>{
  const state=Object.assign(createState(),createCampaign(42)),markup=inventoryMarkup(state,'starting-sword');
- assert.equal((markup.match(/data-consume=/g)||[]).length,3);assert.ok(markup.indexOf('inventory-pouch')<markup.indexOf('<h3>Satchel'));
- assert.match(markup,/world keeps moving/);assert.match(markup,/5 of each food/);
+ assert.equal((markup.match(/data-consume=/g)||[]).length,3);assert.ok(markup.indexOf('inventory-pouch')>markup.indexOf('<h3>Satchel'));
+ assert.equal((markup.match(/class="inventory-grid"/g)||[]).length,2);assert.match(markup,/5 of each food/);
+ assert.doesNotMatch(markup,/pouch-foods|pouch-action|pouch-copy/);
  for(const key of ['hp','mana','maxHp','maxMana','potions','level','forgeLevel'])assert.ok(markup.includes(`data-resource="${key}"`),`Inventory must expose live ${key} updates`);
  // A DOM contract fixture rejects subtree replacement and unknown selectors.
  const node=()=>({textContent:'',attrs:{},setAttribute(k,v){this.attrs[k]=v;},set innerHTML(_){assert.fail('Snapshot replaced a subtree');}});
- const nodes=new Map(),rows=new Map();
- for(const food of FOOD_LIST){const children=new Map(['[data-food-count]','[data-food-status]','[data-consume]'].map(key=>[key,node()]));const row={querySelector:selector=>{assert.ok(children.has(selector));return children.get(selector);}};nodes.set(`[data-food="${food.id}"]`,row);rows.set(food.id,children);}
+ const nodes=new Map(),rows=new Map(),previews=new Map();
+ for(const food of FOOD_LIST){
+  const count=node(),row={...node(),querySelector:selector=>{assert.equal(selector,'[data-food-count]');return count;}};
+  nodes.set(`[data-food="${food.id}"]`,row);rows.set(food.id,{row,count});
+  const children=new Map(['[data-food-count]','[data-food-status]'].map(key=>[key,node()]));
+  nodes.set(`[data-preview-food="${food.id}"]`,{querySelector:selector=>{assert.ok(children.has(selector));return children.get(selector);}});previews.set(food.id,children);
+ }
  for(const key of ['hp','mana','maxHp','maxMana','potions','gold','level','forgeLevel'])nodes.set(`[data-resource="${key}"]`,node());
  nodes.set('[data-pouch-regen]',node());
- const focused=rows.get(FOOD_LIST[0].id).get('[data-consume]'),equipment={selected:'starting-sword'},container={...node(),scrollTop:123,activeElement:focused,equipment,querySelector:s=>{assert.ok(nodes.has(s),s);return nodes.get(s);}};
+ const focused=rows.get(FOOD_LIST[0].id).row,equipment={selected:'starting-sword'},container={...node(),scrollTop:123,activeElement:focused,equipment,querySelector:s=>{assert.ok(nodes.has(s),s);return nodes.get(s);}};
  updateInventoryResources(container,state);assert.equal(focused.attrs['aria-disabled'],'true');
  state.hp=50;state.mana=20;state.pouch[FOOD_LIST[0].id]=2;updateInventoryResources(container,state);
  assert.equal(focused.attrs['aria-disabled'],'false');assert.equal(nodes.get('[data-resource="hp"]').textContent,'50');
  state.pouch[FOOD_LIST[0].id]=1;state.hp=85;state.foodCooldown=1.3;state.essenceRegen=3.4;updateInventoryResources(container,state);
- assert.equal(rows.get(FOOD_LIST[0].id).get('[data-food-count]').textContent,'1 / 5');assert.match(rows.get(FOOD_LIST[0].id).get('[data-food-status]').textContent,/1.3s/);assert.match(nodes.get('[data-pouch-regen]').textContent,/3.4s left/);
+ assert.equal(rows.get(FOOD_LIST[0].id).count.textContent,'1');assert.equal(previews.get(FOOD_LIST[0].id).get('[data-food-count]').textContent,'1 / 5');assert.match(previews.get(FOOD_LIST[0].id).get('[data-food-status]').textContent,/1.3s/);assert.match(focused.attrs['aria-label'],/1 of 5, Ready in 1.3s/);assert.match(nodes.get('[data-pouch-regen]').textContent,/3.4s left/);
  assert.equal(container.activeElement,focused);assert.equal(container.equipment,equipment);assert.equal(container.equipment.selected,'starting-sword');assert.equal(container.scrollTop,123);
- state.foodCooldown=0;updateInventoryResources(container,state,false);assert.equal(focused.attrs['aria-disabled'],'true');assert.equal(rows.get(FOOD_LIST[0].id).get('[data-food-status]').textContent,'Reconnect to eat.');
+ state.foodCooldown=0;updateInventoryResources(container,state,false);assert.equal(focused.attrs['aria-disabled'],'true');assert.equal(previews.get(FOOD_LIST[0].id).get('[data-food-status]').textContent,'Reconnect to eat.');
 });
