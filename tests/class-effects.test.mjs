@@ -105,7 +105,7 @@ test('authoritative snapshots identify secondary / volley projectiles and expose
   assert.ok(command('select-class',{classId}));player.state.cooldowns.bolt=player.state.cooldowns.nova=0;player.state.mana=100;
   assert.ok(command('ability',{action:classId==='geralt'?'nova':'bolt',angle:0}));
   const state=world.snapshot(viewer.id).players.find(p=>p.id===player.id);
-  if(classId==='reaver'){assert.equal(state.guard,.35);assert.equal(state.guardTime,4);}else{assert.ok(state.shield>0);assert.equal(state.shieldTime,4);}
+  if(classId==='reaver'){assert.equal(state.guard,CLASSES.reaver.abilities.bolt.guard);assert.equal(state.guardTime,CLASSES.reaver.abilities.bolt.duration);}else{assert.ok(state.shield>0);assert.equal(state.shieldTime,4);}
   for(let i=0;i<90;i++)world.step();
   const expired=world.snapshot(viewer.id).players.find(p=>p.id===player.id);assert.equal(expired.shield,0);assert.equal(expired.guardTime,0);
  }
