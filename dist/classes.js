@@ -8,10 +8,11 @@ export const CLASSES={
   attack:ability('Arcane Bolt','projectile',.60,0,'Fire a ranged arcane projectile.',{damage:26,range:11,speed:17,projectile:'arcane',magic:true}),
   bolt:ability('Fireball','projectile',1.2,18,'Hurl a large fireball. Grazing an enemy counts as a hit and bursts on impact.',{damage:46,range:35,speed:14,hitRadius:.4,projectile:'ember',color:'#ff902e',magic:true}),dodge:evade('Miststep',2.2),
   nova:ability('Elemental Storm','zone',9,38,'Call a three-second storm at your aim point.',{damage:13,radius:3.4,duration:3,interval:.5,range:8,magic:true}),heal:draught}},
- ranger:{id:'ranger',concept:'C02',name:'Ranger',role:'Ranged · precision',description:'Cut through foes with piercing arrows and punish clustered enemies with a focused rain of arrows.',hp:125,mana:100,regen:7,speed:5.2,color:'#b6ca87',weapon:'Yew longbow',weaponType:'longbow',focus:'Quiver of barbed arrows',abilities:{
-  attack:ability('Quickshot','projectile',.58,0,'Loose an arrow at a distant enemy.',{damage:25,range:13,speed:23,projectile:'arrow'}),
-  bolt:ability('Piercing Shot','projectile',2.8,20,'Fire a powerful arrow that pierces up to four enemies.',{damage:48,range:16,speed:26,pierce:4,projectile:'arrow'}),dodge:evade('Hunter’s Roll',1.7),
-  nova:ability('Arrow Rain','zone',8,32,'Rain arrows onto your aim point for three seconds.',{damage:15,radius:3.1,duration:3,interval:.5,range:10}),heal:draught}},
+ ranger:{id:'ranger',concept:'C02',name:'Ranger',role:'Archery · twin blades',description:'Fight with Legolas’s speed and precision: loose swift arrows, draw twin blades when enemies close in, and slip away to find your next shot.',hp:125,mana:100,regen:7,speed:5.2,color:'#b6ca87',weapon:'Elven longbow',weaponType:'longbow',focus:'Quiver & twin fighting knives',abilities:{
+  attack:ability('Elven Quickshot','projectile',.46,0,'Loose a swift arrow. Automatically strike twice with Twin Blades when an enemy is within blade reach in front of you.',{damage:22,range:13,speed:26,projectile:'arrow',closeRange:ability('Twin Blades','melee',.46,0,'Cut twice with paired fighting knives.',{damage:12,range:2.15,arc:1.5,hits:2})}),
+  bolt:ability('Piercing Shot','projectile',2.8,20,'Fire a powerful arrow that pierces up to four enemies.',{damage:48,range:16,speed:28,pierce:4,projectile:'arrow'}),
+  dodge:ability('Elven Step','dodge',1.5,0,'Evade in your movement direction with brief invulnerability. While standing still, leap back from your aim.',{retreat:true}),
+  nova:ability('Threefold Volley','projectile',7,30,'Loose three arrows in a narrow fan. Each arrow pierces up to two enemies.',{damage:34,range:15,speed:27,projectile:'arrow',count:3,spread:.14,pierce:2}),heal:draught}},
  reaver:{id:'reaver',concept:'C03',name:'Reaver',role:'Melee · fury',description:'Trade speed for reach and resilience. Bleed enemies with your axe, then whirl through the pack.',hp:180,mana:80,regen:6,speed:4.6,color:'#e3a178',weapon:'Two-handed war axe',weaponType:'war axe',focus:'Fury talisman',abilities:{
   attack:ability('Rend','melee',.68,0,'Sweep your axe in a wide arc and inflict bleeding.',{damage:34,range:3.1,arc:2.3,dot:{damage:4,duration:3,interval:.75,type:'bleed'}}),
   bolt:ability('War Cry','burst',7,22,'Stagger nearby enemies and take 35% less damage for four seconds.',{damage:0,radius:4,root:1,guard:.35,duration:4}),dodge:evade('Rush',2.1),
@@ -35,6 +36,8 @@ export const CLASS_LIST=Object.values(CLASSES);
 const legacy={id:'warden',name:'Warden',role:'Oathbound',hp:140,mana:100,regen:7,speed:4.9,color:'#88cfdb',weapon:'Warden’s longsword',weaponType:'sword',focus:'Shield',abilities:{attack:ability('Cleave','melee',.48,0,'Sweep your blade.',{damage:28,range:2.9,arc:2.1}),bolt:ability('Emberbolt','projectile',1.2,18,'Hurl a firebolt.',{damage:46,range:35,speed:14,projectile:'ember',magic:true}),dodge:evade('Evade'),nova:ability('Cinder nova','burst',6,35,'Burn nearby enemies.',{damage:62,radius:4.6,root:.7,magic:true}),heal:draught}};
 export const classFor=state=>CLASSES[state?.classId]||legacy;
 export const abilitiesFor=state=>classFor(state).abilities;
+// The authority chooses close-range attacks; all viewers animate that same choice.
+export function abilityForEvent(event){const skill=abilitiesFor(event)[event.action];return event.variant==='closeRange'&&skill?.closeRange?skill.closeRange:skill;}
 export const classAppearance=(classId,appearanceId)=>classId==='sorcerer'?(SORCERER_APPEARANCES[appearanceId]||SORCERER_APPEARANCES.C01):null;
 export const conceptFor=(classId,appearanceId)=>classAppearance(classId,appearanceId)?.id||CLASSES[classId]?.concept||'warden';
 export const classColor=state=>classAppearance(state?.classId,state?.appearanceId)?.color||classFor(state).color;

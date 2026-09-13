@@ -253,6 +253,12 @@ export function animateHeroAttack(rig, dt) {
   const release=Math.sin(p*Math.PI);
   arm.rotation.set(-.55-release*.3,-.15,-.16);rig.body.rotation.x=-release*.14;rig.body.position.z=-release*.1;
   if(shield)shield.rotation.x=-.3-release*.2;
+ } else if(rig.attackKind==='paired') {
+  // The right and left cuts peak at the authoritative .11s / .24s hit times.
+  const elapsed=.42-rig.attack,right=Math.sin(Math.min(1,elapsed/.22)*Math.PI),left=Math.sin(Math.max(0,Math.min(1,(elapsed-.13)/.22))*Math.PI);
+  arm.rotation.set(-.35-right*.6,-.9+right*1.8,-.16-right*.2);
+  if(shield)shield.rotation.set(-.35-left*.6,.9-left*1.8,.16+left*.2);
+  rig.body.rotation.y=(right-left)*.3;rig.body.position.z=(right+left)*.06;
  } else {
   const windup=.11/.42,strike=.22/.42;
   const swing=p<windup?-p/windup:p<strike?-1+2*(1-(1-(p-windup)/(strike-windup))**3):1-((p-strike)/(1-strike));
