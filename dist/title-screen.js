@@ -9,8 +9,7 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
   selectedMode = mode;
   choices.forEach((button, i) => {
    const selected = i === (mode === 'single-player' ? 0 : 1);
-   button.setAttribute('aria-checked', String(selected));
-   button.tabIndex = selected ? 0 : -1;
+   button.dataset.highlighted = String(selected);
    if (selected && focus) button.focus();
   });
  }
@@ -18,7 +17,6 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
   root.hidden = false;
   root.dataset.screen = screen;
   q('mode-choice').hidden = screen !== 'modes';
-  q('begin-vigil').hidden = screen !== 'modes';
   q('main-menu-actions').hidden = screen !== 'main';
   q('loading-status').hidden = screen !== 'loading';
   q('loading-retry').hidden = true;
@@ -32,7 +30,16 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
    ? 'The shared world keeps moving. Rest at a sanctuary to stay safe.'
    : 'Your adventure is paused. Pick up where you left off.';
  }
- q('begin-vigil').onclick = () => onBegin(selectedMode);
+ choices.forEach((button, i) => {
+  const mode = i === 0 ? 'single-player' : 'multiplayer';
+  button.onpointerenter = () => selectMode(mode);
+  button.onfocus = () => selectMode(mode);
+  button.onclick = () => {
+   if (root.hidden || root.dataset.screen !== 'modes') return;
+   selectMode(mode);
+   onBegin(mode);
+  };
+ });
  q('menu-resume').onclick = onResume;
  q('menu-change-character').onclick = onChangeCharacter;
  q('loading-retry').onclick = () => location.reload();
@@ -42,11 +49,13 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
    event.preventDefault(); onResume(); return;
   }
   if (root.dataset.screen === 'modes' && choices.includes(event.target)) {
+   const focusedMode = event.target === choices[0] ? 'single-player' : 'multiplayer';
    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
     event.preventDefault();
-    selectMode(event.key === 'Home' ? 'single-player' : event.key === 'End' ? 'multiplayer' : selectedMode === 'single-player' ? 'multiplayer' : 'single-player', true);
-   } else if (event.key === 'Enter') {
-    event.preventDefault(); onBegin(selectedMode);
+    selectMode(event.key === 'Home' ? 'single-player' : event.key === 'End' ? 'multiplayer' : focusedMode === 'single-player' ? 'multiplayer' : 'single-player', true);
+   } else {
+    // Keep the highlight with keyboard focus; native buttons handle Enter/Space.
+    selectMode(focusedMode);
    }
   }
   if (event.key === 'Tab') {

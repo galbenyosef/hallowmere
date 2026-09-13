@@ -110,8 +110,6 @@ function dismissMainMenu(){
  if(!mainMenuOpen)return;
  mainMenuOpen=false;$('loading').inert=false;titleScreen.hide();setModeChoiceInert(false);
 }
-$('single-player').onclick=()=>titleScreen.selectMode('single-player');
-$('multi-player').onclick=()=>titleScreen.selectMode('multiplayer');
 $('connection-back').onclick=returnToModeChoice;
 window.addEventListener('pagehide',()=>network?.close());
 function optimizeModel(root){root.traverse(group=>{if(group.isMesh)return;const batches=new Map();for(const child of [...group.children]){if(!child.isMesh||Array.isArray(child.material)||child.children.length)continue;child.updateMatrix();let b=batches.get(child.material.uuid);if(!b){b={material:child.material,geometries:[]};batches.set(child.material.uuid,b);}const geometry=child.geometry.clone();geometry.applyMatrix4(child.matrix);if(!geometry.attributes.uv)geometry.setAttribute('uv',new T.BufferAttribute(new Float32Array(geometry.attributes.position.count*2),2));b.geometries.push(geometry.index?geometry.toNonIndexed():geometry);group.remove(child);}for(const b of batches.values()){const geometry=mergeGeometries(b.geometries);if(geometry)group.add(new T.Mesh(geometry,b.material));b.geometries.forEach(g=>g.dispose());}});}

@@ -82,17 +82,16 @@
   <div class="title-content">
    <h2 id="loading-title">Loading game</h2>
    <p id="loading-message" role="status" aria-live="polite">Loading game assets…</p>
-   <div id="mode-choice" hidden role="radiogroup" aria-label="Game mode">
-    <button id="single-player" class="mode-option" role="radio" aria-checked="true" tabindex="0">
+   <div id="mode-choice" hidden role="group" aria-label="Game mode">
+    <button id="single-player" class="mode-option" type="button" data-highlighted="true">
      <span class="mode-art"><span class="mode-picture"><img src="./assets/menu/twin-paths-solo.webp" alt="" width="1672" height="941"></span><span class="mode-corners" aria-hidden="true"><i></i><i></i></span><span class="mode-selected" data-icon="spark" aria-hidden="true"></span></span>
      <strong>Single player</strong><span class="mode-description">Play solo.</span>
     </button>
-    <button id="multi-player" class="mode-option" role="radio" aria-checked="false" tabindex="-1">
+    <button id="multi-player" class="mode-option" type="button" data-highlighted="false">
      <span class="mode-art"><span class="mode-picture"><img src="./assets/menu/twin-paths-party.webp" alt="" width="1448" height="1086"></span><span class="mode-corners" aria-hidden="true"><i></i><i></i></span><span class="mode-selected" data-icon="spark" aria-hidden="true"></span></span>
      <strong>Multiplayer</strong><span class="mode-description">Join up to 8 adventurers.</span>
     </button>
    </div>
-   <button id="begin-vigil" class="title-primary" hidden>Start game <span aria-hidden="true">›</span></button>
    <div id="main-menu-actions" hidden>
     <button id="menu-resume" class="title-primary">Resume game</button>
     <button id="menu-change-character" class="title-secondary" aria-describedby="menu-character-note">Change character</button>
