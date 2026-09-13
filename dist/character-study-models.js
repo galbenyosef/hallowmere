@@ -186,7 +186,7 @@ export function createStudyScene(c,root=createCharacter(c)){
   const fx=new T.Group();scene.add(fx);
   return{scene,root,fx,glow};
 }
-export function disposeStudy(study){const gs=new Set(),ms=new Set();study.scene.traverse(o=>{if(o.geometry)gs.add(o.geometry);if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])ms.add(m);if(o.isLight)o.dispose?.();});gs.forEach(g=>g.dispose());ms.forEach(m=>m.dispose());}
+export function disposeStudy(study){const gs=new Set(),ms=new Set();study.scene.traverse(o=>{if(o.geometry)gs.add(o.geometry);if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])ms.add(m);if(o.isLight)o.dispose?.();});gs.forEach(g=>g.dispose());const textures=new Set();ms.forEach(m=>{if(m.map)textures.add(m.map);m.dispose();});textures.forEach(t=>t.dispose());}
 
 export function addSkillEffect(study,color,type){
   clearEffect(study);const m=new T.MeshBasicMaterial({color,transparent:true,opacity:.8,depthWrite:false});

@@ -2,7 +2,7 @@ import * as T from './vendor/three.module.js';
 import {roster} from './character-study-roster.js';
 import {createStudyScene,disposeStudy} from './character-study-models.js';
 import {createPlayableCharacter} from './playable-characters.js';
-import {conceptFor} from './classes.js';
+import {CLASSES,conceptFor} from './classes.js';
 import {inventoryPortraits} from './character-art.js';
 
 const preparations=new Map();
@@ -11,7 +11,7 @@ const WIDTH=840,HEIGHT=880;
 // Use the exact gameplay rig, including its scale and held-item attachments.
 // Bounds in camera space keep wide bows, long staffs, and tall hats in frame.
 export function createInventoryStudy(classId,appearanceId){
-  const concept=roster.find(c=>c.id===conceptFor(classId,appearanceId));
+  const concept=roster.find(c=>c.id===conceptFor(classId,appearanceId))||CLASSES[classId];
   if(!concept)throw Error('Unknown inventory character');
   const study=createStudyScene(concept,createPlayableCharacter(classId,appearanceId));
   const lights=study.scene.children.filter(node=>node.isLight);
