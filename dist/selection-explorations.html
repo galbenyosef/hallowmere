@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101716">
+  <title>Hallowmere · Character selection explorations</title>
+  <link rel="icon" href="./assets/icons/favicon-32.png">
+  <link rel="stylesheet" href="./selection-explorations.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}</script>
+</head>
+<body>
+  <div class="gallery">
+    <aside class="gallery-nav">
+      <a class="wordmark" href="./index.html">Hallowmere<span>THE ASHEN VIGIL</span></a>
+      <div class="nav-heading"><span>CHARACTER SELECTION</span><span>10 STUDIES</span></div>
+      <nav id="directions" aria-label="Design directions"></nav>
+      <div class="nav-foot"><span id="favorite-count">No favorites yet</span><p>Explore each direction.<br>Save the ones that speak to you.</p></div>
+    </aside>
+    <main class="gallery-main">
+      <header class="gallery-toolbar">
+        <div><span class="eyebrow">DESIGN EXPLORATION</span><h1 id="direction-title">The Last Hearth</h1></div>
+        <div class="toolbar-actions">
+          <div class="segmented" role="group" aria-label="Preview size"><button id="desktop" aria-pressed="true">Desktop</button><button id="mobile" aria-pressed="false">Mobile</button></div>
+          <button id="favorite" class="quiet-button" aria-pressed="false">Save favorite</button>
+          <button id="focus" class="quiet-button" aria-pressed="false">Focus view</button>
+        </div>
+      </header>
+      <div class="preview-wrap"><div id="preview" class="preview"><section id="screen" class="screen" aria-label="Character selection preview"><p class="loading">Preparing the selection studies…</p></section></div></div>
+      <footer class="design-notes">
+        <div><span class="eyebrow" id="direction-category"></span><p id="direction-description"></p><span class="reference" id="direction-reference"></span></div>
+        <div class="browse-directions"><button id="previous" aria-label="Previous design">←</button><span id="direction-count">01 / 10</span><button id="next" aria-label="Next design">→</button></div>
+      </footer>
+      <p class="gallery-help">Choose a character in any study. Preview actions stay in this gallery. Favorites are saved in this browser.</p>
+    </main>
+  </div>
+  <div class="notification" id="notification" role="status" aria-live="polite" hidden></div>
+  <dialog id="confirmation" aria-labelledby="confirmation-title"><span class="eyebrow">SELECTION PREVIEW</span><h2 id="confirmation-title"></h2><p id="confirmation-body"></p><form method="dialog"><button class="primary">Continue exploring</button></form></dialog>
+  <noscript>This interactive gallery needs JavaScript. Enable it to explore the ten character selection studies.</noscript>
+  <script type="module" src="./selection-explorations.js"></script>
+</body>
+</html>
