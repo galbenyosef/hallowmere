@@ -67,7 +67,7 @@ function regionalBossLoot(state,type,zone){
 }
 export function regionQuestSummary(state){
  const map=mapFor(state.mapId),progress=state.regionProgress?.[map.id];
- if(map.theme==='cave'){const claimed=map.caches.every(c=>state.claimedCaches?.includes(c.id));return{title:map.name,objective:claimed?'Cache claimed · Return to Hallowmere':'Explore the cave and claim its cache',count:claimed?'✓':'OPTIONAL',hint:claimed?'Use the entrance to return to the surface.':'Defeat the cache’s guardians for treasure, or return to the surface at any time.'};}
+ if(map.theme==='cave'){const found=map.caches.filter(c=>state.claimedCaches?.includes(c.id)).length,claimed=found===map.caches.length;return{title:map.name,objective:claimed?'Caches claimed · Return to Hallowmere':`Explore the tunnels · ${found} / ${map.caches.length} caches`,count:claimed?'✓':'OPTIONAL',hint:claimed?'Use the entrance to return to the surface.':'Explore the forgotten passages beyond the watchfires. Defeat each cache’s guardians to claim its treasure.'};}
  if(map.id==='underways')return{title:'The Underways',objective:'Explore the hidden passages',count:'EXPLORE',hint:'Defeat cave guardians for treasure. Sealed routes open as surface bosses fall.'};
  if(!progress)return{title:map.name,objective:'Explore the region',count:'',hint:'Follow the marked landmarks.'};
  if(progress.bossDefeated)return{title:map.name,objective:state.campaignComplete?'The Ash Regent has fallen':'Passage to the next region opened',count:'✓',hint:state.campaignComplete?'Claim your spoils. The roads and Underways remain open.':'Claim the guardian’s weapon and continue through the northern passage.'};

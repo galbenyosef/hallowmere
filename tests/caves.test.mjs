@@ -13,7 +13,7 @@ function walk(w,p,goal){
  for(const point of path){let steps=0;while(distance(p,point)>.03&&steps++<500){const d=distance(p,point),step=Math.min(.12,d);Object.assign(p,resolveMove(p,(point.x-p.x)/d*step,(point.z-p.z)/d*step,w.obstaclesFor(p),.42,w.boundsFor(p)));}assert.ok(distance(p,point)<.04);}
 }
 test('three distinct cave sizes have complete round trips from the starting level before its boss',()=>{
- assert.deepEqual(FIRST_LEVEL_CAVES.map(c=>c.encounters.length),[3,6,10]);
+ assert.deepEqual(FIRST_LEVEL_CAVES.map(c=>c.encounters.length),[26,33,46]);
  for(const entrance of CAVE_ENTRANCES){
   const w=new World({seed:17}),p=w.join().player,portal=PORTALS.find(o=>o.id===entrance.id);
   assert.ok(w.snapshot(p.id).interactions.portals.some(o=>o.id===portal.id&&!o.locked));
@@ -64,5 +64,5 @@ test('cave combat and snapshots stay on their map; death returns to Ashwick',()=
 });
 
 test('caves clearly identify optional exploration and the claimed reward',()=>{
- for(const map of FIRST_LEVEL_CAVES){const state={mapId:map.id,claimedCaches:[]};assert.equal(regionQuestSummary(state).count,'OPTIONAL');state.claimedCaches.push(map.caches[0].id);assert.equal(regionQuestSummary(state).objective,'Cache claimed · Return to Hallowmere');}
+ for(const map of FIRST_LEVEL_CAVES){const state={mapId:map.id,claimedCaches:[]};assert.equal(regionQuestSummary(state).count,'OPTIONAL');state.claimedCaches.push(map.caches[0].id);assert.equal(regionQuestSummary(state).objective,`Explore the tunnels · 1 / ${map.caches.length} caches`);state.claimedCaches=map.caches.map(c=>c.id);assert.equal(regionQuestSummary(state).objective,'Caches claimed · Return to Hallowmere');}
 });
