@@ -27,7 +27,8 @@ choices is the Hallowmere character study gallery.
 The gallery opens on these nine concepts, with the six classes together and the
 three wizard directions in a separate Sorcerer appearance group. Treating the
 wizard directions as Sorcerer appearances is the current working interpretation;
-the user selected all three without choosing one default or defining subclasses.
+the original selection included all three without choosing a default. Bone Oracle
+is now the gameplay default, while this gallery preserves the original studies.
 The Sorcerer's original C01 study remains available as its class reference.
 
 The recorded choices live in `dist/character-study-selection.js`. The editable
@@ -36,10 +37,13 @@ All 20 original concepts remain available in the other gallery collections.
 
 ## Playable roster
 
-The six classes are now integrated into the live game. The initial character
-screen shows their weapons, off-hand equipment, stats, and abilities. Sorcerer
-includes the original crystal-staff / spellbook appearance plus Mire Witch,
-Bone Oracle, and Storm Hermit. These appearances share the Sorcerer combat kit. Fireball restores the
+Seven characters are integrated into the live game, including Geralt using the
+existing character study model. The initial character screen shows their weapons,
+equipment, stats, and abilities. Sorcerer defaults to **Bone Oracle (W07)**, with
+the skull-topped staff and spirit skull. Skin selection is removed, and saved
+picker preferences use Bone Oracle on the next selection. Older active sessions
+can retain their Sorcerer appearance; the original studies remain archived.
+All Sorcerer appearances share the same combat kit. Fireball restores the
 large fireball, fiery trail, cast flash, and impact burst on right mouse
 (18 essence, 1.2-second cooldown), replacing Frostbind.
 
@@ -51,6 +55,7 @@ large fireball, fiery trail, cast flash, and impact burst on right mouse
 | Nightblade | Twin Cut | Knife Fan | Shadowstep | Smoke Veil |
 | Oathkeeper | Consecrated Strike | Aegis | Pilgrim’s Step | Sanctuary |
 | Plague Alchemist | Virulent Bolt | Bitter Remedy | Quickstep | Miasma |
+| Geralt | Steel Strike | Igni | Witcher’s Roll | Quen |
 
 Press **C**, click the character name, or choose **Change class** from the game
 menu while in a sanctuary. Switching retains quest progress, crowns, equipment

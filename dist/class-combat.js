@@ -7,7 +7,7 @@ import {isSanctuary,WORLD_BOUNDS,ITEM_TEMPLATES} from './campaign.js';
 export function selectClass(world,p,message){
  if(!isSanctuary(p)||p.state.ended){world.result(p,{ok:false,operation:'class',reason:'Return to a sanctuary before changing class.'});return false;}
  const oldClass=p.state.classId,oldAppearance=p.state.appearanceId;
- if(!applyClass(p.state,message.classId,message.appearanceId)){world.result(p,{ok:false,operation:'class',reason:'Choose one of the six classes and an available appearance.'});return false;}
+ if(!applyClass(p.state,message.classId,message.appearanceId)){world.result(p,{ok:false,operation:'class',reason:'Choose an available character.'});return false;}
  p.state.inventory=p.state.inventory.map(item=>weaponForClass(item,p.state));
  for(const drop of p.loot)if(!drop.claimed&&drop.kind==='item')drop.name=weaponForClass({template:drop.template,...ITEM_TEMPLATES[drop.template]},p.state).name;
  if(oldClass!==p.state.classId||oldAppearance!==p.state.appearanceId){

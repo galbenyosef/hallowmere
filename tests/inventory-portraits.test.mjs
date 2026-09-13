@@ -17,7 +17,7 @@ test('all inventory portraits preserve gameplay geometry and materials and frame
     const study=createInventoryStudy(classId,appearanceId),gameplay=createPlayableCharacter(classId,appearanceId);
     const signature=root=>{
       const meshes=[];
-      root.traverse(node=>{if(node.isMesh)meshes.push([node.geometry.getAttribute('position').count,node.material.color.getHex(),node.material.emissive.getHex()]);});
+      root.traverse(node=>{if(node.isMesh)meshes.push([node.geometry.getAttribute('position').count,(Array.isArray(node.material)?node.material:[node.material]).map(m=>[m.color.getHex(),m.emissive.getHex()])]);});
       return meshes;
     };
     assert.equal(study.root.userData.characterConcept,conceptFor(classId,appearanceId));

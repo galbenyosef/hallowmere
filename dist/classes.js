@@ -3,8 +3,9 @@ const ability=(name,kind,cooldown,cost,description,options={})=>({name,kind,cool
 const draught=ability('Draught','heal',1,0,'Restore up to 65 vitality. Consumes one healing draught.');
 const evade=(name,cooldown=1.9)=>ability(name,'dodge',cooldown,0,'Evade in your movement direction with brief invulnerability.');
 export const SORCERER_APPEARANCES={C01:{id:'C01',name:'Sorcerer',weapon:'Crystal-tipped staff',focus:'Spellbook',color:'#88cfdb'},W06:{id:'W06',name:'Mire Witch',weapon:'Gnarled root staff',focus:'Marsh lantern',color:'#bed184'},W07:{id:'W07',name:'Bone Oracle',weapon:'Skull-topped staff',focus:'Spirit skull',color:'#a6d9bd'},W10:{id:'W10',name:'Storm Hermit',weapon:'Lightning fork staff',focus:'Storm orb',color:'#adcaef'}};
+export const DEFAULT_SORCERER_APPEARANCE='W07';
 export const CLASSES={
- sorcerer:{id:'sorcerer',concept:'C01',name:'Sorcerer',role:'Ranged · elemental control',description:'Keep your distance, hurl blazing fireballs, and blanket the road with an elemental storm.',hp:110,mana:120,regen:9,speed:4.8,color:'#88cfdb',weapon:'Crystal-tipped staff',weaponType:'staff',focus:'Spellbook',abilities:{
+ sorcerer:{id:'sorcerer',concept:DEFAULT_SORCERER_APPEARANCE,name:'Sorcerer',role:'Ranged · elemental control',description:'Keep your distance, hurl blazing fireballs, and blanket the road with an elemental storm.',hp:110,mana:120,regen:9,speed:4.8,color:'#a6d9bd',weapon:'Skull-topped staff',weaponType:'staff',focus:'Spirit skull',abilities:{
   attack:ability('Arcane Bolt','projectile',.60,0,'Fire a ranged arcane projectile.',{damage:26,range:11,speed:17,projectile:'arcane',magic:true}),
   bolt:ability('Fireball','projectile',1.2,18,'Hurl a large fireball. Grazing an enemy counts as a hit and bursts on impact.',{damage:46,range:35,speed:14,hitRadius:.4,projectile:'ember',color:'#ff902e',magic:true}),dodge:evade('Miststep',2.2),
   nova:ability('Elemental Storm','zone',9,38,'Call a three-second storm at your aim point.',{damage:13,radius:3.4,duration:3,interval:.5,range:8,magic:true}),heal:draught}},
@@ -28,19 +29,24 @@ export const CLASSES={
  alchemist:{id:'alchemist',concept:'C09',name:'Plague Alchemist',role:'Ranged · affliction',description:'Coat the battlefield in poison, fire your hand crossbow, and shatter remedies to aid nearby allies.',hp:130,mana:110,regen:8,speed:4.8,color:'#c0d78e',weapon:'Hand crossbow',weaponType:'crossbow',focus:'Alchemical flask',abilities:{
   attack:ability('Virulent Bolt','projectile',.66,0,'Fire a bolt that poisons its target for three seconds.',{damage:19,range:10,speed:19,projectile:'venom',dot:{damage:4,duration:3,interval:.75,type:'poison'}}),
   bolt:ability('Bitter Remedy','burst',5,22,'Shatter a flask at your aim point, damaging enemies and healing allies for 25 vitality.',{damage:24,heal:25,radius:2.6,range:7,magic:true}),dodge:evade('Quickstep',1.9),
-  nova:ability('Miasma','zone',9,35,'Release a four-second poison cloud that damages and slows enemies.',{damage:8,radius:3.7,duration:4,interval:.5,range:7,slow:.4,magic:true}),heal:draught}}
+  nova:ability('Miasma','zone',9,35,'Release a four-second poison cloud that damages and slows enemies.',{damage:8,radius:3.7,duration:4,interval:.5,range:7,slow:.4,magic:true}),heal:draught}},
+ geralt:{id:'geralt',concept:'geralt',name:'Geralt',role:'Melee · sword and signs',description:'Hunt the creatures of Hallowmere with a steel sword, scorch nearby foes with Igni, and ward off blows with Quen.',hp:150,mana:100,regen:7,speed:5,color:'#c6d1cc',weapon:'Steel sword',weaponType:'sword',focus:'Silver sword and hip dagger',abilities:{
+  attack:ability('Steel Strike','melee',.52,0,'Sweep your steel sword through enemies in front of you.',{damage:30,range:2.9,arc:2.1}),
+  bolt:ability('Igni','burst',5,22,'Scorch nearby enemies and burn them for three seconds.',{damage:32,radius:3.2,magic:true,color:'#ff902e',dot:{damage:4,duration:3,interval:.75,type:'burn'}}),dodge:evade('Witcher’s Roll',1.8),
+  nova:ability('Quen','shield',8,30,'Raise a protective sign that absorbs 45 damage for four seconds.',{shield:45,duration:4}),heal:draught}}
 };
 export const CLASS_LIST=Object.values(CLASSES);
 // Compatibility for a session that has not chosen a class yet.
 const legacy={id:'warden',name:'Warden',role:'Oathbound',hp:140,mana:100,regen:7,speed:4.9,color:'#88cfdb',weapon:'Warden’s longsword',weaponType:'sword',focus:'Shield',abilities:{attack:ability('Cleave','melee',.48,0,'Sweep your blade.',{damage:28,range:2.9,arc:2.1}),bolt:ability('Emberbolt','projectile',1.2,18,'Hurl a firebolt.',{damage:46,range:35,speed:14,projectile:'ember',magic:true}),dodge:evade('Evade'),nova:ability('Cinder nova','burst',6,35,'Burn nearby enemies.',{damage:62,radius:4.6,root:.7,magic:true}),heal:draught}};
 export const classFor=state=>CLASSES[state?.classId]||legacy;
 export const abilitiesFor=state=>classFor(state).abilities;
-export const classAppearance=(classId,appearanceId)=>classId==='sorcerer'?(SORCERER_APPEARANCES[appearanceId]||SORCERER_APPEARANCES.C01):null;
+export const classAppearance=(classId,appearanceId)=>classId==='sorcerer'?(SORCERER_APPEARANCES[appearanceId]||SORCERER_APPEARANCES[DEFAULT_SORCERER_APPEARANCE]):null;
 export const conceptFor=(classId,appearanceId)=>classAppearance(classId,appearanceId)?.id||CLASSES[classId]?.concept||'warden';
 export const classColor=state=>classAppearance(state?.classId,state?.appearanceId)?.color||classFor(state).color;
 export const primaryDamage=state=>classFor(state).abilities.attack.damage+(state.level||1)*2+(state.damageBonus||0);
 export function applyClass(state,classId,appearanceId){
  const definition=Object.hasOwn(CLASSES,classId)?CLASSES[classId]:null;if(!definition)return false;
+ if(classId==='sorcerer'&&appearanceId==null)appearanceId=DEFAULT_SORCERER_APPEARANCE;
  if(classId==='sorcerer'&&!Object.hasOwn(SORCERER_APPEARANCES,appearanceId))return false;
  if(classId!=='sorcerer'&&appearanceId!==undefined&&appearanceId!==null&&appearanceId!==definition.concept)return false;
  const hpRatio=state.maxHp?state.hp/state.maxHp:1,manaRatio=state.maxMana?state.mana/state.maxMana:1;

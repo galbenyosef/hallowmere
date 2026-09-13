@@ -1,6 +1,6 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 
-// Independent character study. No playable-class registration or game state.
+// Shared model for the character study and playable Geralt adapter.
 export const GERALT_POSES = Object.freeze(['sheathed', 'steel', 'silver', 'dagger']);
 const UP = new T.Vector3(0, 1, 0);
 

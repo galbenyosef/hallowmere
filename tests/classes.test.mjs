@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../dist/vendor/three.core.js';
 import {World} from '../server/world.mjs';
-import {CLASS_LIST,SORCERER_APPEARANCES,applyClass,abilitiesFor,primaryDamage} from '../dist/classes.js';
+import {CLASS_LIST,SORCERER_APPEARANCES,applyClass,abilitiesFor,primaryDamage,conceptFor} from '../dist/classes.js';
 import {createState,awardKill} from '../dist/combat.js';
 import {createCampaign,collectLoot,equipItem,START} from '../dist/campaign.js';
 import {createPlayableCharacter,modelBounds} from '../dist/playable-characters.js';
@@ -18,7 +18,29 @@ function fixture(classId,appearanceId=classId==='sorcerer'?'C01':undefined){
 }
 const cast=(w,p,action,extra={})=>command(w,p,'ability',{action,angle:0,...extra});
 
-test('the six classes preserve health ratios, upgrades and cooldowns when changing calling',()=>{
+test('Sorcerer defaults to Bone Oracle across selection, equipment, portraits, and restart',()=>{
+ const {w,p}=fixture('sorcerer',null);
+ assert.equal(p.state.appearanceId,'W07');assert.equal(conceptFor('sorcerer'),'W07');
+ assert.equal(p.state.inventory[0].name,'Skull-topped staff');
+ assert.equal(createPlayableCharacter('sorcerer').userData.characterConcept,'W07');
+ w.reset();assert.equal(p.state.appearanceId,'W07');
+ assert.ok(applyClass(p.state,'sorcerer'));assert.equal(p.state.appearanceId,'W07');
+});
+
+test('Geralt can strike, burn enemies, evade, shield damage, and resume with his equipment',()=>{
+ const {w,p,enemy}=fixture('geralt'),e=enemy(-40,7);
+ assert.equal(p.state.inventory[0].name,'Steel sword');
+ assert.ok(cast(w,p,'attack'));tick(w,3);assert.equal(e.hp,968);
+ assert.ok(cast(w,p,'bolt'));assert.equal(e.hp,934);tick(w,16);assert.equal(e.hp,930);
+ assert.ok(cast(w,p,'nova'));w.damagePlayer(p,30);assert.equal(p.state.hp,150);assert.equal(p.state.shield,15);
+ w.damagePlayer(p,20);assert.equal(p.state.hp,145);assert.equal(p.state.shield,0);
+ assert.ok(cast(w,p,'dodge'));assert.ok(p.dodge>0);assert.ok(p.state.invulnerable>0);
+ assert.equal(w.snapshot(p.id).players[0].classId,'geralt');
+ w.leave(p.id);assert.equal(w.join(p.token).player.state.classId,'geralt');
+ w.reset();assert.equal(p.state.classId,'geralt');assert.equal(p.state.inventory[0].name,'Steel sword');
+});
+
+test('all playable classes preserve health ratios, upgrades and cooldowns when changing calling',()=>{
  const state=Object.assign(createState(),createCampaign(17));state.hp=51;state.mana=37;state.cooldowns.nova=6;
  for(const c of CLASS_LIST){assert.ok(applyClass(state,c.id,c.id==='sorcerer'?'C01':undefined));assert.ok(Math.abs(state.hp/state.maxHp-51/140)<1e-12);assert.ok(Math.abs(state.mana/state.maxMana-.37)<1e-12);assert.equal(state.cooldowns.nova,6);}
  collectLoot(state,{id:'charm',kind:'item',template:'oak-charm'});equipItem(state,'charm');
@@ -106,8 +128,8 @@ test('aimed abilities cannot cross walls or spend resources on invalid targets',
  assert.equal(cast(w,p,'constructor'),false);
 });
 
-test('all nine chosen models have finite world-sized bounds and weapons follow the animated arms',()=>{
- const choices=[...Object.keys(SORCERER_APPEARANCES).map(id=>['sorcerer',id]),...CLASS_LIST.filter(c=>c.id!=='sorcerer').map(c=>[c.id,c.concept])];assert.equal(choices.length,9);
+test('all playable and legacy appearance models have finite world-sized bounds and weapons follow the animated arms',()=>{
+ const choices=[...Object.keys(SORCERER_APPEARANCES).map(id=>['sorcerer',id]),...CLASS_LIST.filter(c=>c.id!=='sorcerer').map(c=>[c.id,c.concept])];assert.equal(choices.length,10);
  for(const [classId,look] of choices){const root=createPlayableCharacter(classId,look),bounds=modelBounds(root),size=bounds.getSize(new T.Vector3());assert.ok(size.y>1.7&&size.y<3.1,look);assert.ok(size.x<2.5&&size.z<2,look);
   root.traverse(n=>{if(n.geometry)for(const value of n.geometry.attributes.position.array)assert.ok(Number.isFinite(value),look);});
   const weapon=root.getObjectByName('weapon'),arm=root.getObjectByName('armR');assert.equal(weapon.parent,arm);const before=new T.Box3().setFromObject(weapon).getCenter(new T.Vector3());arm.rotation.x=-.7;root.updateMatrixWorld(true);const after=new T.Box3().setFromObject(weapon).getCenter(new T.Vector3());assert.ok(before.distanceTo(after)>.1,look);

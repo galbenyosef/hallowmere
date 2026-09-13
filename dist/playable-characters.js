@@ -1,9 +1,21 @@
 import * as T from './vendor/three.core.js';
 import {roster} from './character-study-roster.js';
 import {createCharacter} from './character-study-models.js';
+import {createGeraltCharacter} from './geralt-character-model.js';
 import {conceptFor} from './classes.js';
 
 export function createPlayableCharacter(classId,appearanceId){
+ if(classId==='geralt'){
+  const character=createGeraltCharacter(),root=character.root,body=root.getObjectByName('body'),arm=body.getObjectByName('armR');
+  character.setPose('steel');
+  root.updateMatrixWorld(true);body.attach(root.getObjectByName('head'));
+  const weapon=character.weapons.steel;weapon.name='weapon';arm.attach(weapon);
+  for(const child of body.children)child.position.y-=1.3;
+  body.position.y=1.3;body.userData.baseY=1.3;
+  arm.rotation.set(0,0,0);body.getObjectByName('armL').rotation.set(0,0,0);
+  root.scale.setScalar(.9);root.name='Geralt';root.userData.characterConcept='geralt';
+  return root;
+ }
  const concept=roster.find(c=>c.id===conceptFor(classId,appearanceId));if(!concept)throw Error('Unknown playable character');
  const root=createCharacter(concept),body=root.getObjectByName('body');
  // Study geometry uses absolute heights. Move the body pivot to the waist while
