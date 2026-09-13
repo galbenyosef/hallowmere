@@ -10,16 +10,34 @@ test('transport waits for a snapshot, resumes per-tab identity, reconciles ackno
  Object.assign(globalThis,{fetch:async()=>({ok:true,json:async()=>({serverUrl:''})}),sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{protocol:'http:',host:'localhost:5182'},document:{addEventListener(){},removeEventListener(){}},window:{addEventListener(){}},WebSocket:Socket});
  const client=new MultiplayerClient({onSnapshot:(m,changed)=>snapshots.push({m,changed}),onStatus:(...s)=>status.push(s)});
  try{
-  await client.start();const ws=Socket.latest;assert.equal(ws.url,'ws://localhost:5182/multiplayer');ws.onopen();assert.equal(ws.sent[0].token,'old-token');
+  await client.start();let ws=Socket.latest;assert.equal(ws.url,'ws://localhost:5182/multiplayer');assert.deepEqual(status.at(-1),['Connecting to game server…',false,{retryable:false}]);ws.onopen();assert.equal(ws.sent[0].token,'old-token');assert.deepEqual(status.at(-1),['Joining the shared world…',false,{retryable:false}]);
   assert.equal(client.send('ability',{action:'attack'}),false);
-  ws.receive({type:'welcome',id:'a',token:'new-token',worldId:'new-world'});assert.equal(client.connected,false);
+  ws.receive({type:'welcome',id:'a',token:'new-token',worldId:'new-world'});assert.equal(client.connected,false);assert.deepEqual(status.at(-1),['Syncing game world…',false,{retryable:false}]);
   ws.receive({type:'snapshot',worldId:'new-world',ack:0});assert.equal(client.connected,true);assert.equal(snapshots[0].changed,true);assert.equal(storage.get('hallowmere-resume'),'new-token');assert.equal(storage.get('hallowmere-world'),'new-world');
   client.send('input',{x:1,z:0,angle:0});client.send('input',{x:1,z:0,angle:0});assert.equal(client.pending.length,2);
   ws.receive({type:'snapshot',worldId:'new-world',ack:1});assert.equal(client.pending.length,1);assert.equal(client.pending[0].seq,2);
   ws.receive({type:'snapshot',worldId:'new-world',ack:1,state:{mapId:'drowned-wood'}});assert.equal(client.pending.length,0);assert.deepEqual(client.input,{x:0,z:0,angle:0});assert.equal(client.mapId,'drowned-wood');
-  ws.receive({type:'snapshot',v:PROTOCOL_VERSION-1});assert.equal(client.connected,false);assert.match(status.at(-1)[0],/versions differ/);assert.equal(client.retry,undefined);
+  ws.close();assert.equal(client.connected,false);assert.deepEqual(status.at(-1),['Connection interrupted. Reconnecting automatically…',false,{retryable:true}]);assert.ok(client.retry);
+  clearTimeout(client.retry);client.retry=undefined;client.connect();ws=Socket.latest;assert.deepEqual(status.at(-1),['Reconnecting to game server…',false,{retryable:true}]);ws.onopen();ws.receive({type:'welcome',id:'a',token:'new-token',worldId:'new-world'});assert.deepEqual(status.at(-1),['Syncing game world…',false,{retryable:true}]);
+  ws.receive({type:'snapshot',worldId:'new-world',ack:0});assert.equal(client.connected,true);assert.equal(client.attempt,0);
+  ws.receive({type:'snapshot',v:PROTOCOL_VERSION-1});assert.equal(client.connected,false);assert.match(status.at(-1)[0],/versions differ/);assert.deepEqual(status.at(-1)[2],{retryable:true,failed:true});assert.equal(client.retry,undefined);
   client.close();assert.equal(client.send('ability',{action:'nova'}),false);assert.equal(client.connected,false);
  }finally{client.close();for(const [k,descriptor] of Object.entries(originals))if(descriptor)Object.defineProperty(globalThis,k,descriptor);else delete globalThis[k];}
+});
+
+test('a stalled world sync times out and offers recovery after the server welcomes the player',t=>{
+ const originals=Object.fromEntries(['document','WebSocket'].map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));
+ const status=[];
+ class Socket{constructor(){this.readyState=1;Socket.latest=this;}close(){this.readyState=3;this.onclose?.();}}
+ Object.assign(globalThis,{document:{removeEventListener(){}},WebSocket:Socket});
+ t.mock.timers.enable({apis:['setTimeout']});
+ const client=new MultiplayerClient({onSnapshot(){},onStatus:(...s)=>status.push(s)});
+ try{
+  client.url='ws://localhost:5182/multiplayer';client.connect();const ws=Socket.latest;
+  ws.onmessage({data:JSON.stringify({v:PROTOCOL_VERSION,type:'welcome',id:'a',token:'token'})});
+  assert.equal(status.at(-1)[0],'Syncing game world…');t.mock.timers.tick(7999);assert.equal(ws.readyState,1);
+  t.mock.timers.tick(1);assert.equal(ws.readyState,3);assert.equal(client.connected,false);assert.equal(status.at(-1)[2].retryable,true);assert.ok(client.retry);
+ }finally{client.close();t.mock.timers.reset();for(const [k,descriptor] of Object.entries(originals))if(descriptor)Object.defineProperty(globalThis,k,descriptor);else delete globalThis[k];}
 });
 
 
