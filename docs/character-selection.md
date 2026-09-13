@@ -47,6 +47,15 @@ All Sorcerer appearances share the same combat kit. Fireball restores the
 large fireball, fiery trail, cast flash, and impact burst on right mouse
 (18 essence, 1.2-second cooldown), replacing Frostbind.
 
+The live picker uses **Circle of Oaths** (selection study 03): seven portrait
+medallions surround the selected character. The arrows halfway up either side
+of the character cycle through the roster and wrap at both ends. Selecting a
+portrait also changes the active calling. With focus in the wheel, arrow keys
+cycle, and Home/End select the first/last character. The active portrait remains
+the wheel's single tab stop; the previous/next buttons are separately focusable.
+Starting stats remain visible; expand an ability or Equipment for its details.
+Selection controls lock while a class change is being confirmed by the game.
+
 | Class | Primary attack | Right mouse | 1 · Evade | 2 · Class skill |
 | --- | --- | --- | --- | --- |
 | Sorcerer | Arcane Bolt | Fireball | Miststep | Elemental Storm |
