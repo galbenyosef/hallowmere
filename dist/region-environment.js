@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {MAPS,PORTALS,mapFor,availablePortal} from './regions.js';
 import {createCaveEntranceEffect} from './cave-entrance-effects.js';
+import {createTreasureChest} from './treasure-chests.js';
 
 const palettes={
  'drowned-wood':{ground:0x273d37,stone:0x4e6052,dark:0x243129,trim:0x8b9564,glow:0x8fc4a1},
@@ -53,11 +54,11 @@ export function createRegionLandmarks(scene,mapId){
   const crystal=mesh('rock','glow',o.x,1.8,o.z,.37,.65,.37);animated.push(crystal);objectives.push({id:o.id,crystal});
  }
  if(map.checkpoint){const c=map.checkpoint;mesh('cylinder','stone',c.x,.08,c.z,2,.16,2);const ring=mesh('ring','trim',c.x,.18,c.z,2,2,2);ring.rotation.x=Math.PI/2;mesh('box','dark',c.x,1,c.z,.18,2,.18);const flame=mesh('rock','glow',c.x,2.1,c.z,.22,.38,.22);animated.push(flame);}
- for(const c of map.caches){const parts=[mesh('box','dark',c.x,.35,c.z,1.1,.7,.75),mesh('box','trim',c.x,.68,c.z,1.18,.16,.83)];for(const dx of [-.37,.37])parts.push(mesh('box','trim',c.x+dx,.36,c.z,.1,.72,.8));cacheMarks.push({id:c.id,parts});}
- function updateProgress(progress){for(const mark of portalMarks){mark.glow.visible=availablePortal(mark.portal,progress);if(mark.caveEffect)mark.caveEffect.group.visible=mark.glow.visible;}const r=(progress?.regionProgress||progress?.regions||progress)?.[mapId];for(const part of seal)part.visible=!map.objectives.every(o=>r?.objectives?.includes(o.id));for(const o of objectives){o.crystal.visible=!r?.objectives?.includes(o.id);}}
- function sync(interactions=[],discoveries=[]){const found=new Set(Array.isArray(discoveries)?discoveries:[]);for(const mark of portalMarks)if(mark.portal.hidden)mark.glow.scale.setScalar(found.has(mark.portal.id)?.45:.18);for(const o of objectives){const interaction=(Array.isArray(interactions)?interactions:interactions?.objectives||[]).find(i=>i.id===o.id);if(interaction?.completed)o.crystal.visible=false;}if(Array.isArray(interactions?.caches))for(const c of cacheMarks)for(const part of c.parts)part.visible=interactions.caches.some(i=>i.id===c.id);}
- function update(t){for(let i=0;i<animated.length;i++)animated[i].rotation.y=t*.4+i;for(const effect of caveEffects)effect.update(t);}
- return{group,dispose(){for(const effect of caveEffects)effect.dispose();k.dispose();},updateProgress,sync,update};
+ for(const c of map.caches)cacheMarks.push({id:c.id,visual:createTreasureChest(group,c,map)});
+ function updateProgress(progress){for(const c of cacheMarks)c.visual.setClaimed(progress?.claimedCaches?.includes(c.id));for(const mark of portalMarks){mark.glow.visible=availablePortal(mark.portal,progress);if(mark.caveEffect)mark.caveEffect.group.visible=mark.glow.visible;}const r=(progress?.regionProgress||progress?.regions||progress)?.[mapId];for(const part of seal)part.visible=!map.objectives.every(o=>r?.objectives?.includes(o.id));for(const o of objectives){o.crystal.visible=!r?.objectives?.includes(o.id);}}
+ function sync(interactions=[],discoveries=[]){const found=new Set(Array.isArray(discoveries)?discoveries:[]);for(const mark of portalMarks)if(mark.portal.hidden)mark.glow.scale.setScalar(found.has(mark.portal.id)?.45:.18);for(const o of objectives){const interaction=(Array.isArray(interactions)?interactions:interactions?.objectives||[]).find(i=>i.id===o.id);if(interaction?.completed)o.crystal.visible=false;}}
+ function update(t){for(let i=0;i<animated.length;i++)animated[i].rotation.y=t*.4+i;for(const effect of caveEffects)effect.update(t);for(const c of cacheMarks)c.visual.update(t);}
+ return{group,dispose(){for(const effect of caveEffects)effect.dispose();for(const c of cacheMarks)c.visual.dispose();k.dispose();},updateProgress,sync,update};
 }
 export function createRegionEnvironment(scene,mapId){
  const map=mapFor(mapId),k=kit(scene,mapId),{mesh,group}=k,b=map.bounds,obstacles=map.obstacles.map(o=>({...o})),gates=[],cover=[];
