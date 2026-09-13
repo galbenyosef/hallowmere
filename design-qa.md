@@ -1,3 +1,53 @@
+# Modern NPC character update
+
+final result: passed
+
+## Target and comparison evidence
+
+The user requested more interesting, modern-looking NPCs. The accepted direction is polished, stylized dark fantasy using the game's actual 3D models. Dialogue layout and game behavior are preserved.
+
+Source: `screenshots/dialogue-character/rowan-laptop.png`. Implementation: `screenshots/modern-npcs/rowan-dialogue.png`. Both show the initial Rowan quest with zero crowns and three draughts at 1280 × 720 CSS pixels. Both were opened together in one comparison input. Captures are 1280 × 720 pixels; the browser normalizes its reported devicePixelRatio of 2 to one screenshot pixel per CSS pixel. No additional image scaling was used.
+
+Additional evidence in `screenshots/modern-npcs/`:
+
+- `first-pass.png`: initial lineup, used to identify hair and clothing intersections.
+- `lineup.png`: all four final GLB models, rendered through the production portrait renderer at 1280 × 720.
+- `brann-dialogue.png` and `edda-dialogue.png`: live conversations with the matching models.
+- `rowan-mobile.png`: 390 × 844 CSS viewport and image pixels. The full portrait, quest, choices, and resource footer fit a 354px dialog with no horizontal overflow.
+- `village.png`: the actual NPC models at gameplay scale, with normal lighting and labels.
+
+The full lineup and full dialogue were inspected. A single-character Brann review at a 650px image height provided the focused face, hands, bracer, and boot inspection; the final live Brann capture confirms those fixes.
+
+## Findings and iteration history
+
+No unresolved P0/P1/P2 findings.
+
+1. **P2: Hair caps intersected the forehead and exposed stray facets.** Increased cap clearance and repositioned the swept locks. Regenerated all four GLBs, then reviewed the full lineup and live portraits.
+2. **P2: Brann's shoulder decoration and bracer intersected his arm.** Removed the partly buried shoulder plate, widened the bracer, and placed its fittings on the outer surface. The final Brann portrait has clean edges.
+3. **P3, addressed: Block-shaped feet.** Replaced the rectangular boot uppers with a sloped toe profile and a separate shaped sole. All four models remain grounded.
+4. The temporary review page initially clipped its labels at a 720px viewport. Its image area was reduced for the final complete lineup capture. This was a review fixture issue, not a game layout change.
+
+## Fidelity surfaces
+
+- **Typography:** Existing Cinzel headings, Georgia dialogue, and Inter supporting text remain unchanged.
+- **Layout:** Character stays left, conversation right; existing compact mobile composition remains. Staff, lantern, hammer, shield, and coat tails are fully framed.
+- **Colors:** Muted teal, ivory, leather brown, steel, and brass stay consistent with the village. Material roughness and metal highlights distinguish fabric, leather, skin, and equipment.
+- **Asset quality:** Four distinct authored 3D models replace the simple villagers: archivist Rowan, apothecary Edda, forge master Brann, and roadwarden Rook. The same generated GLBs feed gameplay and portraits. Sculpted facial sections, hair, fitted coats, hands, boots, pouches, and role-specific equipment improve detail and silhouette. Rook has a separate watchman asset; the player's Warden prefab is preserved.
+- **Content:** Names, roles, dialogue, prices, quests, and services are unchanged.
+
+## Validation and checklist
+
+- [x] Rebuild NPC assets reproducibly with `npm run generate:npcs`; the full asset generation command includes the new models as well.
+- [x] Verify finite geometry, actor scale, grounded feet, portrait framing, and retained arms/legs/equipment after gameplay batching. Each source model stays below 45,000 triangles.
+- [x] Enter a live Single Player session, accept Rowan's quest, close via Escape, and approach Brann and Edda through ordinary movement.
+- [x] Verify mobile layout and restore the normal viewport afterward.
+- [x] Run `npm test`: 208 passed, zero failures. `npm run build`: passed. Integration repeats validation on the merged main revision.
+- [x] Remove the temporary model review route; retain screenshots as evidence.
+
+Browser error log: no errors. Rook's asset and framing were tested in the complete model lineup and automated checks; his distant world conversation was not reached during this visual pass. Physical mobile hardware was not tested.
+
+---
+
 # Twin Paths implementation QA
 
 final result: passed
@@ -104,7 +154,6 @@ saving across page reloads is outside this change.
 - [x] Desktop, phone, and landscape evidence
 - [x] Keyboard navigation, focus, and reduced-motion rules
 - [x] Standard tests and build validation
-
 
 ---
 
