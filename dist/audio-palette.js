@@ -1,8 +1,12 @@
+// Witchglass (audition set 04); bump the revision when generated audio changes.
+export const AUDIO_PALETTE = {id: 'witchglass', name: 'Witchglass', revision: 3};
 // Playback defaults are separate from the asset workshop so the game stays dependency-free.
 const bank = (name, count, options = {}) => ({
   files: Array.from({length: count}, (_, i) => `${name}${i ? `-${i + 1}` : ''}`),
-  bus: 'sfx', gain: .8, wet: .12, priority: 2, cooldown: .065, voices: 4,
+  bus: 'sfx', gain: .8, priority: 2, cooldown: .065, voices: 4,
   pitch: .045, ...options,
+  // The selected source already carries crystal reflections; keep the room send subtle.
+  wet: (options.wet ?? .12) * .35,
 });
 
 export const SOUND_BANKS = {

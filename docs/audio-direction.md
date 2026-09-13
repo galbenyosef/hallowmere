@@ -1,5 +1,7 @@
 # Hallowmere audio direction and review
 
+**Historical palette v2.** On September 13, 2026, the user chose Witchglass from the ten-set audition. The active effects are now original Witchglass synthesis; see [the current implementation](witchglass-audio.md). This document, its physical-source archive, and its 34-second preview describe the previous palette.
+
 Implemented September 12, 2026. The selected direction is intimate physical sound under an unsettling supernatural atmosphere: worn steel, bone and cloth, unstable throat textures, distant bells, breath-like wind, and restrained low-frequency weight. Combat transients remain quick and legible.
 
 ## Research and selection

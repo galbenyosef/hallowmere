@@ -1,0 +1,20 @@
+{
+  "palette": "Witchglass",
+  "decoded": 79,
+  "failed": [],
+  "sampleRate": 48000,
+  "channels": 2,
+  "duration": 29,
+  "peakDb": -11.171285811658594,
+  "rmsDb": -32.11360407409818,
+  "clipped": 0,
+  "musicIncluded": false,
+  "liveGame": {
+    "palette": "Witchglass",
+    "decoded": 79,
+    "failed": [],
+    "versionedRequests": 79,
+    "musicRetained": true,
+    "mutedPauseResume": true
+  }
+}

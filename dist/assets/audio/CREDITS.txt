@@ -1,12 +1,13 @@
-Hallowmere — The Ashen Vigil: audio palette v2
+Hallowmere — Witchglass audio palette v3
 
+Selected direction: Witchglass (sound audition set 04).
 Sound design and synthesis: original Hallowmere workshop.
-Recorded source material: Kenney, Impact Sounds (2019) and RPG Audio (2014).
-License: Creative Commons Zero (CC0 1.0).
-https://kenney.nl/assets/impact-sounds
-https://kenney.nl/assets/rpg-audio
-https://creativecommons.org/publicdomain/zero/1.0/
+Crystal FM, inharmonic fragments, liquid chimes, and short reflections.
+All 79 active effects and ambience files are original synthesized material.
+No recorded samples or third-party effects are used by this palette.
 
-Sources were edited, layered, filtered, pitch shifted, and granulated.
-Detailed provenance and publisher license text: scripts/audio-sources/.
+Source: scripts/witchglass.mjs and scripts/generate-audio.mjs.
+24 kHz synthesis resampled to 48 kHz PCM16 for delivery.
+The historical Kenney CC0 source archive and its licenses are retained in
+scripts/audio-sources/; those recordings are not in the active Witchglass assets.
 Rebuild with npm run generate:audio.
