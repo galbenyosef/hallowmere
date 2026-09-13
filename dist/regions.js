@@ -48,7 +48,7 @@ const pair=(id,mapId,x,z,toMapId,toX,toZ,requires=null,hidden=false,name='Passag
  {id:`${id}-return`,mapId:toMapId,x:toX,z:toZ,toMapId:mapId,toX:x,toZ:z,requires,hidden:false,name:`Return to ${MAPS[mapId].name}`}
 ];
 export const PORTALS=[
- ...CAVE_ENTRANCES.flatMap(entrance=>pair(entrance.id,'overworld',entrance.x,entrance.z,entrance.caveId,MAPS[entrance.caveId].start.x,MAPS[entrance.caveId].start.z,null,false,entrance.name).map((portal,i)=>({...portal,appearance:i?'cave':entrance.appearance,...(!i&&entrance.buildingId?{buildingId:entrance.buildingId}:{})}))),
+ ...CAVE_ENTRANCES.flatMap(entrance=>pair(entrance.id,'overworld',entrance.x,entrance.z,entrance.caveId,MAPS[entrance.caveId].start.x,MAPS[entrance.caveId].start.z,null,!!entrance.hidden,entrance.name).map((portal,i)=>({...portal,appearance:i?'cave':entrance.appearance,...(!i&&entrance.buildingId?{buildingId:entrance.buildingId,rotation:entrance.rotation}:{})}))),
  ...pair('wood-road','overworld',23,5,'drowned-wood',0,27,'boss',false,'Road to Drowned Wood'),
  ...pair('quarry-road','drowned-wood',0,-28,'blackvein-quarry',0,27,'rootbound',false,'Road to Blackvein Quarry'),
  ...pair('keep-road','blackvein-quarry',0,-28,'crownfall-keep',0,27,'quarry-warden',false,'Road to Crownfall Keep'),

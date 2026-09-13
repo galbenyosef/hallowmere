@@ -28,6 +28,8 @@ export function createRegionLandmarks(scene,mapId){
    pieces.push(mesh('box','dark',p.x,.135,p.z,1.25,.025,1.65));
    for(let i=0;i<5;i++)pieces.push(mesh('box','stone',p.x,.15+i*.025,p.z-.6+i*.3,1.05,.045,.25));
    for(const dx of [-.65,.65])pieces.push(mesh('box','trim',p.x+dx,.24,p.z,.12,.26,1.8));
+   const c=Math.cos(p.rotation||0),s=Math.sin(p.rotation||0);
+   for(const part of pieces){const dx=part.position.x-p.x,dz=part.position.z-p.z;part.position.x=p.x+c*dx+s*dz;part.position.z=p.z-s*dx+c*dz;part.rotation.y=p.rotation||0;}
   }else if(p.appearance==='cave'||p.hidden||mapId==='underways'){
    // A dark, low opening remains readable from the isometric camera without a roof.
    pieces.push(mesh('box','dark',p.x,.5,mouthZ,2.6,1,.9));
@@ -38,10 +40,10 @@ export function createRegionLandmarks(scene,mapId){
    for(const dx of [-1.4,1.4])mesh('box','stone',p.x+dx,1.4,p.z,.55,2.8,.55);
    mesh('box','trim',p.x,2.8,p.z,3.4,.35,.7);
   }
-  const glow=mesh('rock','glow',p.x,.12,p.z+.65,.24,.12,.24);animated.push(glow);
+  const glow=mesh('rock','glow',p.x+Math.sin(p.rotation||0)*.65,.12,p.z+Math.cos(p.rotation||0)*.65,.24,.12,.24);animated.push(glow);
   const caveEffect=['cave','stairs'].includes(p.appearance)?createCaveEntranceEffect(group,p):null;
   if(caveEffect)caveEffects.push(caveEffect);
-  portalMarks.push({portal:p,glow,pieces,caveEffect});
+  const mark={portal:p,glow,pieces,caveEffect,unlocked:true,inside:!p.buildingId};portalMarks.push(mark);updatePortalVisibility(mark);
  }
  if(mapId==='blackvein-quarry'){
   for(const x of [-3,3])mesh('box','stone',x,1.5,-18,.7,3,.7);
@@ -56,8 +58,9 @@ export function createRegionLandmarks(scene,mapId){
  }
  if(map.checkpoint){const c=map.checkpoint;mesh('cylinder','stone',c.x,.08,c.z,2,.16,2);const ring=mesh('ring','trim',c.x,.18,c.z,2,2,2);ring.rotation.x=Math.PI/2;mesh('box','dark',c.x,1,c.z,.18,2,.18);const flame=mesh('rock','glow',c.x,2.1,c.z,.22,.38,.22);animated.push(flame);}
  for(const c of map.caches){const parts=[mesh('box','dark',c.x,.35,c.z,1.1,.7,.75),mesh('box','trim',c.x,.68,c.z,1.18,.16,.83)];for(const dx of [-.37,.37])parts.push(mesh('box','trim',c.x+dx,.36,c.z,.1,.72,.8));cacheMarks.push({id:c.id,parts});}
- function updateProgress(progress){for(const mark of portalMarks){mark.glow.visible=availablePortal(mark.portal,progress);if(mark.caveEffect)mark.caveEffect.group.visible=mark.glow.visible;}const r=(progress?.regionProgress||progress?.regions||progress)?.[mapId];for(const part of seal)part.visible=!map.objectives.every(o=>r?.objectives?.includes(o.id));for(const o of objectives){o.crystal.visible=!r?.objectives?.includes(o.id);}}
- function sync(interactions=[],discoveries=[]){const found=new Set(Array.isArray(discoveries)?discoveries:[]);for(const mark of portalMarks)if(mark.portal.hidden)mark.glow.scale.setScalar(found.has(mark.portal.id)?.45:.18);for(const o of objectives){const interaction=(Array.isArray(interactions)?interactions:interactions?.objectives||[]).find(i=>i.id===o.id);if(interaction?.completed)o.crystal.visible=false;}if(Array.isArray(interactions?.caches))for(const c of cacheMarks)for(const part of c.parts)part.visible=interactions.caches.some(i=>i.id===c.id);}
+ function updatePortalVisibility(mark){const visible=!mark.portal.buildingId||mark.inside;if(mark.portal.buildingId)for(const part of mark.pieces)part.visible=visible;mark.glow.visible=visible&&mark.unlocked;if(mark.caveEffect)mark.caveEffect.group.visible=mark.glow.visible;}
+ function updateProgress(progress){for(const mark of portalMarks){mark.unlocked=availablePortal(mark.portal,progress);updatePortalVisibility(mark);}const r=(progress?.regionProgress||progress?.regions||progress)?.[mapId];for(const part of seal)part.visible=!map.objectives.every(o=>r?.objectives?.includes(o.id));for(const o of objectives){o.crystal.visible=!r?.objectives?.includes(o.id);}}
+ function sync(interactions=[],discoveries=[]){const found=new Set(Array.isArray(discoveries)?discoveries:[]);for(const mark of portalMarks){if(mark.portal.hidden&&!mark.portal.buildingId)mark.glow.scale.setScalar(found.has(mark.portal.id)?.45:.18);if(mark.portal.buildingId){mark.inside=!!interactions?.portals?.some(p=>p.id===mark.portal.id);updatePortalVisibility(mark);}}for(const o of objectives){const interaction=(Array.isArray(interactions)?interactions:interactions?.objectives||[]).find(i=>i.id===o.id);if(interaction?.completed)o.crystal.visible=false;}if(Array.isArray(interactions?.caches))for(const c of cacheMarks)for(const part of c.parts)part.visible=interactions.caches.some(i=>i.id===c.id);}
  function update(t){for(let i=0;i<animated.length;i++)animated[i].rotation.y=t*.4+i;for(const effect of caveEffects)effect.update(t);}
  return{group,dispose(){for(const effect of caveEffects)effect.dispose();for(const scenery of caveScenery)scenery.dispose();k.dispose();},updateProgress,sync,update};
 }

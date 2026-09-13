@@ -19,8 +19,9 @@ export function refreshGates(world){
 }
 function reachable(world,p,object,radius=2.8){return object&&sameMap(p,object)&&distance(p,object)<=radius&&hasLineOfSight(p,object,world.obstaclesFor(p),.08);}
 function unlocked(world,object){return availablePortal(object,progressFor(world));}
+function insidePortalHouse(world,p,portal){return !portal.buildingId||world.buildings.some(b=>b.id===portal.buildingId&&insideBuilding(b,p));}
 export function discoverEntrances(world,p){
- for(const portal of PORTALS)if(portal.hidden&&sameMap(p,portal)&&distance(p,portal)<5.5&&hasLineOfSight(p,portal,world.obstaclesFor(p),.08)&&!world.shared.discoveries.includes(portal.id)){
+ for(const portal of PORTALS)if(portal.hidden&&sameMap(p,portal)&&insidePortalHouse(world,p,portal)&&distance(p,portal)<5.5&&hasLineOfSight(p,portal,world.obstaclesFor(p),.08)&&!world.shared.discoveries.includes(portal.id)){
   world.shared.discoveries.push(portal.id);world.result(p,{ok:true,message:`Hidden passage discovered · ${portal.name}`});
  }
 }
@@ -39,7 +40,7 @@ export function regionCommand(world,p,message){
  if(type==='travel'){
   const portal=PORTALS.find(portal=>portal.id===id);
   if(!reachable(world,p,portal)||portal.hidden&&!world.shared.discoveries.includes(id))return false;
-  if(portal.buildingId&&!world.buildings.some(b=>b.id===portal.buildingId&&insideBuilding(b,p)))return false;
+  if(!insidePortalHouse(world,p,portal))return false;
   if(!unlocked(world,portal)){world.result(p,{ok:false,reason:'The way is sealed. Defeat the preceding guardian.'});return false;}
   const destination={mapId:portal.toMapId,x:portal.toX,z:portal.toZ},bounds=world.boundsFor(destination);
   if(!MAPS[destination.mapId]||destination.x<bounds.minX||destination.x>bounds.maxX||destination.z<bounds.minZ||destination.z>bounds.maxZ||pointBlocked(destination,world.obstaclesFor(destination),.42))return false;
@@ -76,7 +77,7 @@ function cacheBlocked(world,map,cache){return world.enemies.some(e=>e.hp>0&&e.ma
 export function regionInteractions(world,p){
  const map=mapFor(p.mapId),state=world.shared.regionProgress[map.id];
  return {
-  portals:PORTALS.filter(o=>sameMap(p,o)&&(!o.hidden||world.shared.discoveries.includes(o.id))).map(o=>({...o,locked:!unlocked(world,o)})),
+  portals:PORTALS.filter(o=>sameMap(p,o)&&insidePortalHouse(world,p,o)&&(!o.hidden||world.shared.discoveries.includes(o.id))).map(o=>({...o,locked:!unlocked(world,o)})),
   checkpoints:CHECKPOINTS.filter(o=>sameMap(p,o)).map(o=>({...o,active:p.state.checkpointId===o.id})),
   objectives:(map.objectives||[]).map(({waves,...o})=>({...o,completed:!!state?.objectives.includes(o.id),wave:state?.objectiveWaves?.[o.id]||0,waves:waves?.length||0,active:!!state?.objectiveWaves?.[o.id]&&world.enemies.some(e=>e.hp>0&&e.mapId===map.id&&e.waveObjective===o.id),locked:objectiveBlocked(world,map,o)})),
   caches:(map.caches||[]).filter(o=>!p.state.claimedCaches.includes(o.id)).map(o=>({...o,locked:!unlocked(world,o)||cacheBlocked(world,map,o)}))

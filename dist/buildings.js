@@ -12,7 +12,7 @@ export const BUILDING_SPECS=[
  ['ashwick-west','Wayfarer’s Cottage',-75,14,5.1,5.5,2.9,0],
  ['ashwick-east','Oakbeam House',-63,14.5,5.2,5.5,3.1,.05],
  ['gatehouse','Rook’s Gatehouse',-23,-2,4.4,4.4,2.7,0]
-].map(([id,name,x,z,w,d,h,rotation,chapel=false])=>({id,name,x,z,w,d,h,rotation,chapel}));
+].map(([id,name,x,z,w,d,h,rotation,chapel=false])=>({id,name,x,z,w,d,h,rotation,chapel,abandoned:['west-lodge','grave-house','south-house'].includes(id)}));
 export function buildingWorld(b,x,z){const c=Math.cos(b.rotation),s=Math.sin(b.rotation);return{x:b.x+c*x+s*z,z:b.z-s*x+c*z};}
 export function buildingLocal(b,p){const c=Math.cos(b.rotation),s=Math.sin(b.rotation),x=p.x-b.x,z=p.z-b.z;return{x:c*x-s*z,z:s*x+c*z};}
 export function insideBuilding(b,p,inset=.12){const q=buildingLocal(b,p);return Math.abs(q.x)<b.w/2-inset&&Math.abs(q.z)<b.d/2-inset;}
