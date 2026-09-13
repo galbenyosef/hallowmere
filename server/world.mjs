@@ -1,3 +1,4 @@
+import {FORAGE_PATCHES,FORAGE_REGROW_SECONDS,harvestFood,consumeFood} from '../dist/foraging.js';
 import {classFor,applyClass,weaponForClass} from '../dist/classes.js';
 import {selectClass,castClassAbility,resolveClassHits,advanceClassEffects,hitEnemy} from './class-combat.mjs';
 import {randomUUID,randomBytes} from 'node:crypto';
@@ -19,7 +20,7 @@ export class World {
   for(const p of this.players.values())this.resetPlayer(p);
   this.emit('reset',{worldId:this.id});
  }
- resetPlayer(p){const choice={classId:p.state?.classId,appearanceId:p.state?.appearanceId};Object.assign(p,{state:Object.assign(createState(),createCampaign(this.seed)),x:START.x+(p.slot%4)*.7,z:START.z+Math.floor(p.slot/4)*.7,angle:0,input:{x:0,z:0},moving:false,lastInput:0,dodge:0,dodgeDir:{x:0,z:1},loot:[],lastSeq:0});if(choice.classId){applyClass(p.state,choice.classId,choice.appearanceId);p.state.inventory=p.state.inventory.map(item=>weaponForClass(item,p.state));}}
+ resetPlayer(p){const choice={classId:p.state?.classId,appearanceId:p.state?.appearanceId};Object.assign(p,{state:Object.assign(createState(),createCampaign(this.seed)),x:START.x+(p.slot%4)*.7,z:START.z+Math.floor(p.slot/4)*.7,angle:0,input:{x:0,z:0},moving:false,lastInput:0,dodge:0,dodgeDir:{x:0,z:1},loot:[],forageReadyAt:{},lastSeq:0});if(choice.classId){applyClass(p.state,choice.classId,choice.appearanceId);p.state.inventory=p.state.inventory.map(item=>weaponForClass(item,p.state));}}
  spawn(type,x,z,zone,id=randomUUID()){
   const e={id,type,x,z,zone,hp:ENEMY_TYPES[type].hp,maxHp:ENEMY_TYPES[type].hp,phase:'idle',timer:0,cooldown:1,angle:0,attackAngle:0,aim:{x,z},home:{x,z},attackCount:0,path:[],navAt:0,moving:false};this.enemies.push(e);return e;
  }
@@ -59,6 +60,8 @@ export class World {
   if(m.type==='ability')return this.ability(p,m);
   if(m.type==='equip'){const result=equipItem(p.state,m.id);this.result(p,result);return result.ok;}
   if(m.type==='collect')return this.collect(p,m.id);
+  if(m.type==='forage')return this.forage(p,m.id);
+  if(m.type==='consume'){const result=consumeFood(p.state,m.itemId);this.result(p,{...result,operation:'consume'});return result.ok;}
   if(m.type==='service'){
    const npc=NPCS.find(n=>n.id===m.npcId);if(!npc||distance(p,npc)>2.8||!hasLineOfSight(p,npc,this.obstacles))return false;
    Object.assign(p.state,Object.fromEntries(SHARED_KEYS.map(k=>[k,this.shared[k]])));
@@ -71,6 +74,13 @@ export class World {
  result(p,result){this.emit('result',{playerId:p.id,...result});}
  collect(p,id){const d=p.loot.find(d=>d.id===id&&!d.claimed);if(!d||distance(p,d)>2.8||!hasLineOfSight(p,d,this.obstacles))return false;
   const result=collectLoot(p.state,d);if(result.collected){if(d.template==='bellkeeper-edge')this.shared.bossLootClaimed=true;this.emit('loot',{playerId:p.id,drop:d});}return result.collected;
+ }
+ forage(p,id){
+  const patch=FORAGE_PATCHES.find(patch=>patch.id===id);
+  if(!patch||this.time<(p.forageReadyAt[id]||0)||distance(p,patch)>2.8||!hasLineOfSight(p,patch,this.obstacles))return false;
+  const result=harvestFood(p.state,patch.itemId);
+  if(result.ok)p.forageReadyAt[id]=this.time+FORAGE_REGROW_SECONDS;
+  this.result(p,{...result,operation:'forage'});return result.ok;
  }
  ability(p,m){return castClassAbility(this,p,m);}
  projectile(origin,angle,speed,damage,hostile,ownerId,offset=0){this.projectiles.push({id:randomUUID(),x:origin.x+Math.sin(angle)*offset,z:origin.z+Math.cos(angle)*offset,angle,speed,damage,hostile,ownerId,life:2.5});}
@@ -139,6 +149,6 @@ export class World {
  }
  snapshot(id,afterEvent=0){const p=this.players.get(id);return {type:'snapshot',worldId:this.id,tick:this.tick,time:this.time,ack:p.lastSeq,state:this.viewState(p),you:id,
   players:this.connected().map(q=>({id:q.id,slot:q.slot,color:q.color,x:q.x,z:q.z,angle:q.angle,moving:q.moving,hp:q.state.hp,maxHp:q.state.maxHp,ended:q.state.ended,dodge:q.dodge,classId:q.state.classId,appearanceId:q.state.appearanceId,speed:classFor(q.state).speed,shield:q.state.shield||0,concealed:q.state.concealed||0,zone:zoneAt(q)})),
-  enemies:this.enemies.map(({path,navAt,home,dots,...e})=>e),projectiles:this.projectiles.map(({damage,ownerId,skill,hitIds,remainingHits,...b})=>b),zones:this.zones.map(({skill,next,ownerId,...z})=>z),loot:p.loot.filter(d=>!d.claimed),
+  enemies:this.enemies.map(({path,navAt,home,dots,...e})=>e),projectiles:this.projectiles.map(({damage,ownerId,skill,hitIds,remainingHits,...b})=>b),zones:this.zones.map(({skill,next,ownerId,...z})=>z),loot:p.loot.filter(d=>!d.claimed),forage:FORAGE_PATCHES.filter(patch=>this.time>=(p.forageReadyAt[patch.id]||0)),
   votes:[...this.votes],voteDeadline:this.voteDeadline,events:this.events.filter(e=>e.id>afterEvent&&(!e.playerId||e.type==='ability'||e.type==='hurt'||e.type==='respawn'||e.playerId===id))};}
 }

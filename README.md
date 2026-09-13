@@ -26,7 +26,7 @@ Open **http://127.0.0.1:5182**. To play from another device on the same network,
 
 Development mode restarts the server when its code or imported gameplay modules change. A restart creates a new vigil, and open game tabs reconnect automatically. Use `npm start` to run without watching files.
 
-If the game stays on the connection screen with a WebSocket error, check **http://localhost:5182/health**. It should return JSON with `ok: true` and `version: 1`. A 404 means an older or static-only server is still using port 5182: stop that process and restart with `npm run dev` (or `npm run dev:network`). Reloading the browser alone cannot update a running server.
+If the game stays on the connection screen with a WebSocket error, check **http://localhost:5182/health**. It should return JSON with `ok: true` and `version: 2`. A 404 means an older or static-only server is still using port 5182: stop that process and restart with `npm run dev` (or `npm run dev:network`). Reloading the browser alone cannot update a running server.
 
 ## GitHub Pages
 
@@ -47,13 +47,30 @@ Keep local asset URLs relative so the game works both at a domain root and under
 | Evade | 1 |
 | Class skill | 2 |
 | Healing draught | 3 |
-| Speak to a villager / collect nearby loot | F or click its label |
-| Equipment inventory | I |
+| Speak / collect loot / harvest plants | F or click its label |
+| Inventory, equipment, and food pouch | I |
+| Eat forage | Eat button in the Inventory pouch |
 | Choose class (in a sanctuary) | C or click your character name |
-| Reveal loot labels during combat | Hold Alt |
+| Reveal loot and plant labels during combat | Hold Alt |
 | Journal / map / pause | J / M / Escape |
 
 Touch devices have a movement stick and ability buttons with automatic enemy aiming. Red ground indicators show enemy attacks before they resolve. Evade grants brief invulnerability. Essence regenerates. Every defeated monster drops crowns; draughts and equipment can also drop. Walk over crowns, or use F/click a label to collect loot. Equip weapons and charms in the inventory for real damage and vitality bonuses. Brief browser focus changes do not open a menu. Menus and background tabs release movement input, but the shared world continues. Enemies can still attack an idle character outside a sanctuary. A manually opened menu, map, or conversation stays open on return. Interrupted touch gestures reset the movement stick.
+
+## Foraging
+
+Harvest 18 outdoor patches with **F**, the interaction button, or a plant label. Clicking a distant label walks to it. Ashwick has three patches, Mourning Road nine, and Hallowmere six. Each plant gives one food, independently for each adventurer, and returns after three minutes. A full stack leaves the plant available.
+
+Open **Inventory (I)** to use the pouch above your equipment satchel. It holds **five of each food**:
+
+| Food | Effect |
+| --- | --- |
+| Crimson mushroom | Restore 35 current health |
+| Moonleaf herb | Restore 40 extra essence over five seconds, alongside natural regeneration |
+| Bramble berries | Restore 15 current health and 15 essence |
+
+Foods share a two-second cooldown, separate from belt draughts. They never exceed maximum resources or raise your stats. Moonleaf cannot stack or refresh while active. Food is not consumed when all its affected resources are full; berries work if either resource is depleted. Inventory shows live resources, food availability, and moonleaf duration while the shared world keeps moving.
+
+Your pouch and personal harvest timers survive death, respawn, and the normal 60-second reconnect window. Death clears active moonleaf regeneration; disconnecting pauses personal food effects and cooldowns. Plants keep regrowing with the world. A new vigil empties the pouch and restores all plants. These rules and range/visibility checks are authoritative on the server. Protocol 2 adds personal `forage` snapshots and `forage {id}` / `consume {itemId}` commands; update the backend and frontend together.
 
 ## Chosen roster
 
@@ -97,7 +114,7 @@ A per-tab resume token restores the same character within 60 seconds of disconne
 
 1. Create a Render Blueprint from this repository using [render.yaml](render.yaml). The configured single always-on Node instance is a paid service; review the current cost before creating it. Keep the service at one instance, since multiple instances would create separate worlds. The declaration follows the [Render Blueprint reference](https://render.com/docs/blueprint-spec).
 2. `ALLOWED_ORIGINS` defaults to `https://miguelsolorio.github.io`. Add any Sites frontend origin as a comma-separated value when serving the game there. Origins contain no paths. Keep automatic backend deployment off so a frontend push cannot unexpectedly reset an active adventure.
-3. Deploy the backend and verify `https://<backend-host>/health`. Its response must include `ok: true` and `version: 1`. Render provides secure [WebSocket connections](https://render.com/docs/websocket).
+3. Deploy the backend and verify `https://<backend-host>/health`. Its response must include `ok: true` and `version: 2`. Render provides secure [WebSocket connections](https://render.com/docs/websocket).
 4. Set the GitHub repository variable `MULTIPLAYER_SERVER_URL` to `wss://<backend-host>/multiplayer`, then run the Pages workflow. The workflow installs dependencies, tests, validates, checks the backend, and writes the public endpoint into the deployment artifact.
 5. For another static host, run `MULTIPLAYER_SERVER_URL=wss://<backend-host>/multiplayer npm run configure:multiplayer` before uploading `dist/`. An empty endpoint uses the current origin, which is suitable for the included local server. Do not publish an empty endpoint to a static-only host.
 

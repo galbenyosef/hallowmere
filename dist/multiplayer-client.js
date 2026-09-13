@@ -28,7 +28,7 @@ export class MultiplayerClient {
   ws.onopen=()=>ws.send(JSON.stringify({v:PROTOCOL_VERSION,type:'join',token:this.token||undefined}));
   ws.onmessage=event=>{
    let m;try{m=JSON.parse(event.data);}catch{return;}
-   if(m.v!==PROTOCOL_VERSION)return;
+   if(m.v!==PROTOCOL_VERSION){terminal=true;this.connected=false;clearTimeout(timeout);this.onStatus('The game and server versions differ. Reload after the server has been updated.',false);ws.close();return;}
    if(m.type==='error'&&m.code==='IDENTITY_IN_USE'){this.token=null;try{sessionStorage.removeItem('hallowmere-resume');}catch{}return;}
    if(m.type==='error'){terminal=!!m.terminal;this.onStatus(m.message,false);return;}
    if(m.type==='welcome'){
