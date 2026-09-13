@@ -111,24 +111,17 @@
 .modal.inventory-modal .inventory-hint { margin:0 auto 0 0;text-align:left;width:auto;color:#94a8ac;font-size:10px;line-height:1.7; }
 .modal.inventory-modal .primary-button { width:auto;background:#c3a85a20;border-color:#d4bd7880;box-shadow:none;font:14px/1.5 var(--serif);padding:12px 23px; }
 
-/* Character selection preserves its class controls and sanctuary restrictions. */
+/* Keep the original circular selector inside the Open Chronicle menu frame. */
 .roster-dialog.chronicle-shell { background:linear-gradient(90deg,#061016f5,#08151bee),url('./assets/menu/twin-paths-solo.webp') center 58%/cover; }
 .roster-dialog::backdrop { background:#061016;backdrop-filter:blur(5px); }
 .roster-dialog .chronicle-main { overflow:auto;scrollbar-width:thin; }
 .roster-header { padding-right:44px; }
 .roster-close { right:0;top:0; }
-.roster-layout { grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:38px;margin-top:0;align-items:start; }
-.roster-wheel { aspect-ratio:auto;display:flex;flex-direction:column;max-width:none;margin:0; }
-.roster-ring { display:none; }
-.roster-portrait { position:relative;inset:auto;height:clamp(250px,44dvh,450px);transform:none;background:radial-gradient(ellipse,#52778520,transparent 68%); }
-.roster-portrait img { width:100%;height:100%; }
-.roster-appearance-name { bottom:0;font-size:10px;letter-spacing:2px;color:#b9bca7; }
-.roster-classes { position:static;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px 8px;margin:23px 0 0; }
-.roster-classes button { position:static;transform:none;width:auto;min-height:70px; }
-.roster-medallion { width:56px;height:58px;border-radius:0;background:#13232db0;border-color:#7994a540; }
-.roster-class-label { font-size:9px;max-width:none;color:inherit; }
-.roster-classes button[aria-pressed=true] .roster-medallion { border-color:#e0c989;background:#34434b;box-shadow:inset 0 0 0 1px #e0c98940; }
-.roster-step { top:42%; }.roster-previous { left:0; }.roster-next { right:0; }
+.roster-layout { grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:38px;margin-top:0;align-items:center;flex:none; }
+.roster-appearance-name { color:#b9bca7; }
+.roster-medallion { background:#13232db0;border-color:#7994a560; }
+.roster-class-label { color:inherit; }
+.roster-classes button[aria-pressed=true] .roster-medallion { border-color:#e0c989;background:#34434b;box-shadow:0 0 0 4px #e0c98915,0 0 22px #e0c98925; }
 .roster-description { padding:12px 0 0; }
 .roster-name { font-size:34px; }
 .roster-description .eyebrow { font-size:10px; }
@@ -214,8 +207,12 @@
  .inventory-layout { gap:22px; }.inventory-grid { grid-template-columns:repeat(6,minmax(0,1fr));max-height:250px; }.inventory-pouch .empty-cell:nth-child(n+7) { display:none; }
  .inventory-grid>* { max-height:55px; }.inventory-equipment { gap:8px; }.equipment-slot strong { font-size:10px; }
  .chronicle-pause,.journal-copy,.chronicle-controls { gap:25px; }.chronicle-scene { min-height:300px; }
- .roster-layout { gap:24px; }.roster-medallion { width:45px;height:48px; }.roster-class-label { font-size:8px; }.roster-stats { gap:24px; }
+ .roster-layout { gap:24px; }.roster-stats { gap:24px; }
  .map-panel.expanded { grid-template-columns:140px minmax(0,1fr) 175px;gap:22px;padding:25px; }
+}
+@media(max-width:1000px) {
+ .roster-layout { grid-template-columns:1fr; }
+ .roster-wheel { max-width:440px; }
 }
 @media(max-width:760px) {
  .modal.chronicle-shell,.roster-dialog.chronicle-shell,.modal.npc-modal.has-npc-portrait { display:block;height:100dvh;padding:18px 22px;overflow:auto; }
@@ -229,7 +226,7 @@
  .inventory-equipment { grid-template-columns:1fr; }.inventory-attributes dl { column-gap:12px; }.inventory-attributes dl>div { font-size:11px; }
  .inventory-modal .inventory-detail { column-gap:20px; }.inventory-detail .item-comparison { padding-left:16px; }
  .modal.chronicle-shell .modal-actions { padding:15px 0;margin-top:22px;flex-wrap:wrap; }.modal.inventory-modal .inventory-hint { width:100%;text-align:left; }
- .roster-layout { grid-template-columns:1fr 1fr;gap:22px; }.roster-portrait { height:260px; }.roster-name { font-size:28px; }.roster-skills { grid-template-columns:1fr; }.roster-stats { gap:17px; }.roster-class-label { font-size:8px; }
+ .roster-layout { gap:22px; }.roster-name { font-size:28px; }.roster-stats { gap:24px; }
  .chronicle-controls { grid-template-columns:1fr; }.chronicle-scene { min-height:260px; }
  .npc-modal .chronicle-stage { gap:24px;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr); }.npc-modal .dialogue-portrait { height:280px; }
  .map-panel.expanded { display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,.6fr);grid-template-rows:auto auto auto auto;padding:18px 22px;gap:20px; }
@@ -241,7 +238,7 @@
  .inventory-modal .inventory-crowns { top:21px; }.inventory-crowns strong { font-size:22px; }.inventory-crowns span { font-size:8px; }.inventory-modal .chronicle-heading { padding-right:75px; }
  .inventory-grid>* { max-height:none; }.inventory-modal .inventory-detail { display:block;margin-top:24px; }.inventory-detail .item-comparison { margin-top:16px;padding:16px 0 0;border-left:0;border-top:1px solid var(--chronicle-line); }.inventory-modal .inventory-detail p { font-size:13px; }.inventory-detail>[data-preview-food] { display:block; }
  .modal.inventory-modal .primary-button { width:100%; }.modal.chronicle-shell .modal-actions { gap:12px; }.modal.chronicle-shell .modal-actions>.primary-button { flex:1; }
- .roster-layout { grid-template-columns:1fr;gap:28px; }.roster-portrait { height:290px; }.roster-classes { grid-template-columns:repeat(4,minmax(0,1fr)); }.roster-medallion { width:55px;height:57px; }.roster-class-label { font-size:9px; }.roster-skills { grid-template-columns:1fr 1fr; }
+ .roster-layout { gap:28px; }
  .chronicle-pause,.journal-copy { grid-template-columns:1fr;gap:26px; }.chronicle-scene { min-height:215px; }.chronicle-pause-options { padding-bottom:10px; }.journal-progress { border-left:0;border-top:1px solid var(--chronicle-line);padding:24px 0 0; }
  .npc-modal .chronicle-stage { display:flex;flex-direction:column;align-items:stretch; }.npc-modal .dialogue-portrait { height:240px; }.npc-modal .npc-speech { font-size:18px; }
  .map-panel.expanded { grid-template-columns:1fr;padding:16px 18px; }.map-panel.expanded .map-frame { grid-column:1;grid-row:3; }.map-panel.expanded .map-legend { grid-column:1;grid-row:4;display:grid;grid-template-columns:1fr 1fr;gap:10px; }.map-legend h3,.map-legend>span { grid-column:1/-1;margin:8px 0; }.map-legend p { margin:4px 0;font-size:12px; }.map-panel.expanded .map-caption { grid-row:5; }

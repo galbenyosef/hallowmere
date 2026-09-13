@@ -53,7 +53,12 @@ colors, typography, and square gold borders.
 game transitions; character changes still require a sanctuary, and navigation is
 unavailable before choosing the first character or while dead. The index becomes
 a horizontally scrolling row on small screens. Menus open at the top without
-scrolling to the focused close button.
+scrolling to the focused close button. Character selection uses the original
+circular arrangement: seven class medallions surround the selected portrait,
+with previous/next arrows and keyboard navigation. On narrower screens the
+character details move below the wheel. Desktop and mobile captures in
+`screenshots/circular-character-selector/` show the actual selector rendered
+without starting a game session.
 
 Inventory inspection stays beneath the character and satchel. Hovering or
 focusing a tile changes the visible details; clicking or pressing Enter retains
