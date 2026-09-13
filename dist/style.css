@@ -9,14 +9,14 @@
 /* Inventory: a framed equipment sheet above a compact, expandable satchel. */
 
 
-/* Polished gunmetal, fine brass inlays, and luminous alchemical glass. */
+/* Tidal glass: study 01, with a quiet brass mount and a soft resource glow. */
 .orb-group{--resource-glow:255,61,86}.mana-group{--resource-glow:52,172,255}
-.orb-frame{padding:6px;border-color:#b7a47c80;background:conic-gradient(from 30deg,#121d25,#687078 12%,#26313a 23%,#101920 43%,#8e8977 54%,#26323b 65%,#111920 84%,#696e69);box-shadow:0 8px 24px #000a,0 0 0 3px #081015,0 0 0 4px #b9a27a30,0 0 18px rgba(var(--resource-glow),calc(.32 * var(--potion-strength,1))),0 0 42px rgba(var(--resource-glow),calc(.2 * var(--potion-strength,1))),0 8px 66px rgba(var(--resource-glow),calc(.12 * var(--potion-strength,1)))}
+.orb-frame{padding:6px;border-color:#a9997566;background:linear-gradient(135deg,#3e4544,#aa9470 23%,#454641 42%,#272f31 68%,#a9946a 88%,#363d3d);box-shadow:0 8px 24px #000a,0 0 0 3px #080e13,0 0 0 4px #bac9ca24,0 0 28px rgba(var(--resource-glow),calc(.1 * var(--potion-strength,1)))}
 .orb-frame:before,.orb-frame:after{width:10px;height:10px;top:calc(50% - 5px);background:linear-gradient(135deg,#d8c49a,#4a4a41);border:1px solid #cfbd9380;box-shadow:0 2px 5px #0008}
 .orb-frame:before{left:-6px}.orb-frame:after{right:-6px}
-.orb{background:#070e17;box-shadow:0 0 0 1px rgba(var(--resource-glow),.45),0 0 13px rgba(var(--resource-glow),.28),inset 0 0 12px #000}
-.orb-shader{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.shader-ready .liquid{visibility:hidden}
+.orb{background:#070e17;box-shadow:0 0 0 2px #080e13,inset 0 0 12px #000}
+.orb-effect{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.effect-ready .liquid,.effect-ready .orb-glass{visibility:hidden}
 .orb-glass{pointer-events:none;background:radial-gradient(ellipse at 31% 15%,#e5f3ff24,transparent 27%),radial-gradient(ellipse at 50% 45%,transparent 55%,#0008 100%);box-shadow:inset 0 1px 2px #e6f2ff80,inset 0 -2px 3px #d1edff20}
 .orb-glass:after{content:'';position:absolute;inset:7% 10% 13%;border-radius:50%;border:1px solid transparent;border-top-color:#ecf7ff4d;transform:rotate(-30deg)}
 .orb-value{top:35%;font-size:23px;color:#fff0db;text-shadow:0 2px 6px #000,0 0 16px #0008;font-variant-numeric:tabular-nums}
