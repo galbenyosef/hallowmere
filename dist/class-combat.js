@@ -1,6 +1,6 @@
 import {sameMap} from './regions.js';
 import {randomUUID} from './world-random.js';
-import {abilitiesFor,classFor,classColor,applyClass,weaponForClass} from './classes.js';
+import {abilitiesFor,classFor,classColor,applyClass,weaponForClass,damageMultiplier} from './classes.js';
 import {useAbility,ENEMY_TYPES,distance,withinArc,hasLineOfSight,pointBlocked} from './combat.js';
 import {isSanctuary,WORLD_BOUNDS,ITEM_TEMPLATES} from './campaign.js';
 
@@ -32,7 +32,7 @@ function centerFor(world,p,m,skill,angle){
 }
 export function hitEnemy(world,p,e,skill,amount){
  if(e.hp<=0||!sameMap(p,e))return;
- let damage=amount;
+ let damage=amount*damageMultiplier(p.state);
  if(e.type==='sentinel'&&!skill.magic&&withinArc(e,p,e.angle,100,Math.PI*.85))damage*=.4;
  if(skill.backstab){const behind=(p.x-e.x)*Math.sin(e.angle)+(p.z-e.z)*Math.cos(e.angle)<0;if(behind)damage*=skill.backstab;}
  if(damage>0)world.damageEnemy(e,damage,!!skill.magic,skill.color||classColor(p.state),skill.projectile);
@@ -46,9 +46,26 @@ function affectArea(world,p,center,skill){
  for(const e of world.enemies)if(e.hp>0&&sameMap(p,e)&&distance(center,e)<=skill.radius&&hasLineOfSight(center,e,obstaclesFor(world,p)))hitEnemy(world,p,e,skill,skill.damage>0?skill.damage+p.state.level*2+p.state.damageBonus*.35:0);
  for(const ally of world.connected())if(!ally.state.ended&&sameMap(p,ally)&&distance(center,ally)<=skill.radius&&hasLineOfSight(center,ally,obstaclesFor(world,p))){
   if(skill.heal)ally.state.hp=Math.min(ally.state.maxHp,ally.state.hp+skill.heal);
+  if(skill.boost)empower(ally,skill.boost);
   if(skill.conceal)ally.state.concealed=.5;
   if(skill.guard&&skill.kind==='zone'){ally.state.guard=Math.max(ally.state.guardTime>0?ally.state.guard:0,skill.guard);ally.state.guardTime=Math.max(ally.state.guardTime||0,.7);}
  }
+}
+function empower(ally,amount){ally.state.damageBoost=Math.max(ally.state.boostTime>0?ally.state.damageBoost:0,amount);ally.state.boostTime=.7;}
+function allyFor(world,p,m,range,{fallen=false,padding=.1}={}){
+ const candidates=world.connected().filter(ally=>ally.id!==p.id&&!!ally.state.ended===fallen&&sameMap(p,ally)&&distance(p,ally)<=range&&hasLineOfSight(p,ally,obstaclesFor(world,p),padding));
+ if(m.targetId)return candidates.find(ally=>ally.id===m.targetId)||null;
+ const aimed=m.target&&Number.isFinite(m.target.x)&&Number.isFinite(m.target.z);
+ // Explicit ground aim chooses the closest ally to the cursor. Without a
+ // pointer (keyboard / touch), prefer an injured ally, then the nearest one.
+ return candidates.sort((a,b)=>fallen?distance(p,a)-distance(p,b):aimed?distance(a,m.target)-distance(b,m.target):(a.state.hp/a.state.maxHp-b.state.hp/b.state.maxHp)||distance(p,a)-distance(p,b))[0]||null;
+}
+function resurrect(world,p,range){
+ const ally=allyFor(world,p,{},range,{fallen:true});if(!ally)return;
+ Object.assign(ally.state,{hp:Math.ceil(ally.state.maxHp*.5),ended:false,invulnerable:1,shield:0,shieldTime:0,guard:0,guardTime:0,concealed:0,boostTime:0,damageBoost:0,valkyrieTime:0});
+ ally.input={x:0,z:0};ally.dodge=0;ally.rootUntil=0;ally.lastInput=-1;
+ world.hits=world.hits.filter(hit=>hit.playerId!==ally.id);world.projectiles=world.projectiles.filter(b=>b.ownerId!==ally.id);world.zones=world.zones.filter(z=>z.ownerId!==ally.id);
+ world.emit('respawn',{playerId:ally.id,revivedBy:p.id,x:ally.x,z:ally.z});
 }
 export function castClassAbility(world,p,m){
  const skills=abilitiesFor(p.state);
@@ -58,6 +75,8 @@ export function castClassAbility(world,p,m){
  const a=m.angle%(Math.PI*2);
  if(skill.closeRange&&world.enemies.some(e=>e.hp>0&&sameMap(p,e)&&withinArc(p,e,a,skill.closeRange.range,skill.closeRange.arc)&&hasLineOfSight(p,e,obstaclesFor(world,p)))){skill=skill.closeRange;variant='closeRange';}
  const center=centerFor(world,p,m,skill,a);if(!center){world.result(p,{ok:false,reason:'That spell cannot reach through the wall.'});return false;}
+ const support=skill.kind==='support'?allyFor(world,p,m,skill.range):null;
+ if(skill.kind==='support'&&(m.targetId&&!support||!support&&p.state.hp>=p.state.maxHp)){world.result(p,{ok:false,reason:m.targetId?'That ally is out of reach.':'Aim at an ally, or use the staff when you need healing.'});return false;}
  if(!useAbility(p.state,m.action))return false;
  p.angle=a;world.emit('ability',{playerId:p.id,mapId:p.mapId,action:m.action,classId:p.state.classId,appearanceId:p.state.appearanceId,kind:skill.kind,...(variant?{variant}:{}),color:skill.color||classColor(p.state),x:center.x,z:center.z,angle:a});
  const damage=(skill.damage||0)+p.state.level*2+p.state.damageBonus;
@@ -72,8 +91,18 @@ export function castClassAbility(world,p,m){
  if(skill.guard&&skill.kind!=='zone'){p.state.guard=skill.guard;p.state.guardTime=skill.duration;}
  if(skill.kind==='shield'){p.state.shield=skill.shield;p.state.shieldTime=skill.duration;}
  if(skill.kind==='zone')world.zones.push({id:randomUUID(),mapId:p.mapId,ownerId:p.id,classId:p.state.classId,color:classColor(p.state),action:m.action,x:center.x,z:center.z,radius:skill.radius,start:world.time,until:world.time+skill.duration,next:world.time,skill});
+ if(skill.kind==='support'){
+  const target=support||p;
+  // One live tether per caster; repeated or overlapping casts cannot stack.
+  world.zones=world.zones.filter(zone=>zone.ownerId!==p.id||zone.kind!=='support');
+  world.zones.push({id:randomUUID(),kind:'support',mapId:p.mapId,ownerId:p.id,casterId:p.id,targetId:target.id,classId:p.state.classId,color:classColor(p.state),action:m.action,x:p.x,z:p.z,radius:.5,start:world.time,until:world.time+skill.duration,next:world.time,skill});
+ }
+ if(skill.valkyrie){p.state.valkyrieTime=skill.duration;resurrect(world,p,skill.resurrectRange);}
  if(skill.kind==='dodge'){
   let stepped=false;
+  if(skill.guardian){const ally=allyFor(world,p,m,skill.range,{padding:.42});
+   if(ally){const d=distance(p,ally),travel=Math.max(0,d-.9);p.dodge=travel/15;p.dodgeDir=d?{x:(ally.x-p.x)/d,z:(ally.z-p.z)/d}:{x:0,z:0};p.angle=d?Math.atan2(p.dodgeDir.x,p.dodgeDir.z):a;stepped=true;}
+  }
   if(skill.shadowstep){const enemy=world.enemies.filter(e=>e.hp>0&&sameMap(p,e)&&withinArc(p,e,a,skill.range,1.6)).sort((x,y)=>distance(p,x)-distance(p,y))[0];
    if(enemy){const destination={x:enemy.x-Math.sin(enemy.angle)*1.15,z:enemy.z-Math.cos(enemy.angle)*1.15};
     if(!pointBlocked(destination,obstaclesFor(world,p),.42)&&hasLineOfSight(p,destination,obstaclesFor(world,p),.42)&&destination.x>=bounds.minX&&destination.x<=bounds.maxX&&destination.z>=bounds.minZ&&destination.z<=bounds.maxZ){Object.assign(p,destination);p.dodge=0;p.input={x:0,z:0};stepped=true;}
@@ -96,11 +125,23 @@ export function resolveClassHits(world){
 }
 export function advanceClassEffects(world){
  for(const e of world.enemies){if((e.slowUntil||0)<=world.time)e.slow=0;
-  for(const dot of e.dots||[]){const owner=world.players.get(dot.ownerId);if(e.hp>0&&owner?.connected&&!owner.state.ended&&sameMap(owner,e)&&sameMap(dot,e)&&dot.next<=world.time&&world.time<=dot.until){world.damageEnemy(e,dot.damage,dot.type==='poison',classColor(owner.state));dot.next+=dot.interval;}}
+  for(const dot of e.dots||[]){const owner=world.players.get(dot.ownerId);if(e.hp>0&&owner?.connected&&!owner.state.ended&&sameMap(owner,e)&&sameMap(dot,e)&&dot.next<=world.time&&world.time<=dot.until){world.damageEnemy(e,dot.damage*damageMultiplier(owner.state),dot.type==='poison',classColor(owner.state));dot.next+=dot.interval;}}
   e.dots=(e.dots||[]).filter(d=>d.next<=d.until&&d.until>=world.time&&world.players.get(d.ownerId)?.connected);
  }
  world.zones=world.zones.filter(zone=>{const owner=world.players.get(zone.ownerId);if(!owner?.connected||owner.state.ended||!sameMap(owner,zone)||world.time>=zone.until)return false;
   if(zone.skill.follow){zone.x=owner.x;zone.z=owner.z;}
+  if(zone.kind==='support'){
+   const target=world.players.get(zone.targetId);
+   if(!target?.connected||target.state.ended||!sameMap(owner,target)||distance(owner,target)>zone.skill.range||!hasLineOfSight(owner,target,obstaclesFor(world,owner)))return false;
+   zone.x=owner.x;zone.z=owner.z;zone.targetX=target.x;zone.targetZ=target.z;
+   const healing=target.state.hp<target.state.maxHp;zone.supportMode=healing||target===owner?'heal':'boost';
+   if(zone.next<=world.time){
+    if(healing){const healed=Math.min(zone.skill.heal,target.state.maxHp-target.state.hp);target.state.hp+=healed;if(target!==owner)owner.state.hp=Math.min(owner.state.maxHp,owner.state.hp+healed*.25);}
+    else if(target!==owner)empower(target,zone.skill.boost);
+    zone.next+=zone.skill.interval;
+   }
+   return true;
+  }
   if(zone.next<=world.time){affectArea(world,owner,zone,zone.skill);zone.next+=zone.skill.interval;}
   return true;
  });

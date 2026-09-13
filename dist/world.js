@@ -2,7 +2,7 @@ import {mapFor,sameMap} from './regions.js';
 import {initializeRegions,refreshGates,discoverEntrances,returnToCheckpoint,regionCommand,regionInteractions,regionalKill} from './region-campaign.js';
 import {updateRegionEnemy,stepRegionHazards} from './region-combat.js';
 import {FORAGE_PATCHES,FORAGE_REGROW_SECONDS,harvestFood,consumeFood} from './foraging.js';
-import {classFor,applyClass,weaponForClass} from './classes.js';
+import {speedFor,applyClass,weaponForClass} from './classes.js';
 import {selectClass,castClassAbility,resolveClassHits,advanceClassEffects,hitEnemy} from './class-combat.js';
 import {randomUUID,randomSeed,randomToken} from './world-random.js';
 import {ENEMY_TYPES,SPAWNS,createState,advanceState,useAbility,hurtPlayer,awardKill,withinArc,resolveMove,distance,segmentHitsCircle,findPath,hasLineOfSight,pointBlocked} from './combat.js';
@@ -53,7 +53,7 @@ export class World {
    if(!finitePoint(m)||!Number.isFinite(m.angle)||Math.abs(m.x)>1||Math.abs(m.z)>1)return false;
    p.input={...direction(m.x,m.z),...(finitePoint(m.stopAt)?{stopAt:{x:m.stopAt.x,z:m.stopAt.z}}:{})};p.angle=m.angle%(Math.PI*2);p.lastInput=this.time;return true;
   }
-  if(m.type==='respawn'&&p.state.ended){p.state.hp=p.state.maxHp;p.state.mana=p.state.maxMana;p.state.ended=false;p.state.shield=0;p.state.shieldTime=0;p.state.guard=0;p.state.guardTime=0;p.state.concealed=0;p.state.invulnerable=1;returnToCheckpoint(this,p);this.emit('respawn',{playerId:id});return true;}
+  if(m.type==='respawn'&&p.state.ended){p.state.hp=p.state.maxHp;p.state.mana=p.state.maxMana;p.state.ended=false;p.state.shield=0;p.state.shieldTime=0;p.state.guard=0;p.state.guardTime=0;p.state.concealed=0;p.state.boostTime=p.state.damageBoost=p.state.valkyrieTime=0;p.state.invulnerable=1;returnToCheckpoint(this,p);this.emit('respawn',{playerId:id});return true;}
   if(m.type==='vote'){
    if(m.agree===false){this.cancelVote();return true;}
    if(m.agree!==true)return false;this.votes.add(id);this.voteDeadline=this.now()+30000;
@@ -111,7 +111,7 @@ export class World {
   this.expire();this.time+=dt;this.tick++;const players=this.connected();
   for(const p of players){advanceState(p.state,dt);p.moving=false;if(p.state.ended)continue;
    const active=this.time-p.lastInput<.25&&!(p.rootUntil>this.time),pad=active?p.input:{x:0,z:0};
-   if(p.dodge>0){p.angle=Math.atan2(p.dodgeDir.x,p.dodgeDir.z);const travel=Math.min(p.dodge,dt)*15;this.move(p,p.dodgeDir.x*travel,p.dodgeDir.z*travel);p.dodge=Math.max(0,p.dodge-dt);}else {const travel=pad.stopAt?Math.min(classFor(p.state).speed*dt,distance(p,pad.stopAt)):classFor(p.state).speed*dt;this.move(p,pad.x*travel,pad.z*travel);}
+   if(p.dodge>0){p.angle=Math.atan2(p.dodgeDir.x,p.dodgeDir.z);const travel=Math.min(p.dodge,dt)*15;this.move(p,p.dodgeDir.x*travel,p.dodgeDir.z*travel);p.dodge=Math.max(0,p.dodge-dt);}else {const travel=pad.stopAt?Math.min(speedFor(p.state)*dt,distance(p,pad.stopAt)):speedFor(p.state)*dt;this.move(p,pad.x*travel,pad.z*travel);}
    discoverEntrances(this,p);p.state.mapId=p.mapId;p.state.zone=zoneAt(p);if(!p.state.visited.includes(p.state.zone))p.state.visited.push(p.state.zone);
    for(const d of p.loot)if(!d.claimed&&d.kind==='gold'&&distance(p,d)<1.25)this.collect(p,d.id);
   }
@@ -158,7 +158,7 @@ export class World {
   const a=Math.atan2(goal.x-e.x,goal.z-e.z);e.angle=a;this.move(e,Math.sin(a)*ENEMY_TYPES[e.type].speed*(1-(e.slow||0))*dt,Math.cos(a)*ENEMY_TYPES[e.type].speed*(1-(e.slow||0))*dt,ENEMY_TYPES[e.type].boss||e.type==='boss'?.85:.37);
  }
  snapshot(id,afterEvent=0){const p=this.players.get(id);return {type:'snapshot',worldId:this.id,tick:this.tick,time:this.time,ack:p.lastSeq,mapId:p.mapId,interactions:regionInteractions(this,p),brokenCover:this.obstaclesFor(p).filter(o=>o.destructible&&o.disabled).map(o=>o.id),hazards:this.hazards.filter(h=>sameMap(h,p)).map(({hitIds,damage,...h})=>h),state:this.viewState(p),you:id,
-  players:this.connected().map(q=>({id:q.id,mapId:q.mapId,slot:q.slot,color:q.color,x:q.x,z:q.z,angle:q.angle,moving:q.moving,hp:q.state.hp,maxHp:q.state.maxHp,ended:q.state.ended,dodge:q.dodge,classId:q.state.classId,appearanceId:q.state.appearanceId,rooted:q.rootUntil>this.time,speed:q.rootUntil>this.time?0:classFor(q.state).speed,shield:q.state.shield||0,shieldTime:q.state.shieldTime||0,guard:q.state.guard||0,guardTime:q.state.guardTime||0,concealed:q.state.concealed||0,zone:zoneAt(q)})),
+  players:this.connected().map(q=>({id:q.id,mapId:q.mapId,slot:q.slot,color:q.color,x:q.x,z:q.z,angle:q.angle,moving:q.moving,hp:q.state.hp,maxHp:q.state.maxHp,ended:q.state.ended,dodge:q.dodge,classId:q.state.classId,appearanceId:q.state.appearanceId,rooted:q.rootUntil>this.time,speed:q.rootUntil>this.time?0:speedFor(q.state),valkyrieTime:q.state.valkyrieTime||0,damageBoost:q.state.damageBoost||0,boostTime:q.state.boostTime||0,shield:q.state.shield||0,shieldTime:q.state.shieldTime||0,guard:q.state.guard||0,guardTime:q.state.guardTime||0,concealed:q.state.concealed||0,zone:zoneAt(q)})),
   enemies:this.enemies.filter(e=>sameMap(e,p)).map(({path,navAt,home,dots,...e})=>e),projectiles:this.projectiles.filter(b=>sameMap(b,p)).map(({damage,ownerId,skill,hitIds,remainingHits,...b})=>b),zones:this.zones.filter(z=>sameMap(z,p)).map(({skill,next,ownerId,...z})=>z),loot:p.loot.filter(d=>!d.claimed&&sameMap(d,p)),forage:FORAGE_PATCHES.filter(patch=>sameMap(patch,p)&&this.time>=(p.forageReadyAt[patch.id]||0)),
   votes:[...this.votes],voteDeadline:this.voteDeadline,events:this.events.filter(e=>e.id>afterEvent&&(!e.mapId||sameMap(e,p)||e.playerId===id)&&(!e.playerId||e.type==='ability'||e.type==='hurt'||e.type==='respawn'||e.playerId===id))};}
 }

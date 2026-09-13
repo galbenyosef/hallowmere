@@ -19,7 +19,7 @@ choices is the Hallowmere character study gallery.
 | C02 | Ranger | Elven longbow | Quiver & twin fighting knives |
 | C03 | Reaver | Two-handed war axe | Fury talisman |
 | C04 | Nightblade | Paired elven blades | Throwing knives |
-| C05 | Oathkeeper | Lantern mace | Kite shield |
+| C05 | Oathkeeper | Caduceus staff | Radiant wings & Caduceus blaster |
 | C09 | Plague Alchemist | Hand crossbow | Alchemical flask |
 
 ## Study organization
@@ -62,7 +62,7 @@ Selection controls lock while a class change is being confirmed by the game.
 | Ranger | Elven Quickshot / Twin Blades | Piercing Shot | Elven Step | Threefold Volley |
 | Reaver | Rend | War Cry | Rush | Blood Whirl |
 | Nightblade | Twin Cut | Knife Fan | Shadowstep | Smoke Veil |
-| Oathkeeper | Consecrated Strike | Aegis | Pilgrim’s Step | Sanctuary |
+| Oathkeeper | Caduceus Blaster | Caduceus Staff | Guardian Angel | Valkyrie |
 | Plague Alchemist | Virulent Bolt | Bitter Remedy | Quickstep | Miasma |
 | Geralt | Steel Strike | Igni | Witcher’s Roll | Quen |
 
@@ -107,3 +107,32 @@ live local and multiplayer actors.
 The tank tuning raises base vitality from 180 to 220 and War Cry’s four-second
 damage reduction from 35% to 45%, while lowering movement speed from 4.6 to
 4.3. Rend, Rush, and Blood Whirl retain their existing behavior.
+
+## Oathkeeper angelic support redesign
+
+Oathkeeper keeps the `oathkeeper` / `C05` identity with Mercy-inspired ivory and
+gold armor, blonde hair tied in a high ponytail, a halo, a Caduceus staff, a sidearm,
+and articulated wings with luminous feathers. The shared native 3D model appears
+in gameplay, the class picker, inventory portraits, and the study gallery. Wings
+unfurl during Guardian Angel and Valkyrie; the sidearm appears during primary fire.
+
+- **Primary / Caduceus Blaster:** a golden ranged projectile for solo combat.
+- **Right mouse / Caduceus Staff:** a three-second tether to the reachable ally
+  closest to the cursor, or the most injured nearby ally with keyboard/touch.
+  It heals 14 vitality every half-second; a healthy ally instead receives a
+  refreshed 30% damage boost. Healing an ally also restores 25% of that healing
+  to Oathkeeper. With no reachable ally, it heals Oathkeeper. Moving out of range,
+  crossing a wall, dying, disconnecting, or changing maps breaks the tether.
+- **1 / Guardian Angel:** fly toward the ally closest to the cursor, stopping
+  beside them. Without a reachable ally, use the normal directional evade.
+- **2 / Valkyrie:** six seconds of extended wings, 25% faster movement, and a
+  moving aura that heals and boosts nearby allies (including Oathkeeper). On
+  activation, resurrect the nearest reachable fallen teammate within six units
+  at half health, in place, with a second of invulnerability. Resurrection is
+  combined with Valkyrie to fit the existing four combat controls. It neither
+  resets possessions/cooldowns nor revives across walls or maps.
+
+Base vitality is 135, essence 110, and movement speed 5. Staff healing and Valkyrie
+work in solo play. Tethers appear gold while healing and blue while amplifying
+an ally; their endpoints follow the actual staff and teammate on each client.
+The authority owns targeting, healing, boosts, resurrection, and flight movement.

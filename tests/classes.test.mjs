@@ -110,12 +110,6 @@ test('Nightblade paired backstabs, knife fan, Shadowstep and smoke have separate
  tick(w,100);assert.equal(w.zones.length,0);assert.equal(p.state.concealed,0);assert.equal(e.slow,0);
 });
 
-test('Oathkeeper absorbs damage and heals allies without friendly fire',()=>{
- const {w,p,enemy}=fixture('oathkeeper'),ally=w.join().player;Object.assign(ally,{x:p.x+1,z:p.z});ally.state.hp=50;const e=enemy(-40,7);
- cast(w,p,'bolt');w.damagePlayer(p,30);assert.equal(p.state.hp,190);assert.equal(p.state.shield,10);w.damagePlayer(p,20);assert.equal(p.state.hp,180);assert.equal(p.state.shield,0);
- cast(w,p,'nova');tick(w);assert.equal(ally.state.hp,56);assert.equal(ally.state.guard,.2);assert.equal(e.hp,993);
- cast(w,p,'attack');tick(w,3);assert.ok(p.state.hp>186);assert.equal(ally.state.hp,56);
-});
 
 test('Alchemist poison ticks expire, remedies heal at the aim point, and Miasma slows',()=>{
  const {w,p,enemy}=fixture('alchemist'),e=enemy(),ally=w.join().player;Object.assign(ally,{x:-40,z:9});ally.state.hp=50;
