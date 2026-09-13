@@ -13,21 +13,24 @@ export class MultiplayerClient {
   try{this.token=sessionStorage.getItem('hallowmere-resume');this.worldId=sessionStorage.getItem('hallowmere-world');}catch{}
  }
  async start(){
+  if(this.closed||this.starting)return;this.starting=true;this.abort=new AbortController();
   this.onStatus('Connecting to game server…',false);
-  try{const response=await fetch(new URL('./multiplayer-config.json',import.meta.url),{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!response.ok)throw Error();const config=await response.json();
+  try{const response=await fetch(new URL('./multiplayer-config.json',import.meta.url),{cache:'no-store',signal:AbortSignal.any([this.abort.signal,AbortSignal.timeout(8000)])});if(!response.ok)throw Error();const config=await response.json();if(this.closed)return;
    this.url=config.serverUrl||`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}/multiplayer`;
    const url=new URL(this.url);if(!['ws:','wss:'].includes(url.protocol)||(location.protocol==='https:'&&url.protocol!=='wss:'))throw Error();this.connect();
-  }catch{this.onStatus('The game server is unavailable. Please retry the connection.',false,{retryable:true,failed:true});}
+  }catch{if(this.closed)return;this.onStatus('The game server is unavailable. Please retry the connection.',false,{retryable:true,failed:true});}
+  if(this.closed)return;
   this.interval=setInterval(()=>{if(this.connected){if(performance.now()-this.lastSnapshot>4000){this.socket.close();return;}this.send('input',this.input);}},50);
   this.onHidden=()=>{this.input={x:0,z:0,angle:this.input.angle};this.send('input',this.input);};
   document.addEventListener('visibilitychange',this.onHidden);
-  window.addEventListener('pagehide',()=>this.close(),{once:true});
+  this.onPageHide=()=>this.close();window.addEventListener('pagehide',this.onPageHide,{once:true});
  }
  connect(){
   if(this.closed)return;this.onStatus(this.attempt?'Reconnecting to game server…':'Connecting to game server…',false,{retryable:this.attempt>0});
-  const ws=this.socket=new WebSocket(this.url);let terminal=false;const timeout=setTimeout(()=>ws.close(),8000);
-  ws.onopen=()=>{this.onStatus('Joining the shared world…',false,{retryable:this.attempt>0});ws.send(JSON.stringify({v:PROTOCOL_VERSION,type:'join',token:this.token||undefined}));};
-  ws.onmessage=event=>{
+  const ws=this.socket=new WebSocket(this.url);let terminal=false;const timeout=this.connectTimeout=setTimeout(()=>ws.close(),8000);
+  const stale=()=>this.closed||this.socket!==ws;
+  ws.onopen=()=>{if(stale())return;this.onStatus('Joining the shared world…',false,{retryable:this.attempt>0});ws.send(JSON.stringify({v:PROTOCOL_VERSION,type:'join',token:this.token||undefined}));};
+  ws.onmessage=event=>{if(stale())return;
    let m;try{m=JSON.parse(event.data);}catch{return;}
    if(m.v!==PROTOCOL_VERSION){terminal=true;this.connected=false;clearTimeout(timeout);this.onStatus('The game and server versions differ. Reload after the server has been updated.',false,{retryable:true,failed:true});ws.close();return;}
    if(m.type==='error'&&m.code==='IDENTITY_IN_USE'){this.token=null;try{sessionStorage.removeItem('hallowmere-resume');}catch{}return;}
@@ -47,7 +50,7 @@ export class MultiplayerClient {
    }
   };
   ws.onerror=()=>{};
-  ws.onclose=()=>{clearTimeout(timeout);this.connected=false;this.pending=[];this.input={x:0,z:0,angle:0};if(this.closed||terminal)return;
+  ws.onclose=()=>{clearTimeout(timeout);if(stale())return;this.connected=false;this.pending=[];this.input={x:0,z:0,angle:0};if(this.closed||terminal)return;
    this.onStatus('Connection interrupted. Reconnecting automatically…',false,{retryable:true});const wait=Math.min(10000,500*2**this.attempt++);this.retry=setTimeout(()=>this.connect(),wait+Math.random()*200);
   };
  }
@@ -57,5 +60,5 @@ export class MultiplayerClient {
   if(type==='input'){this.pending.push(message);if(this.pending.length>80)this.pending.shift();}
   this.socket.send(JSON.stringify(message));return true;
  }
- close(){this.closed=true;this.connected=false;clearInterval(this.interval);clearTimeout(this.retry);document.removeEventListener('visibilitychange',this.onHidden);this.socket?.close();}
+ close(){this.closed=true;this.connected=false;this.abort?.abort();clearInterval(this.interval);clearTimeout(this.retry);clearTimeout(this.connectTimeout);document.removeEventListener('visibilitychange',this.onHidden);globalThis.window?.removeEventListener?.('pagehide',this.onPageHide);this.socket?.close();}
 }

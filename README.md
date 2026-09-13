@@ -58,7 +58,7 @@ Keep local asset URLs relative so the game works both at a domain root and under
 | Reveal loot and plant labels during combat | Hold Alt |
 | Journal / map / pause | J / M / Escape |
 
-Touch devices have a movement stick and ability buttons with automatic enemy aiming. Red ground indicators show enemy attacks before they resolve. Evade grants brief invulnerability. Essence regenerates. Every defeated monster drops crowns; draughts and equipment can also drop. Walk over crowns, or use F/click a label to collect loot. Equip weapons and charms in the inventory for real damage and vitality bonuses. Brief browser focus changes do not open a menu. Menus and background tabs release movement input, but the shared world continues. Enemies can still attack an idle character outside a sanctuary. A manually opened menu, map, or conversation stays open on return. Interrupted touch gestures reset the movement stick.
+Touch devices have a movement stick and ability buttons with automatic enemy aiming. Red ground indicators show enemy attacks before they resolve. Evade grants brief invulnerability. Essence regenerates. Every defeated monster drops crowns; draughts and equipment can also drop. Walk over crowns, or use F/click a label to collect loot. Equip weapons and charms in the inventory for real damage and vitality bonuses. Brief browser focus changes do not open a menu. Menus and background tabs release movement input. Single player pauses; in multiplayer, the shared world continues. In multiplayer, enemies can still attack an idle character outside a sanctuary. A manually opened menu, map, or conversation stays open on return. Interrupted touch gestures reset the movement stick.
 
 ## Foraging
 
@@ -72,7 +72,7 @@ Open **Inventory (I)** to use the pouch above your equipment satchel. It holds *
 | Moonleaf herb | Restore 40 extra essence over five seconds, alongside natural regeneration |
 | Bramble berries | Restore 15 current health and 15 essence |
 
-Foods share a two-second cooldown, separate from belt draughts. They never exceed maximum resources or raise your stats. Moonleaf cannot stack or refresh while active. Food is not consumed when all its affected resources are full; berries work if either resource is depleted. Inventory shows live resources, food availability, and moonleaf duration while the shared world keeps moving.
+Foods share a two-second cooldown, separate from belt draughts. They never exceed maximum resources or raise your stats. Moonleaf cannot stack or refresh while active. Food is not consumed when all its affected resources are full; berries work if either resource is depleted. Inventory shows resources, food availability, and moonleaf duration. In multiplayer, the shared world keeps moving while inventory is open.
 
 Your pouch and personal harvest timers survive death, respawn, and the normal 60-second reconnect window. Death clears active moonleaf regeneration; disconnecting pauses personal food effects and cooldowns. Plants keep regrowing with the world. A new vigil empties the pouch and restores all plants. These rules and range/visibility checks are authoritative on the server. Protocol 3 retains personal `forage` snapshots and `forage {id}` / `consume {itemId}` commands; update the backend and frontend together.
 
@@ -102,7 +102,7 @@ Follow the cobbled **Mourning Road** east through three randomized packs (six to
 
 Defeat the twelve afflicted in **Hallowmere** to summon **the Bellkeeper**, a 720-vitality boss with telegraphed ground attacks and radial projectiles. Road kills do not count toward the village objective. The boss always drops 60 crowns, two draughts, and **Bellkeeper’s Requiem**, a legendary class weapon with +18 primary attack damage. Collect the relic, equip it, and return to Rowan for an 80-crown quest reward. Exploration and trading continue after victory.
 
-Each vigil is a shared session. “Vote for a new vigil” resets progress and rerolls the road only when all connected players agree. Votes expire after 30 seconds and cancel when membership changes. An empty world resets after ten minutes.
+In multiplayer, each vigil is a shared session. “Vote for a new vigil” resets progress and rerolls the road only when all connected players agree. Votes expire after 30 seconds and cancel when membership changes. An empty world resets after ten minutes.
 
 ## Beyond Hallowmere
 
@@ -128,9 +128,17 @@ Travel, checkpoints, cave discoveries, landmark waves, and rewards are server-au
 
 Regional playtime is a design target rather than a measured guarantee. Deterministic tests verify combat and traversal rules; a full player playthrough is still needed to calibrate the 15–20 minute first-visit target.
 
+## Choose a game mode
+
+After assets load, choose **Single Player** or **Multiplayer**, then select your character. The game never connects to multiplayer before that choice, even if this tab has a previous multiplayer session.
+
+Single Player runs the shared game simulation locally in your browser, with no multiplayer backend connection. Menus, character selection, and a hidden tab pause the local world. Starting a new vigil resets your solo adventure immediately. Reloading starts a fresh session and shows the mode choice again; solo progress is not saved. Page assets must still load from the website (there is no offline installation).
+
+Multiplayer joins the existing shared world and retains its reconnection behavior. While the initial connection is pending or fails, **Back to game modes** lets you choose solo instead. To change modes after entering a world, reload the page.
+
 ## Cooperative multiplayer
 
-The public link automatically joins one world with up to eight adventurers. Ground rings, numbered labels, and map markers identify each character. Movement and travel are independent: a player can enter the Mourning Road, Hallowmere, or an unlocked building while teammates remain elsewhere. After Hallowmere, adventurers can independently travel to Drowned Wood, Blackvein Quarry, Crownfall Keep, and the Underways. No party gathering is required at boundaries.
+Choosing Multiplayer joins one shared world with up to eight adventurers. Ground rings, numbered labels, and map markers identify each character. Movement and travel are independent: a player can enter the Mourning Road, Hallowmere, or an unlocked building while teammates remain elsewhere. After Hallowmere, adventurers can independently travel to Drowned Wood, Blackvein Quarry, Crownfall Keep, and the Underways. No party gathering is required at boundaries.
 
 Enemies, quest acceptance, objectives, the boss, relic recovery, and chapel access are shared. Each connected player on the enemy’s map gets personal enemy loot and experience, while health, mana, currency, equipment, services, and reward claims remain individual. Late joiners inherit the world’s current quest state without historical enemy drops. There is no friendly fire or player collision. Death offers a return to the latest personally activated checkpoint (Ashwick by default) with health and mana restored, retaining gear and currency.
 
