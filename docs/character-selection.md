@@ -68,8 +68,15 @@ appearance identity. Primary attacks automatically use two knife cuts against
 visible enemies within 2.15 units in the forward cone, and bow shots otherwise.
 Both modes share one cooldown. Elven Step follows movement input or retreats
 opposite the aim when stationary. Threefold Volley fires three physical arrows;
-each can pierce two enemies and is stopped by walls. Appearance work awaits the
-user's visual references; the original Ranger model is still in place.
+each can pierce two enemies and is stopped by walls.
+
+The reference-based Ranger mesh is shared by selection, inventory, the character
+study, and gameplay. Swept-back blond hair and side braids leave the pointed ears
+visible above a fitted olive tunic, engraved leather bracers, and a grey cloak
+with a silver leaf clasp. The carved longbow, full quiver, and ivory-handled twin
+knives remain attached to the animated body. During a close-range primary attack,
+the bow moves to the back and both knives appear in the hands; the bow returns
+when the two cuts finish. Ranged attacks use a dedicated bow-draw pose.
 
 The authoritative server owns damage, projectiles, poison and bleed ticks,
 roots, slows, shields, concealment, and cooperative healing. Class definitions
