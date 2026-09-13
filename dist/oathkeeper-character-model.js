@@ -12,18 +12,47 @@ function path(p,m,points,r=.015){for(let i=1;i<points.length;i++)rod(p,m,points[
 function plate(p,m,points,depth=.025){const shape=new T.Shape();points.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();return mesh(p,new T.ExtrudeGeometry(shape,{depth,bevelEnabled:false}),m);}
 const gem=(p,m,x,y,z,s=.045)=>mesh(p,new T.OctahedronGeometry(1),m,x,y,z,s,s*1.55,s*.65);
 
+function makeFace(head,m){
+ // One continuous oval face replaces the overlapping head/chin spheres.
+ // Features sit on the skin surface, so eyes stay inset in three-quarter views.
+ const face=group(head,'oathkeeper-face'),segments=40,positions=[],indices=[];
+ const rings=[[-.199,.027,.043,.012],[-.18,.061,.068,.011],[-.145,.087,.087,.010],[-.105,.108,.102,.005],[-.06,.122,.113,0],[-.015,.132,.12,0],[.03,.134,.122,0],[.08,.13,.12,-.003],[.13,.117,.107,-.008],[.18,.089,.081,-.016],[.215,.037,.035,-.021]];
+ function profile(y){
+  const end=Math.max(1,rings.findIndex(row=>row[0]>=y)),a=rings[end-1],b=rings[end],t=T.MathUtils.clamp((y-a[0])/(b[0]-a[0]),0,1);
+  return [1,2,3].map(i=>T.MathUtils.lerp(a[i],b[i],t));
+ }
+ const nose=(x,y)=>.018*Math.exp(-((x/.022)**2)-((y+.033)/.035)**2)+.008*Math.exp(-((x/.015)**2)-((y-.018)/.064)**2);
+ const surface=(x,y)=>{const [w,d,shift]=profile(y);return shift+d*Math.sqrt(Math.max(0,1-(x/w)**2))+nose(x,y);};
+ for(const [y,w,d,shift] of rings)for(let i=0;i<segments;i++){
+  const a=i/segments*Math.PI*2,x=Math.sin(a)*w,front=Math.cos(a);
+  positions.push(x,y,front*d+shift+(front>0?nose(x,y)*front:0));
+ }
+ for(let j=0;j<rings.length-1;j++)for(let i=0;i<segments;i++){const a=j*segments+i,b=j*segments+(i+1)%segments;indices.push(a,b,a+segments,b,b+segments,a+segments);}
+ const skin=m.skin.clone();skin.flatShading=false;skin.roughness=.95;
+ const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();mesh(face,geometry,skin);
+ function patch(name,mat,outline,offset=.003){
+  const points=outline.map(([x,y])=>new T.Vector2(x,y)),g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(outline.flatMap(([x,y])=>[x,y,surface(x,y)+offset]),3));g.setIndex(T.ShapeUtils.triangulateShape(points,[]).flat());g.computeVertexNormals();
+  const feature=group(face,name),piece=mesh(feature,g,mat);piece.castShadow=false;return piece;
+ }
+ const eyeWhite=material('#c8c1ad'),iris=material('#426978'),pupil=material('#26353a'),lid=material('#8f6d5e'),brow=material('#9a815b'),lip=material('#af7d70');
+ for(const s of [-1,1]){
+  const x=s*.055,y=.012;
+  const outline=[[-.027,0],[-.014,.008],[.004,.009],[.026,.001],[.014,-.006],[-.009,-.007]].map(([dx,dy])=>[x+dx,y+dy]);
+  patch(`oathkeeper-eye-${s}`,eyeWhite,outline);
+  const oval=(rx,ry)=>Array.from({length:12},(_,i)=>{const a=i/12*Math.PI*2;return [x+Math.cos(a)*rx,y+Math.sin(a)*ry];});
+  patch(`oathkeeper-iris-${s}`,iris,oval(.009,.008),.0045);
+  patch(`oathkeeper-pupil-${s}`,pupil,oval(.0038,.006),.0055);
+  patch(`oathkeeper-upper-lid-${s}`,lid,[[x-.027,y],[x-.014,y+.009],[x+.004,y+.010],[x+.026,y+.001],[x+.004,y+.007],[x-.013,y+.006]],.006);
+  patch(`oathkeeper-brow-${s}`,brow,[[x-.026,.042],[x-.010,.048],[x+.014,.047],[x+.026,.041],[x+.012,.043],[x-.01,.044]],.003);
+  ball(head,skin,s*.132,-.027,-.005,.020,.039,.017);
+ }
+ // A small, relaxed closed mouth; no raised tube or exaggerated smile.
+ patch('oathkeeper-mouth',lip,[[-.03,-.10],[-.011,-.096],[0,-.098],[.011,-.096],[.03,-.10],[.014,-.105],[0,-.107],[-.014,-.105]],.003);
+}
+
 function makeHead(body,m){
  const head=group(body,'head',0,2.035,.02);
- ball(head,m.skin,0,0,0,.137,.197,.123);ball(head,m.skin,0,-.116,.035,.096,.085,.087);
- ball(head,m.skin,0,-.035,.125,.022,.042,.027);
- for(const s of [-1,1]){
-  ball(head,m.skin,s*.137,-.028,-.007,.026,.049,.021);
-  ball(head,m.white,s*.056,.008,.113,.032,.015,.012);
-  ball(head,m.eye,s*.054,.008,.126,.011,.012,.005);
-  ball(head,m.dark,s*.054,.008,.131,.004,.008,.002);
-  path(head,m.hairShade,[[s*.028,.046,.12],[s*.056,.052,.121],[s*.09,.040,.103]],.006);
- }
- rod(head,m.lip,[-.032,-.105,.118],[.032,-.105,.118],.005);
+ makeFace(head,m);
  const hair=group(head,'oathkeeper-blonde-hair');
  mesh(hair,new T.SphereGeometry(.153,14,9,0,Math.PI*2,0,1.65),m.hair,0,.082,-.02,1,1,1);
  for(let i=0;i<9;i++){
