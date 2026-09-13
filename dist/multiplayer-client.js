@@ -4,6 +4,8 @@ import {WORLD_BOUNDS} from './campaign.js';
 
 export function predictedPosition(position,pending,ack,obstacles,bounds=WORLD_BOUNDS){
  let result={x:position.x,z:position.z};
+ // A dodge follows its server-confirmed direction, not queued walking inputs.
+ if(position.dodge>0||position.ended)return result;
  for(const input of pending)if(input.seq>ack){const travel=input.stopAt?Math.min((position.speed??PLAYER_SPEED)*.05,distance(result,input.stopAt)):(position.speed??PLAYER_SPEED)*.05;result=resolveMove(result,input.x*travel,input.z*travel,obstacles,.42,bounds);}
  return result;
 }

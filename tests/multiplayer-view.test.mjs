@@ -42,3 +42,26 @@ test('party members on different maps retain party state but hide their actor, r
   view.sync([self,{...ally,mapId:'drowned-wood'}],'self');view.update(.05,1);assert.equal(actor.model.visible,true);assert.equal(actor.ring.visible,true);
  }finally{delete globalThis.document;delete globalThis.innerWidth;delete globalThis.innerHeight;}
 });
+
+test('teammates keep a constant walking speed across jittered snapshots and stop when updates stall',()=>{
+ globalThis.document={getElementById:()=>({append(){}}),createElement:()=>({style:{},remove(){}})};globalThis.innerWidth=1000;globalThis.innerHeight=700;
+ try{
+  for(const fps of [30,60,144]){
+   const scene=new T.Scene(),player=new T.Group(),walks=[];
+   const view=createMultiplayerView({scene,camera:new T.PerspectiveCamera(),cloneModel:()=>new T.Group(),getRig:()=>({}),animateRig:(_rig,_t,moving)=>walks.push(moving),animateHeroAttack(){},player});
+   const self={id:'self',slot:0,color:'#55cce6',mapId:'overworld',x:0,z:0},ally={...self,id:'ally',slot:1};
+   const sync=time=>view.sync([self,{...ally,x:time*4.9,angle:Math.PI/2,moving:true}],'self',time);
+   sync(0);const actor=view.actors.get('ally');let next=1,previous=0;
+   for(let frame=1;frame<=fps*3;frame++){
+    const time=frame/fps;
+    while(next<=30&&next*.1+[0,.04,.01,.06][next%4]<=time)sync(next++*.1);
+    view.update(1/fps,time);
+    if(time>.5){assert.ok(Math.abs(actor.model.position.x-previous-4.9/fps)<1e-8,`uneven step at ${fps} fps, t=${time}`);assert.equal(walks.at(-1),true);}
+    previous=actor.model.position.x;
+   }
+   for(let frame=0;frame<fps;frame++)view.update(1/fps,4);
+   assert.equal(walks.at(-1),false);const stopped=actor.model.position.x;view.update(1,5);assert.equal(actor.model.position.x,stopped);
+   sync(10);view.update(1/fps,10);assert.equal(actor.model.position.x,49);
+  }
+ }finally{delete globalThis.document;delete globalThis.innerWidth;delete globalThis.innerHeight;}
+});
