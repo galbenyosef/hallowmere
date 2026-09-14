@@ -204,7 +204,7 @@ final result: passed
 
 ## Target and evidence
 
-The user selected “02 The dialogue tree” from `dist/quest-proposals.html#variation-2`. The source panel and the implemented conversation use the same 600px desktop width. The gallery navigation and captions are study controls, outside the implementation target.
+The user selected “02 The dialogue tree” from `docs/variations/quest-proposals.html#variation-2`. The source panel and the implemented conversation use the same 600px desktop width. The gallery navigation and captions are study controls, outside the implementation target.
 
 - Source visual truth: `screenshots/dialogue-tree/reference.png`.
 - Implementation capture: `screenshots/dialogue-tree/desktop.png`.

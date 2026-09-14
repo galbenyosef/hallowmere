@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {createHuntKingCharacter} from './hunt-king-model.js';
-import {createGeraltCharacter} from './geralt-character-model.js';
+import {createGeraltCharacter} from '../../dist/geralt-character-model.js';
 
 const $ = id => document.getElementById(id);
 const stage = $('model-stage'), canvas = $('character-canvas');

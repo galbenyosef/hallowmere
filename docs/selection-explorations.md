@@ -1,6 +1,6 @@
 # Character selection explorations
 
-Open `/selection-explorations.html` on the task's local server. This is a separate,
+Open `/docs/variations/selection-explorations.html` on the task's local server. This is a separate,
 interactive review gallery; it does not replace the game's class picker.
 
 | Study | Direction | Selection model |
