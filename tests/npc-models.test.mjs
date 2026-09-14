@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
-import {createNpcCharacter,NPC_MODEL_IDS} from '../dist/npc-models.js';
+import {createNpcCharacter,NPC_MODEL_IDS} from '../scripts/npc-models.mjs';
 import {NPCS} from '../dist/campaign.js';
 
 const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');

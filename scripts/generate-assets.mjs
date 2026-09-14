@@ -1,5 +1,5 @@
 import * as T from '../dist/vendor/three.core.js';
-import {createNpcCharacter,NPC_MODEL_IDS} from '../dist/npc-models.js';
+import {createNpcCharacter,NPC_MODEL_IDS} from './npc-models.mjs';
 import {writeFile,mkdir} from 'node:fs/promises';
 const out=new URL('../dist/assets/',import.meta.url);await mkdir(new URL('models/',out),{recursive:true});await mkdir(new URL('audio/',out),{recursive:true});
 const mat=(color,metalness=0,roughness=.8,emissive=0)=>new T.MeshStandardMaterial({color,metalness,roughness,emissive,emissiveIntensity:1});

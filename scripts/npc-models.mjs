@@ -1,4 +1,4 @@
-import * as T from './vendor/three.core.js';
+import * as T from '../dist/vendor/three.core.js';
 
 // The workshop and game portraits share these source models. Dimensions use the
 // same waist / arm / leg pivots as the other Hallowmere actors.
