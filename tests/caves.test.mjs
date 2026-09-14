@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {World} from '../dist/world.js';
 import {FIRST_LEVEL_CAVES,CAVE_ENTRANCES} from '../dist/caves.js';
 import {PORTALS} from '../dist/regions.js';
-import {findPath,resolveMove,distance,pointBlocked} from '../dist/combat.js';
+import {ENEMY_TYPES,findPath,resolveMove,distance,pointBlocked} from '../dist/combat.js';
 import {insideBuilding,buildingWorld} from '../dist/buildings.js';
 import {START,regionQuestSummary} from '../dist/campaign.js';
 import {discoverEntrances} from '../dist/region-campaign.js';
@@ -67,8 +67,10 @@ test('cave combat and snapshots stay on their map; death returns to Ashwick',()=
  for(const map of FIRST_LEVEL_CAVES){
   const w=new World({seed:17}),p=w.join().player,ally=w.join().player,e=w.enemies.find(e=>e.mapId===map.id);
   at(p,{...e,x:e.x+.8});p.state.invulnerable=0;const hp=p.state.hp,allyHp=ally.state.hp;
-  for(let i=0;i<50;i++)w.step(.05);
-  assert.ok(p.state.hp<hp,`${map.name}: enemies must attack`);assert.equal(ally.state.hp,allyHp);
+  // Randomized casters have longer initial cooldowns and telegraphed windups.
+  const attackWindow=e.cooldown+ENEMY_TYPES[e.type].windup+.5;
+  for(let i=0;i<Math.ceil(attackWindow/.05)&&p.state.hp===hp;i++)w.step(.05);
+  assert.ok(p.state.hp<hp,`${map.name}: enemies must attack within their first attack window`);assert.equal(ally.state.hp,allyHp);
   assert.ok(w.snapshot(p.id).enemies.every(e=>e.mapId===map.id));
   p.state.invulnerable=0;w.damagePlayer(p,10000);assert.equal(command(w,p,'respawn'),true);
   assert.equal(p.mapId,'overworld');assert.equal(p.x,START.x);assert.equal(p.z,START.z);
