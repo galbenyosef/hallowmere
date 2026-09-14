@@ -11,7 +11,7 @@ test('objective defense waves and personal checkpoint activation have distinct c
 });
 
 test('server hazard enemies never add misleading legacy circles while original attacks keep telegraphs',()=>{
- for(const type of ['hollow','hound','revenant','boss'])assert.equal(usesLegacyTelegraph(type),true,type);
- for(const [type,data] of Object.entries(ENEMY_TYPES))if(data.modelType)assert.equal(usesLegacyTelegraph(type),false,type);
+ for(const type of ['hollow','hound','revenant','boss','cutthroat','ghoul','gravecaller','bone-colossus','thorn-ghoul','shard-hound','ash-stalker'])assert.equal(usesLegacyTelegraph(type),true,type);
+ for(const [type,data] of Object.entries(ENEMY_TYPES))if(data.regionalAttack)assert.equal(usesLegacyTelegraph(type),false,type);
  assert.equal(usesLegacyTelegraph('unknown'),false);
 });

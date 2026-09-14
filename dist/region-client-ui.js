@@ -9,4 +9,4 @@ export function regionActionName(record){
 }
 
 // Expansion enemies broadcast exact hazard shapes; the old attacks use local circles/arcs.
-export function usesLegacyTelegraph(type){return !!ENEMY_TYPES[type]&&!ENEMY_TYPES[type].modelType;}
+export function usesLegacyTelegraph(type){return !!ENEMY_TYPES[type]&&!ENEMY_TYPES[type].regionalAttack;}

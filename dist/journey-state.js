@@ -15,7 +15,7 @@ export function captureJourney(world,id){
  const p=world.players.get(id);
  if(!p?.state.classId)throw Error('Choose a character before saving.');
  const layouts={overworld:{obstacles:world.obstacles},...world.mapLayouts};
- return structuredClone({version:JOURNEY_VERSION,capturedAt:Date.now(),seed:world.seed,time:world.time,tick:world.tick,
+ return structuredClone({version:JOURNEY_VERSION,encounterVersion:1,capturedAt:Date.now(),seed:world.seed,time:world.time,tick:world.tick,
   shared:world.shared,player:{state:p.state,loot:p.loot,forageReadyAt:p.forageReadyAt},
   enemies:world.enemies,brokenCover:Object.fromEntries(Object.entries(layouts).map(([map,layout])=>[map,layout.obstacles.filter(o=>o.destructible&&o.disabled).map(o=>o.id)]))});
 }
@@ -46,6 +46,13 @@ export function restoreJourney(world,id,record){
  const save=structuredClone(validateJourney(record)),p=world.players.get(id);
  world.time=save.time;world.tick=save.tick;world.shared=save.shared;
  Object.assign(p,save.player);
+ const roster=new Map(world.enemies.map(e=>[e.id,e]));
+ // Upgrade living authored encounters once; slain enemies, rewards and bosses stay intact.
+ if(!save.encounterVersion)save.enemies=save.enemies.map(e=>{
+  const fresh=roster.get(e.id);
+  if(e.hp<=0||!fresh||ENEMY_TYPES[e.type].boss||e.type==='boss')return e;
+  return {...e,type:fresh.type,home:{...fresh.home},hp:Math.max(1,Math.round(fresh.maxHp*e.hp/e.maxHp)),maxHp:fresh.maxHp,baseMaxHp:fresh.maxHp,engaged:false};
+ });
  world.enemies=save.enemies.map(e=>({...e,x:e.home.x,z:e.home.z,phase:e.hp<=0?'dead':'idle',timer:0,cooldown:1,
   moving:false,path:[],navAt:0,dots:[],rootUntil:0,slow:0,exposedUntil:0,chargeDistance:0}));
  for(const [map,layout] of Object.entries({overworld:{obstacles:world.obstacles},...world.mapLayouts})){

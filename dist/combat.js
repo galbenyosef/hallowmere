@@ -12,6 +12,22 @@ Object.assign(ENEMY_TYPES,{
  'quarry-warden':{name:'The Quarry Warden',modelType:'boss',boss:true,hp:4600,speed:1.8,range:10,damage:31,windup:1.6,cooldown:2.8,reward:290},
  'ash-regent':{name:'The Ash Regent',modelType:'boss',boss:true,hp:6400,speed:2,range:11,damage:35,windup:1.6,cooldown:2.6,reward:350}
 });
+// Attack identity is shared by authoritative combat, telegraphs, and creature animation.
+Object.assign(ENEMY_TYPES,{
+ cutthroat:{name:'Grave cutthroat',modelType:'hollow',attackStyle:'knife',tint:'#a7b9c4',scale:.88,hp:52,speed:2.8,range:1.55,damage:11,windup:.6,cooldown:1.6,reward:17},
+ ghoul:{name:'Carrion ghoul',modelType:'hollow',attackStyle:'bite',tint:'#b9ad7c',scale:.94,hp:72,speed:2.45,range:1.55,damage:14,windup:.85,cooldown:2.15,reward:20},
+ gravecaller:{name:'Gravecaller',modelType:'revenant',attackStyle:'orb',large:true,tint:'#b29ad1',orbColor:'#aa70ff',scale:1.25,hp:110,speed:1.35,range:8,damage:19,windup:1.45,cooldown:4,reward:32},
+ 'bone-colossus':{name:'Bone colossus',modelType:'boss',attackStyle:'orb',large:true,tint:'#c2d9d1',orbColor:'#64ead1',scale:.9,hp:180,speed:1.2,range:7.5,damage:22,windup:1.7,cooldown:4.4,reward:44},
+ 'thorn-ghoul':{name:'Briar devourer',modelType:'hollow',attackStyle:'bite',tint:'#80aa6c',scale:1.08,spines:true,hp:125,speed:2.65,range:1.8,damage:18,windup:.85,cooldown:2.1,reward:26},
+ 'shard-hound':{name:'Shardmaw',modelType:'hound',attackStyle:'bite',tint:'#89b8d6',scale:1.15,spines:true,hp:155,speed:3.4,range:1.9,damage:22,windup:.8,cooldown:2.2,reward:32},
+ 'ash-stalker':{name:'Ash stalker',modelType:'hollow',attackStyle:'knife',tint:'#d0977e',scale:1.03,paired:true,hp:195,speed:2.9,range:2,damage:24,windup:.8,cooldown:2,reward:36}
+});
+for(const [type,data] of Object.entries(ENEMY_TYPES)){
+ data.regionalAttack=['hunter','rootling','miner','quarry-mage','sentinel','pyromancer','rootbound','quarry-warden','ash-regent'].includes(type);
+ data.attackStyle??=type==='hound'||type==='hunter'?'bite':type==='hollow'||type==='miner'||type==='sentinel'?'knife':'orb';
+ data.large??=type==='boss'||!!data.boss||['revenant','quarry-mage','pyromancer'].includes(type);
+ data.orbColor??=({rootling:'#8edb65',rootbound:'#8edb65','quarry-mage':'#b190ff','quarry-warden':'#b190ff','ash-regent':'#ff9449',pyromancer:'#ff9449'})[type]||'#ff714b';
+}
 export const SPAWNS=[['hollow',-4,3],['hollow',5,-1],['hound',7.8,7],['hollow',-6,-4],['hound',-4,-9],['revenant',6,-10],['hollow',-7.4,10],['hound',10,11],['hollow',-8,-14],['revenant',8,-16],['hound',-2,-10],['revenant',2,-24]];
 export const ABILITIES={attack:{cooldown:.48,cost:0},bolt:{cooldown:1.2,cost:18},dodge:{cooldown:1.9,cost:0},nova:{cooldown:6,cost:35},heal:{cooldown:1,cost:0}};
 export const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
