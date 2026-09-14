@@ -1,6 +1,7 @@
+import {OVERWORLD_BOUNDS,OUTLANDS,OUTLAND_ROUTES,populateOutlands,expandSurfaceRegion,plantOutlands} from './expansion-layout.js';
 import {FIRST_LEVEL_CAVES,CAVE_ENTRANCES} from './caves.js';
 import {caveSceneryObstacles} from './cave-scenery-layout.js';
-const WORLD_BOUNDS={minX:-81,maxX:26,minZ:-27,maxZ:27};
+const WORLD_BOUNDS=OVERWORLD_BOUNDS;
 const START={x:-66,z:5};
 
 const bounds={minX:-30,maxX:30,minZ:-30,maxZ:30};
@@ -35,6 +36,16 @@ export const MAPS={
  obstacles:[...[-10,10].flatMap((x,i)=>[{x,z:-10.5,w:1.6,d:15},{x,z:10.5,w:1.6,d:15},{id:`underways-gate-${i}`,x,z:0,w:1.6,d:6,requires:i?'quarry-warden':'rootbound'}]),{x:-22,z:3,w:3,d:2},{x:1,z:4,w:3,d:2},{x:20,z:3,w:3,d:2}],
  hazards:[{id:'cave-spores',type:'roots',x:-17,z:-2,radius:1.8,damage:12,period:7,telegraph:1.8,active:1},{id:'cave-fall',type:'rockfall',x:4,z:-4,radius:2,damage:17,period:7,telegraph:1.8,active:.8,requires:'rootbound'},{id:'cave-fire',type:'flame',x:17,z:-3,radius:2,damage:22,period:8,telegraph:1.8,active:1,requires:'quarry-warden'}]}
 };
+populateOutlands(MAPS.overworld,OUTLANDS,OUTLAND_ROUTES,['hollow','hound','revenant']);
+for(const id of ['drowned-wood','blackvein-quarry','crownfall-keep'])expandSurfaceRegion(MAPS[id]);
+for(const id of ['overworld','drowned-wood','blackvein-quarry','crownfall-keep'])plantOutlands(MAPS[id]);
+// The connecting Underways grow within their three gated sections.
+const under=MAPS.underways;under.bounds={minX:-60,maxX:60,minZ:-54,maxZ:54};
+for(const o of under.obstacles)if(o.w===1.6&&o.d===15){o.d=51;o.z=Math.sign(o.z)*28.5;}
+const underSites=[[-43,38],[-43,-38],[0,38],[0,-38],[43,38],[43,-38]].map(([x,z],i)=>({id:`deep-${i}`,name:['Western Stores','Pilgrim’s Ossuary','The Deep Cut','Buried Forge','Royal Catacombs','The Ash Vault'][i],x,z,kind:i%2?'ruin':'stones',radius:10}));
+populateOutlands(under,underSites,underSites.map(s=>({width:3.5,points:[{x:s.x<0?-24:s.x>0?24:0,z:0},{x:s.x,z:s.z}]})),['hollow','miner','sentinel']);
+for(const list of [under.encounters,under.caches])for(const o of list)if(o.id.includes('-deep-'))o.requires=o.x<-10?null:o.x>10?'quarry-warden':'rootbound';
+for(const cache of under.caches){const guard=under.encounters.find(e=>e.id===cache.enemyId);if(guard)guard.elite=true;}
 // Objective defenses turn exploration into sustained, readable combat encounters.
 for(const id of ['drowned-wood','blackvein-quarry','crownfall-keep']){
  const map=MAPS[id],types=id==='drowned-wood'?['hunter','rootling']:id==='blackvein-quarry'?['miner','quarry-mage']:['sentinel','pyromancer'];
@@ -59,9 +70,9 @@ export const PORTALS=[
 ];
 for(const portal of PORTALS)MAPS[portal.mapId].obstacles.push(...caveSceneryObstacles(portal).map(o=>({...o,caveScenery:true})));
 for(const map of Object.values(MAPS))for(const cache of map.caches){cache.mapId=map.id;cache.enemyId??=map.encounters.find(e=>e.elite&&e.tier===cache.tier)?.id;}
-export const CHECKPOINTS=Object.values(MAPS).map(m=>m.checkpoint).filter(Boolean);
+export const CHECKPOINTS=Object.values(MAPS).flatMap(m=>[m.checkpoint,...(m.checkpoints||[])]).filter(Boolean);
 export const mapFor=id=>MAPS[id]||MAPS.overworld;
 export const sameMap=(a,b)=>(a?.mapId||'overworld')===(b?.mapId||'overworld');
-export function isMapSanctuary(position){if(!position.mapId||position.mapId==='overworld')return position.x<-57||Math.hypot(position.x+22,position.z-5)<3.4;return CHECKPOINTS.some(c=>sameMap(c,position)&&Math.hypot(c.x-position.x,c.z-position.z)<=c.radius);}
+export function isMapSanctuary(position){const overworld=!position.mapId||position.mapId==='overworld';return overworld&&((position.x>-82&&position.x<-57&&Math.abs(position.z-5)<18)||Math.hypot(position.x+22,position.z-5)<3.4)||CHECKPOINTS.some(c=>sameMap(c,position)&&Math.hypot(c.x-position.x,c.z-position.z)<=c.radius);}
 export function availablePortal(portal,progress){if(!portal.requires)return true;if(portal.requires==='boss')return !!(progress?.bossDefeated||progress?.victory||progress?.bellkeeperDefeated);const regions=progress?.regions||progress?.regionProgress||progress;return Object.values(regions||{}).some(r=>r&&typeof r==='object'&&r.bossDefeated&&(r.bossId===portal.requires||MAPS[r.id]?.boss?.id===portal.requires))||Object.values(MAPS).some(m=>m.boss?.id===portal.requires&&regions?.[m.id]?.bossDefeated);}
 export function createRegionProgress(){return Object.fromEntries(Object.values(MAPS).filter(m=>m.boss).map(m=>[m.id,{objectives:[],bossSpawned:false,bossDefeated:false}]));}

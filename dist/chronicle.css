@@ -262,3 +262,5 @@
 .modal.pause-modal .pause-credits { margin:18px 0 0;text-align:center;color:#8c9fa5;font:10px/1.8 var(--sans); }
 .pause-credits a { color:#b6ad97;text-underline-offset:3px; }
 @media(max-width:540px) { .modal.chronicle-shell.pause-modal { padding:25px 24px 20px; }.roster-initial .roster-header h2 { font-size:27px; } }
+
+.map-key.cache { background:#95cdbc; }

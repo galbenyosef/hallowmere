@@ -15,7 +15,7 @@ function walk(w,p,goal){
  discoverEntrances(w,p);
 }
 test('outdoor and house caves have complete round trips from the starting level before its boss',()=>{
- assert.deepEqual(FIRST_LEVEL_CAVES.map(c=>c.encounters.length),[26,33,46,6,6]);
+ assert.deepEqual(FIRST_LEVEL_CAVES.map(c=>c.encounters.length),[60,66,80,40,40]);
  for(const entrance of CAVE_ENTRANCES){
   const w=new World({seed:17}),p=w.join().player,portal=PORTALS.find(o=>o.id===entrance.id);
   assert.equal(w.snapshot(p.id).interactions.portals.some(o=>o.id===portal.id&&!o.locked),!portal.hidden);

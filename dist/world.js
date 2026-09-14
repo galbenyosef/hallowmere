@@ -93,7 +93,7 @@ export class World {
  damageEnemy(e,amount,magic=false,color,visual){
   if(e.hp<=0)return;const damage=Math.min(e.hp,Math.round(amount*(e.exposedUntil>this.time?1.2:1)));e.hp-=damage;this.emit('hit',{enemyId:e.id,x:e.x,z:e.z,damage,magic,color,visual});
   if(e.hp>0)return;e.phase='dead';e.moving=false;
-  if(e.type==='boss'){this.shared.victory=true;setBuildingAccess(this.buildings,true);refreshGates(this);}else if(e.mapId==='overworld')this.shared[e.zone==='hallowmere'?'villageKills':'roadKills']++;
+  if(e.type==='boss'){this.shared.victory=true;setBuildingAccess(this.buildings,true);refreshGates(this);}else if(e.mapId==='overworld'&&!e.optional)this.shared[e.zone==='hallowmere'?'villageKills':'roadKills']++;
   regionalKill(this,e);
   for(const p of this.connected()){
    if(!sameMap(p,e))continue;

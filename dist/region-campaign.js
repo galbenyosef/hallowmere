@@ -7,7 +7,7 @@ export function initializeRegions(world){
  world.shared.regionProgress=createRegionProgress();world.shared.discoveries=[];world.shared.campaignComplete=false;world.hazards=[];world.regionHazardCycles=new Map();
  world.mapLayouts=Object.fromEntries(Object.values(MAPS).filter(m=>m.id!=='overworld').map(m=>[m.id,{obstacles:(m.obstacles||[]).map(o=>({...o}))}]));
  for(const map of Object.values(MAPS))for(const spec of map.encounters||[]){
-  const e=world.spawn(spec.type,spec.x,spec.z,map.id,spec.id,map.id);Object.assign(e,{requires:spec.requires,objectiveId:spec.objectiveId,elite:!!spec.elite});
+  const e=world.spawn(spec.type,spec.x,spec.z,map.id,spec.id,map.id);Object.assign(e,{requires:spec.requires,objectiveId:spec.objectiveId,elite:!!spec.elite,optional:!!spec.optional});
   if(spec.elite){e.hp=Math.round(e.hp*1.65);e.maxHp=e.hp;}
  }
  refreshGates(world);

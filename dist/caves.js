@@ -22,6 +22,12 @@ function rectangles(cells,columns,rows,value,w,d){
  return result;
 }
 function cave(id,name,w,d,chambers,tunnels,treasureRooms){
+ const original=[...chambers],originalW=w,originalD=d;
+ const ring=[[-1.13,.72],[-.55,.77],[.55,.77],[1.13,.72],[1.2,0],[1.13,-.72],[.55,-.77],[-.55,-.77],[-1.13,-.72],[-1.2,0]].map(([x,z],i)=>chamber(['Wayfarer’s refuge','Sunken stores','Whispering gallery','Smuggler’s camp','The Crystal Veil','Forgotten sanctum','Deepwater vault','Pilgrim’s tomb','The Lost Dig','Rootbound grotto'][i],Math.round(x*w/2)*2,Math.round(z*d/2)*2,Math.max(5,w*.13),Math.max(5,d*.12),['camp','pool','crystals','camp','crystals','shrine','pool','shrine','camp','crystals'][i]));
+ const first=chambers.length;chambers=[...chambers,...ring];treasureRooms=[...treasureRooms,first+2,first+4,first+5,first+7,first+9];tunnels=[...tunnels];
+ ring.forEach((r,i)=>{const next=ring[(i+1)%ring.length];tunnels.push(tunnel(5.5,[r.x,r.z],[(r.x+next.x)/2,(r.z+next.z)/2],[next.x,next.z]));});
+ for(const i of [0,3,5,8]){const r=ring[i],near=[...original].sort((a,b)=>Math.hypot(a.x-r.x,a.z-r.z)-Math.hypot(b.x-r.x,b.z-r.z))[0];tunnels.push(tunnel(5.5,[near.x,near.z],[(near.x+r.x)/2,(near.z+r.z)/2],[r.x,r.z]));}
+ w=originalW*3;d=originalD*2;
  const columns=w/CELL,rows=d/CELL,cells=new Uint8Array(columns*rows),walls=[],floorTiles=[];
  const carved=p=>chambers.some(r=>((p.x-r.x)/r.rx)**2+((p.z-r.z)/r.rz)**2<1)||tunnels.some(t=>t.points.slice(1).some((b,i)=>distanceToSegment(p,t.points[i],b)<t.width/2));
  for(let row=1;row<rows-1;row++)for(let col=1;col<columns-1;col++){

@@ -1,3 +1,4 @@
+import {OUTLAND_BUILDINGS} from './expansion-layout.js';
 // Rendering and navigation share these dimensions, including each rotated wall.
 export const BUILDING_SPECS=[
  ['west-cottage','Weaver’s Cottage',-12,-4,6,6.8,3.35,.08],
@@ -13,6 +14,7 @@ export const BUILDING_SPECS=[
  ['ashwick-east','Oakbeam House',-63,14.5,5.2,5.5,3.1,.05],
  ['gatehouse','Rook’s Gatehouse',-23,-2,4.4,4.4,2.7,0]
 ].map(([id,name,x,z,w,d,h,rotation,chapel=false])=>({id,name,x,z,w,d,h,rotation,chapel,abandoned:['west-lodge','grave-house','south-house'].includes(id)}));
+BUILDING_SPECS.push(...OUTLAND_BUILDINGS);
 export function buildingWorld(b,x,z){const c=Math.cos(b.rotation),s=Math.sin(b.rotation);return{x:b.x+c*x+s*z,z:b.z-s*x+c*z};}
 export function buildingLocal(b,p){const c=Math.cos(b.rotation),s=Math.sin(b.rotation),x=p.x-b.x,z=p.z-b.z;return{x:c*x-s*z,z:s*x+c*z};}
 export function insideBuilding(b,p,inset=.12){const q=buildingLocal(b,p);return Math.abs(q.x)<b.w/2-inset&&Math.abs(q.z)<b.d/2-inset;}

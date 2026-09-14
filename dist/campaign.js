@@ -1,8 +1,9 @@
+import {OVERWORLD_BOUNDS,OUTLANDS} from './expansion-layout.js';
 import {mapFor,isMapSanctuary} from './regions.js';
 import {weaponForClass} from './classes.js';
 import {distance} from './combat.js';
 
-export const WORLD_BOUNDS={minX:-81,maxX:26,minZ:-27,maxZ:27};
+export const WORLD_BOUNDS=OVERWORLD_BOUNDS;
 export const START={x:-66,z:5};
 // Match the furthest distance at which ground loot labels can be shown.
 export const LOOT_PICKUP_RANGE=17;
@@ -28,9 +29,9 @@ export const ITEM_TEMPLATES={
 };
 export function seededRandom(seed){let value=seed>>>0;return()=>{value=(Math.imul(value,1664525)+1013904223)>>>0;return value/4294967296;};}
 export function createCampaign(seed){return{seed:seed>>>0,mapId:'overworld',checkpointId:null,claimedCaches:[],gold:0,roadKills:0,villageKills:0,dropSerial:0,collectedIds:[],lootCollected:0,inventory:[{id:'starting-sword',template:'wardens-sword',...ITEM_TEMPLATES['wardens-sword']}],equipped:{weapon:'starting-sword',charm:null},forgeLevel:0,damageBonus:0,healthBonus:0,questAccepted:false,questRewarded:false,talkedTo:[],bossLootClaimed:false,rookSupplies:false,visited:['ashwick'],zone:'ashwick'};}
-export function zoneAt(position){if(position.mapId&&position.mapId!=='overworld')return position.mapId;if(position.x<-57)return'ashwick';if(position.x<-24)return'road';return'hallowmere';}
-export function zoneName(zone){if(!['ashwick','road','hallowmere'].includes(zone))return mapFor(zone).name;return zone==='ashwick'?'Ashwick Village':zone==='road'?'The Mourning Road':'Hallowmere Village';}
-export function isSanctuary(position){if(position.mapId&&position.mapId!=='overworld')return isMapSanctuary(position);return zoneAt(position)==='ashwick'||distance(position,{x:-22,z:5})<3.4;}
+export function zoneAt(position){if(position.mapId&&position.mapId!=='overworld')return position.mapId;const site=OUTLANDS.find(s=>distance(position,s)<s.radius);if(site)return site.id;if(position.z<-27||position.z>27||position.x<-82||position.x>27)return'outlands';if(position.x<-57)return'ashwick';if(position.x<-24)return'road';return'hallowmere';}
+export function zoneName(zone){if(zone==='outlands')return 'The Forsaken Outlands';const site=OUTLANDS.find(s=>s.id===zone);if(site)return site.name;if(!['ashwick','road','hallowmere'].includes(zone))return mapFor(zone).name;return zone==='ashwick'?'Ashwick Village':zone==='road'?'The Mourning Road':'Hallowmere Village';}
+export function isSanctuary(position){return isMapSanctuary(position);}
 export function generateRoadEncounters(seed){const random=seededRandom(seed);const encounters=[];for(let pack=0;pack<3;pack++){const center=-51+pack*10;const count=2+Math.floor(random()*2);for(let member=0;member<count;member++){const roll=random();const type=roll<.45?'hollow':roll<.83?'hound':'revenant';encounters.push({id:`road-${pack}-${member}`,type,x:center+(random()-.5)*3.2,z:5+(member%2?1:-1)*(1.4+random()*2.5),zone:'road'});}}return encounters;}
 export function rollLoot(state,type,zone){
  if(['rootbound','quarry-warden','ash-regent'].includes(type))return regionalBossLoot(state,type,zone);

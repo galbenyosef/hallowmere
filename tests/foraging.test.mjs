@@ -14,11 +14,11 @@ const send=(world,p,type,data={})=>world.command(p.id,{worldId:world.id,seq:p.la
 const near=(p,patch)=>Object.assign(p,{x:patch.x,z:patch.z});
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} ≠ ${b}`);
 
-test('6 balanced patches are outdoors, away from doors, and reachable with shared collision',()=>{
+test('original supplies and outland forage are outdoors and reachable with shared collision',()=>{
  const {buildings,obstacles}=createWorldLayout();
- assert.equal(FORAGE_PATCHES.length,6);assert.equal(new Set(FORAGE_PATCHES.map(p=>p.id)).size,6);
+ assert.equal(FORAGE_PATCHES.length,22);assert.equal(new Set(FORAGE_PATCHES.map(p=>p.id)).size,22);
  for(const [zone,count] of [['ashwick',1],['road',3],['hallowmere',2]])assert.equal(FORAGE_PATCHES.filter(p=>p.zone===zone).length,count);
- for(const food of FOOD_LIST)assert.equal(FORAGE_PATCHES.filter(p=>p.itemId===food.id).length,2);
+ for(const food of FOOD_LIST)assert.equal(FORAGE_PATCHES.filter(p=>['ashwick','road','hallowmere'].includes(p.zone)&&p.itemId===food.id).length,2);
  for(const patch of FORAGE_PATCHES){
   assert.equal(zoneAt(patch),patch.zone);assert.equal(pointBlocked(patch,obstacles,.5),false,patch.id);
   assert.ok(buildings.every(b=>!insideBuilding(b,patch)&&distance(patch,b.door)>2.8),patch.id);

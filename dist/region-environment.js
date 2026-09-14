@@ -1,3 +1,4 @@
+import {createOutlandScenery} from './outland-scenery.js';
 import * as T from 'three';
 import {MAPS,PORTALS,mapFor,availablePortal} from './regions.js';
 import {createCaveEntranceEffect} from './cave-entrance-effects.js';
@@ -58,7 +59,7 @@ export function createRegionLandmarks(scene,mapId){
   if(mapId==='blackvein-quarry'){for(const dx of [-1.2,1.2])mesh('box','trim',o.x+dx,1.4,o.z,.2,2.8,.2);mesh('box','trim',o.x,2.8,o.z,2.7,.2,.3);}
   const crystal=mesh('rock','glow',o.x,1.8,o.z,.37,.65,.37);animated.push(crystal);objectives.push({id:o.id,crystal});
  }
- if(map.checkpoint){const c=map.checkpoint;mesh('cylinder','stone',c.x,.08,c.z,2,.16,2);const ring=mesh('ring','trim',c.x,.18,c.z,2,2,2);ring.rotation.x=Math.PI/2;mesh('box','dark',c.x,1,c.z,.18,2,.18);const flame=mesh('rock','glow',c.x,2.1,c.z,.22,.38,.22);animated.push(flame);}
+ for(const c of [map.checkpoint,...(map.checkpoints||[])].filter(Boolean)){mesh('cylinder','stone',c.x,.08,c.z,2,.16,2);const ring=mesh('ring','trim',c.x,.18,c.z,2,2,2);ring.rotation.x=Math.PI/2;mesh('box','dark',c.x,1,c.z,.18,2,.18);const flame=mesh('rock','glow',c.x,2.1,c.z,.22,.38,.22);animated.push(flame);}
  for(const c of map.caches)cacheMarks.push({id:c.id,visual:createTreasureChest(group,c,map)});
  function updatePortalVisibility(mark){const visible=!mark.portal.buildingId||mark.inside;if(mark.portal.buildingId)for(const part of mark.pieces)part.visible=visible;mark.glow.visible=visible&&mark.unlocked;if(mark.caveEffect)mark.caveEffect.group.visible=mark.glow.visible;}
  function updateProgress(progress){for(const c of cacheMarks)c.visual.setClaimed(progress?.claimedCaches?.includes(c.id));for(const mark of portalMarks){mark.unlocked=availablePortal(mark.portal,progress);updatePortalVisibility(mark);}const r=(progress?.regionProgress||progress?.regions||progress)?.[mapId];for(const part of seal)part.visible=!map.objectives.every(o=>r?.objectives?.includes(o.id));for(const o of objectives){o.crystal.visible=!r?.objectives?.includes(o.id);}}
@@ -80,7 +81,7 @@ export function createRegionEnvironment(scene,mapId){
  for(const o of map.objectives){mesh('box','dark',o.x/2,.008,o.z,Math.abs(o.x)+2,.04,2.6);}
  for(const obstacle of obstacles){
   // Cave hills are rendered by the landmarks from these same footprints.
-  if(obstacle.caveScenery)continue;
+  if(obstacle.caveScenery||obstacle.sceneryKind)continue;
   const h=map.theme==='cave'?.55:obstacle.requires?2.5:mapId==='crownfall-keep'?2.8:mapId==='drowned-wood'?1.1:1.7;
   const solid=mesh('box',obstacle.requires?'trim':'stone',obstacle.x,h/2,obstacle.z,obstacle.w,h,obstacle.d);
   if(map.theme==='cave'){
@@ -113,8 +114,9 @@ export function createRegionEnvironment(scene,mapId){
  if(mapId==='drowned-wood')for(const [x,z]of[[-16,19],[16,16],[-17,-18],[20,-19]]){const pool=mesh('cylinder','dark',x,.025,z,4,.025,3);pool.castShadow=false;}
  if(mapId==='blackvein-quarry')for(const x of[-.9,.9])mesh('box','trim',x,.07,2,.08,.08,32);
  if(mapId==='crownfall-keep'){mesh('box','trim',0,.12,-24,7,.24,5);mesh('box','dark',0,1.4,-26,2.2,2.8,1);}
+ const outlands=createOutlandScenery(group,map);
  const landmarks=createRegionLandmarks(scene,mapId);group.add(landmarks.group);
  function updateProgress(progress){for(const {obstacle,solid}of gates){obstacle.disabled=availablePortal(obstacle,progress);solid.visible=!obstacle.disabled;}landmarks.updateProgress(progress);}
  function updateObstacles(disabledIds=[]){const disabled=new Set(disabledIds);for(const c of cover){c.obstacle.disabled=disabled.has(c.obstacle.id);for(const part of c.parts)part.visible=!c.obstacle.disabled;}}
- return{group,obstacles,updateObstacles,buildings:[],torches:[],mists:[],windowGlows:[],glowTexture:null,currentBuilding:()=>null,pickDoor:()=>null,nearestDoor:()=>null,updateProgress,sync:landmarks.sync,update(t){landmarks.update(t);},dispose(){landmarks.dispose();k.dispose();}};
+ return{group,obstacles,updateObstacles,buildings:[],torches:[],mists:[],windowGlows:[],glowTexture:null,currentBuilding:()=>null,pickDoor:()=>null,nearestDoor:()=>null,updateProgress,sync:landmarks.sync,update(t){landmarks.update(t);},dispose(){outlands.dispose();landmarks.dispose();k.dispose();}};
 }
