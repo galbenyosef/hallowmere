@@ -55,6 +55,17 @@ test('solo autosaves the last footsteps and restores them with fresh world/playe
  assert.equal(returned.seen(surface,{x:5,z:35}),false);assert.match(returned.saveLabel,/saved on this device/);
 });
 
+test('saved journeys retain their own charts when switching saves or returning with fresh runtime IDs',t=>{
+ browserStorage(t);const atlas=new ExplorationAtlas(),first={...solo,journeyId:'first'},second={...solo,journeyId:'second'};
+ atlas.setSession('world-a','player-a',first);atlas.reveal(surface,{x:5,z:5},[]);atlas.save();
+ atlas.setSession('world-b','player-b',second);assert.equal(atlas.seen(surface,{x:5,z:5}),false);
+ atlas.reveal(surface,{x:31,z:31},[]);atlas.save();
+ const returned=new ExplorationAtlas();returned.setSession('world-c','player-c',first);
+ assert.equal(returned.seen(surface,{x:5,z:5}),true);assert.equal(returned.seen(surface,{x:31,z:31}),false);
+ returned.setSession('world-d','player-d',second);
+ assert.equal(returned.seen(surface,{x:31,z:31}),true);assert.equal(returned.seen(surface,{x:5,z:5}),false);
+});
+
 test('leaving or hiding the page flushes pending discoveries',t=>{
  browserStorage(t);
  const atlas=new ExplorationAtlas(),windowTarget=new EventTarget(),documentTarget=new EventTarget();atlas.setSession('world','player',solo);

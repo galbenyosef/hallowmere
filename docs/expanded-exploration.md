@@ -39,9 +39,11 @@ Terrain and stationary landmarks remain charted, while enemy markers require
 line of sight within eleven world units. Unexplored terrain, labels, and markers
 remain hidden beneath fog.
 
-Exploration is saved in browser local storage. Solo discoveries use a stable
-profile, so refreshing or reopening the game restores all charted areas despite
-new runtime player/world IDs. Multiplayer charts remain personal to each world
+Exploration is saved in browser local storage. Saved journeys have separate charts
+keyed by their stable journey IDs, so refreshing or reopening the same journey
+restores its chart despite new runtime player/world IDs. Switching journeys does
+not reveal another character's discoveries. The legacy solo profile is retained.
+Multiplayer charts remain personal to each world
 and adventurer and restore on reconnect. Both retain discoveries across travel
 and death. An explicit solo game restart clears that profile's chart.
 
@@ -55,7 +57,8 @@ play. Saves are local to this browser and site address.
 
 For an optional review tour, open `/?preview=exploration`, choose single player,
 and select a character. The tour offers map and location selectors and a safe
-mode. Preview charts stay in memory and do not alter normal saved discoveries.
+mode. Preview tours use an unsaved session, bypass the saved-journey menu, and
+keep charts in memory without altering normal saves or discoveries.
 Ordinary play at `/` has no tour controls. The existing `/?preview=caves` tour
 remains available.
 

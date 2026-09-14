@@ -46,6 +46,7 @@ function icon(name){return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d=
 document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));
 const resourceOrbs=createResourceOrbs();
 const exploration=new ExplorationAtlas();
+const previewMode=['caves','exploration','predator'].includes(new URLSearchParams(location.search).get('preview'));
 bindExplorationSaving(exploration);
 const gameSettings=readGameSettings(),audio=new AudioEngine();audio.musicEnabled=gameSettings.music;let state=Object.assign(createState(),createCampaign(crypto.getRandomValues(new Uint32Array(1))[0])),scene,camera,renderer,environment,player,heroRig,clock,ready=false,started=false,paused=false,backgrounded=document.hidden,mapExpanded=false,modalKind='',angle=0,moveTarget=null,movePath=[],lockedEnemy=null,attackHeld=false,aimActive=false,shake=0,dodgeTime=0,lastMove=new T.Vector3(0,0,-1),targetWorld=new T.Vector3(0,0,-5),accumulated=0,lastStep=0,uiTimer=0,audioTimer=0,audioInterior=null,toastTimer;
 const pointer=new T.Vector2(0,0),raycaster=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0),keys=new Set(),enemies=[],effects=[],floaters=[],prefabs={},cameraOffset=new T.Vector3(17,25,26),cameraTarget=new T.Vector3(0,0,1.6),reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
@@ -86,7 +87,7 @@ function showModeChoice(){
  ready=false;sessionMode=null;mainMenuOpen=false;
  titleScreen.showModes();$('connection-overlay').hidden=true;
 }
-function chooseMode(mode){if(mode==='single-player')openJourneys();else startSession(mode);}
+function chooseMode(mode){if(mode==='single-player'&&!previewMode)openJourneys();else startSession(mode);}
 function openJourneys(preferredId){
  titleScreen.hide();setModeChoiceInert(true);ready=false;journeysMenu.show(preferredId);
 }
@@ -399,7 +400,7 @@ function applySnapshot(snapshot,changed){
  // The first snapshot is a state baseline; retained server events predate this client.
  if(initialSnapshot){victoryShown=!!state.bossLootClaimed;lastNetworkEvent=Math.max(lastNetworkEvent,...snapshot.events.map(event=>event.id));}
  const me=snapshot.players.find(p=>p.id===snapshot.you);if(!me)return;
- exploration.setSession(snapshot.worldId,snapshot.you,{mode:sessionMode,preview:!!new URLSearchParams(location.search).get('preview')});
+ exploration.setSession(snapshot.worldId,snapshot.you,{mode:sessionMode,preview:previewMode,journeyId:activeJourney?.id});
  if(changed&&sessionMode==='single-player')exploration.reset();
  exploration.reveal(mapFor(nextMap),me,environment.obstacles);
  environment.updateProgress?.(state);environment.updateObstacles?.(snapshot.brokenCover||[]);

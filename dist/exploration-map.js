@@ -5,10 +5,10 @@ const CELL=2,DISCOVERY_RADIUS=22,ENEMY_VISIBILITY_RADIUS=11,STORAGE='hallowmere-
 const gridFor=map=>[CELL,map.bounds.minX,map.bounds.maxX,map.bounds.minZ,map.bounds.maxZ].join(':');
 export class ExplorationAtlas{
  constructor(){this.maps=new Map();this.session=null;this.restored={};this.dirty=false;this.timer=null;this.storage=null;this.saved=false;this.storageFailed=false;}
- setSession(worldId,playerId,{mode='multiplayer',preview=false}={}){
+ setSession(worldId,playerId,{mode='multiplayer',preview=false,journeyId=null}={}){
   // Solo world/player UUIDs change on every reload. The local chart belongs to
-  // this browser's solo profile; multiplayer charts belong to their adventurer.
-  const session=preview?`preview:${worldId}:${playerId}`:mode==='single-player'?'solo':`multiplayer:${worldId}:${playerId}`;
+  // the saved journey (or legacy solo profile), independent of runtime IDs.
+  const session=preview?`preview:${worldId}:${playerId}`:mode==='single-player'?(journeyId?`journey:${journeyId}`:'solo'):`multiplayer:${worldId}:${playerId}`;
   if(session===this.session)return;
   this.save();this.maps.clear();this.session=session;this.restored={};this.legacy=null;this.preview=preview;this.dirty=false;this.saved=false;this.storageFailed=false;this.storage=null;this.discardStored=false;
   if(preview)return;
