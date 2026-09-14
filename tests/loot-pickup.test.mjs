@@ -80,15 +80,19 @@ test('solo collection reaches the inventory in the next snapshot without a simul
 
 test('ground clicks collect before movement or combat and stop previous movement',()=>{
  const main=readFileSync(new URL('../dist/main.js',import.meta.url),'utf8'),handlers={},calls=[];
- const context={ready:true,paused:false,backgrounded:false,state:{ended:false},network:{connected:true},pointer:{},camera:{},
-  $:()=>({addEventListener:(name,fn)=>{handlers[name]=fn;},focus(){}}),awaken(){},updatePointer(){},raycaster:{setFromCamera(){}},
+ const context={ready:true,paused:false,backgrounded:false,state:{ended:false},network:{connected:true,send:type=>calls.push([type])},pointer:{},camera:{},
+  pointerShift:false,mouseAction:null,getPointerWorld(){},angle:0,moveTarget:{x:8,z:0},movePath:[{x:8,z:0}],pendingRegionInteraction:'old-region',networkDirection:{x:1,z:0},
+  $:()=>({addEventListener:(name,fn)=>{handlers[name]=fn;},focus(){}}),awaken(){},updatePointer(){context.mouseAction=context.pointerAction();},raycaster:{setFromCamera(){}},
   life:{pending:'old-target',pickLoot:()=>item,interact:id=>{calls.push(['collect',id]);return{ok:true};}},
   releaseInput:()=>calls.push(['stop']),toast:()=>assert.fail('Unexpected failure'),perform:action=>calls.push(['ability',action])};
  vm.createContext(context);
+ vm.runInContext(main.slice(main.indexOf('function pointerAction('),main.indexOf('function updateMouseTarget(')),context);
  vm.runInContext(main.slice(main.indexOf('function collectClickedLoot('),main.indexOf('function regionInteractions(')),context);
  vm.runInContext(main.slice(main.indexOf("$('world').addEventListener('pointerdown'"),main.indexOf("window.addEventListener('pointerup'")),context);
  handlers.pointerdown({button:0,preventDefault(){}});
  assert.deepEqual(calls,[['stop'],['collect',item.id]]);assert.equal(context.life.pending,null);
  calls.length=0;context.paused=true;handlers.pointerdown({button:0});assert.deepEqual(calls,[]);
- context.paused=false;handlers.pointerdown({button:2,preventDefault(){}});assert.deepEqual(calls,[['ability','bolt']]);
+ context.paused=false;handlers.pointerdown({button:2,preventDefault(){}});assert.deepEqual(calls,[['input'],['ability','bolt']]);
+ assert.equal(context.moveTarget,null);assert.equal(context.movePath.length,0);assert.equal(context.pendingRegionInteraction,null);
+ assert.equal(context.network.input.x,0);assert.equal(context.network.input.z,0);
 });
