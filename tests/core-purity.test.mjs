@@ -9,7 +9,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 // dist/world.js breaks the server at import time. This guard walks that closure and bites.
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),dist=resolve(root,'dist');
 const ENTRY=resolve(dist,'world.js');
-const DOM=/\b(?:document|window|navigator|location|matchMedia|localStorage|sessionStorage|requestAnimationFrame|HTMLElement)\b/g;
+const DOM=/(?<![\w$.])(?:document|window|navigator|location|matchMedia|localStorage|sessionStorage|requestAnimationFrame|HTMLElement)\b/g;
 const GLOBAL_DOCUMENT=/\bglobalThis\s*\.\s*document\b/g;
 const STATIC=/(?:^|[;{}])\s*(?:import|export)\s*(?:[\w$*{}\s,]*?\bfrom\s*)?(['"])([^'"]+)\1/gm;
 const DYNAMIC=/\bimport\s*\(\s*(['"])([^'"]+)\1\s*\)/g;
@@ -82,6 +82,10 @@ function strip(source,keepText=false){
 }
 
 const lineOf=(source,index)=>source.slice(0,index).split('\n').length;
+// `{location:1}` and `q.location` name properties rather than reading a global; a ternary
+// (`x?window:y`) does read one, so the character before the name settles which it is. The
+// regex lookbehind covers the dotted form and this covers the object-literal key.
+const propertyKey=(code,m)=>/^\s*:/.test(code.slice(m.index+m[0].length,m.index+m[0].length+64))&&/[{,]\s*$/.test(code.slice(0,m.index));
 function specifiers(source){
  const found=[];
  for(const pattern of [STATIC,DYNAMIC]){pattern.lastIndex=0;let m;while((m=pattern.exec(source)))found.push({spec:m[2],line:lineOf(source,m.index)});}
@@ -125,7 +129,7 @@ test('the simulation core never references the DOM',()=>{
   const code=strip(source);
   for(const pattern of [DOM,GLOBAL_DOCUMENT]){
    pattern.lastIndex=0;let m;
-   while((m=pattern.exec(code)))problems.push(`dist/${name}:${lineOf(code,m.index)} references \`${m[0]}\` — undefined in the Node server`);
+   while((m=pattern.exec(code)))if(!propertyKey(code,m))problems.push(`dist/${name}:${lineOf(code,m.index)} references \`${m[0]}\` — undefined in the Node server`);
   }
  }
  if(problems.length)assert.fail(`the simulation core must stay DOM-free:\n${problems.join('\n')}`);
