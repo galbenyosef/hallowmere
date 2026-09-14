@@ -5,17 +5,31 @@ villages, quest objectives, and passage destinations retain their coordinates.
 
 - The overworld grows from 107 × 54 to 214 × 162 world units. Sixteen named
   locations surround the original route, including two hamlets with four enterable
-  houses, five rest checkpoints, eleven guarded caches, and sixteen forage patches.
+  houses, five rest checkpoints, four guarded caches, and sixteen forage patches.
 - Each surface region grows from 60 × 60 to 120 × 180, with eight peripheral
-  locations, connected trails, three rest checkpoints, and five guarded caches.
-- Each of the five caves gains ten connected chambers and five guarded caches.
+  locations, connected trails, three rest checkpoints, and one or two guarded caches.
+- Each of the five caves gains ten connected chambers, with two or three guarded
+  caches spread through each full cave.
   Cave width triples and depth doubles; the original entrances remain in place.
-- The Underways grow from 60 × 36 to 120 × 108. Six new treasure areas stay inside
-  the existing three gated sections. Their partitions extend to the new boundaries.
+- The Underways grow from 60 × 36 to 120 × 108. Six new side areas stay inside
+  the existing three gated sections, with one cache per section. Their partitions
+  extend to the new boundaries.
 
 Optional surface enemies do not advance the twelve afflicted required to awaken
 the Bellkeeper. New overworld areas can be reached before opening the chapel.
 Ashwick's sanctuary is bounded so enemies in the surrounding wilderness can fight.
+
+Only one in every three authored treasure caches is retained: 25 across all maps,
+down from 74 (66.2% fewer, rounded to whole chests). Their original IDs, locations,
+guard requirements, and rewards are preserved. Removed caches have no chest,
+map marker, interaction, or reward; scenery, encounters, forage, and routes remain.
+Ordinary enemy drops already retain one third of their original rolls. Boss loot,
+the first equipment drop, and quest rewards are unchanged.
+
+Visual review confirmed that Lantern Fen and the Crystal Veil no longer show
+their removed chests or cache markers, while their encounters and scenery remain.
+Gloom Cavern's objective correctly reports three caches. Browser error logs were
+clear. Captures are in `screenshots/expanded-exploration/reduced-loot-*.png`.
 
 The minimap and expanded map reveal a radius of 22 world units around the
 authoritative player position, respecting walls. This doubles the original

@@ -69,6 +69,10 @@ export const PORTALS=[
  ...pair('keep-cave','crownfall-keep',26,14,'underways',24,11,'quarry-warden',true,'Forgotten crypt')
 ];
 for(const portal of PORTALS)MAPS[portal.mapId].obstacles.push(...caveSceneryObstacles(portal).map(o=>({...o,caveScenery:true})));
+// Keep one of every three authored caches, spread across the full journey.
+// Preserve retained IDs so personal claims stay valid across visits and saves.
+let cacheIndex=0;
+for(const map of Object.values(MAPS))map.caches=map.caches.filter(()=>cacheIndex++%3===0);
 for(const map of Object.values(MAPS))for(const cache of map.caches){cache.mapId=map.id;cache.enemyId??=map.encounters.find(e=>e.elite&&e.tier===cache.tier)?.id;}
 export const CHECKPOINTS=Object.values(MAPS).flatMap(m=>[m.checkpoint,...(m.checkpoints||[])]).filter(Boolean);
 export const mapFor=id=>MAPS[id]||MAPS.overworld;
