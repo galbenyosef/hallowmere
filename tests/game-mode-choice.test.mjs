@@ -8,11 +8,13 @@ import {createTitleScreen} from '../dist/title-screen.js';
 const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
 const transitions=main.slice(main.indexOf('function setModeChoiceInert'),main.indexOf("$('connection-back').onclick"));
 function setup(){
+ const journeyState={activeJourney:null,creatingJourney:false,journeyLeaving:false,journeyConflict:false,autosave:null};
  const nodes=new Map();const $=id=>{if(!nodes.has(id))nodes.set(id,{id,hidden:false,classList:{remove(){}},focus(){this.focusCalls=(this.focusCalls||0)+1;},children:[]});return nodes.get(id);};
  $('game').children=[$('world'),$('loading')];const sessions=[],snapshots=[],statuses=[];
  class Session{constructor(callbacks){this.callbacks=callbacks;sessions.push(this);}start(){this.started=true;this.connected=true;}close(){this.closed=true;this.connected=false;}}
  const titleScreen={showModes(){},hide(){$('loading').hidden=true;},showMainMenu(session){$('loading').hidden=false;this.session=session;},updateSession(session){this.session=session;}};
  const context=vm.createContext({$,titleScreen,mainMenuOpen:false,paused:false,backgrounded:false,mapExpanded:false,modalKind:'',currentNpc:null,state:{classId:'sorcerer',gold:81},inSanctuary:true,safeHere:()=>context.inSanctuary,classFor:()=>({name:'Sorcerer'}),inventoryPreviews:{hide(){}},audio:{pause(){}},rosterPicker:{open:false},ready:false,sessionMode:null,assetsReady:false,sessionGeneration:0,network:null,lastSnapshot:null,moveTarget:null,movePath:[],MultiplayerClient:class extends Session{},LocalSession:class extends Session{},applySnapshot:s=>snapshots.push(s),connectionStatus:s=>statuses.push(s),releaseInput(){},clock:{getDelta(){}},awaken(){}});
+ Object.assign(context,journeyState);
  vm.runInContext(transitions,context);return {context,sessions,snapshots,statuses,$,run:code=>vm.runInContext(code,context)};
 }
 
@@ -71,18 +73,22 @@ test('returning from connection and choosing solo discards old multiplayer callb
  context.lastSnapshot={};run('returnToModeChoice()');assert.equal(context.sessionMode,'single-player');assert.equal(sessions[1].closed,undefined);
 });
 
-test('pause to main menu and resume retain the same session, snapshot, and progress',()=>{
+test('pause to main menu and resume retain the same journey, character, snapshot, and progress',()=>{
  const {run,sessions,context,$}=setup();context.assetsReady=true;run("startSession('single-player')");
+ const journey={id:'saved-journey'};context.activeJourney=journey;
  const session=context.network,snapshot={worldId:'current-vigil'};context.lastSnapshot=snapshot;
  run('openMainMenu()');
  assert.equal(context.mainMenuOpen,true);assert.equal(context.paused,true);assert.equal(context.ready,true);
  assert.equal($('world').inert,true);assert.equal($('loading').hidden,false);
  assert.equal(context.network,session);assert.equal(context.lastSnapshot,snapshot);assert.equal(context.state.gold,81);
- assert.equal(context.titleScreen.session.canChangeCharacter,true);
+ assert.equal(context.titleScreen.session.canChangeCharacter,false);assert.equal(context.titleScreen.session.characterLocked,true);
+ for(const blocked of ['journeyLeaving','journeyConflict']){
+  context[blocked]=true;run('resumeFromMainMenu()');assert.equal(context.mainMenuOpen,true);assert.equal(context.paused,true);context[blocked]=false;
+ }
  run('resumeFromMainMenu()');
  assert.equal(context.mainMenuOpen,false);assert.equal(context.paused,false);assert.equal($('world').inert,false);
  assert.equal($('loading').hidden,true);assert.equal(context.network,session);assert.equal(sessions.length,1);
- assert.equal(session.closed,undefined);assert.equal(context.state.gold,81);
+ assert.equal(session.closed,undefined);assert.equal(context.state.gold,81);assert.equal(context.activeJourney,journey);
 });
 
 test('main menu reflects sanctuary restriction and roster closure returns to the menu',()=>{
