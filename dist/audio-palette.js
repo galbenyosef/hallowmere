@@ -1,5 +1,5 @@
 // Witchglass (audition set 04); bump the revision when generated audio changes.
-export const AUDIO_PALETTE = {id: 'witchglass', name: 'Witchglass', revision: 3};
+export const AUDIO_PALETTE = {id: 'witchglass', name: 'Witchglass', revision: 4};
 // Playback defaults are separate from the asset workshop so the game stays dependency-free.
 const bank = (name, count, options = {}) => ({
   files: Array.from({length: count}, (_, i) => `${name}${i ? `-${i + 1}` : ''}`),
@@ -29,9 +29,10 @@ export const SOUND_BANKS = {
   levelup: bank('levelup', 1, {bus: 'ui', wet: .24, priority: 4, pitch: 0}),
   'ui-open': bank('ui-open', 1, {bus: 'ui', gain: .5, wet: .03}),
   'ui-close': bank('ui-close', 1, {bus: 'ui', gain: .45, wet: .03}),
-  step: bank('step', 4, {gain: .7, wet: .025, priority: 1, voices: 2, cooldown: .18}),
-  'step-dirt': bank('step-dirt', 4, {gain: .72, wet: .025, priority: 1, voices: 2, cooldown: .18}),
-  'step-wood': bank('step-wood', 4, {gain: .65, wet: .06, priority: 1, voices: 2, cooldown: .18}),
+  // Dry physical footsteps at half the previous gain, with subtle take variation.
+  step: bank('step', 4, {gain: .35, wet: .01, pitch: .025, priority: 1, voices: 2, cooldown: .18}),
+  'step-dirt': bank('step-dirt', 4, {gain: .36, wet: .01, pitch: .025, priority: 1, voices: 2, cooldown: .18}),
+  'step-wood': bank('step-wood', 4, {gain: .325, wet: .035, pitch: .025, priority: 1, voices: 2, cooldown: .18}),
   door: bank('door', 2, {wet: .17, cooldown: .6, voices: 1}),
   bell: bank('bell', 2, {gain: .7, wet: .35, priority: 3, cooldown: 2, voices: 2, pitch: .012}),
   roar: bank('roar', 2, {wet: .32, priority: 5, cooldown: 1.2, voices: 1}),
