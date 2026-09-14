@@ -6,10 +6,10 @@ Official track/download sources and the CC BY 4.0 license are linked in the [run
 
 ## Playback
 
-- Sound begins after the player's first audio-enabling interaction. The existing sound button controls music and effects together; the game menu also has a separate Music switch.
+- The soundtrack attempts playback as the loading screen starts. If the browser blocks autoplay, the first click, tap, or keypress retries immediately, even while assets are still loading. World effects and ambience remain silent until gameplay is ready and connected. The existing sound button controls music and effects together; the game menu also has a separate Music switch.
 - Two HTML media elements feed the existing Web Audio mixer. Only the current and upcoming tracks load; twenty minutes of decoded PCM are never held in JavaScript memory. All files are served locally with the game, without third-party playback services.
 - Five-second fades follow media playback time. A late download leaves the current song playing to its end before waiting. Failed songs are skipped; exhausting the playlist stops automatic retries until the next audio gesture.
-- Music is mixed quietly on its own bus and briefly reduced under important combat cues. Menus reduce the shared world-bus volume. Muting music, muting all sound, and hiding the tab pause music at its current position; returning resumes the same track and any in-progress transition.
+- Music is mixed quietly on its own bus and briefly reduced under important combat cues. Music bypasses the world-effects bus, so it continues at its usual level during loading and pause menus while world effects and ambience are silenced. Muting music, muting all sound, and hiding the tab pause music at its current position; returning resumes the same track and any in-progress transition.
 - Both media elements are primed during an audio gesture for mobile autoplay. Rejected autoplay can be retried on a later gesture. Music failure does not block effects or gameplay.
 - The local multiplayer server supports MP3 byte ranges, content lengths, and the audio/mpeg MIME type, allowing browser seeking and bounded reads. Static hosting serves the same relative assets.
 

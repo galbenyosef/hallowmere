@@ -14,11 +14,13 @@ export class AudioEngine {
   }
 
   async unlock() {
-    if (this.ready) {
+    // A startup resume can wait for a gesture. Retry inside that gesture even
+    // while initialization is still pending, so autoplay denial cannot stall it.
+    if (this.context) {
       this.music?.unlock();
-      if (!this.backgrounded && this.context.state === 'suspended') await this.context.resume().catch(() => {});
-      return;
+      if (!this.backgrounded && this.context.state === 'suspended') this.context.resume().catch(() => {});
     }
+    if (this.ready) return;
     if (!this.pending) this.pending = this.init().finally(() => { this.pending = null; });
     return this.pending;
   }
@@ -35,11 +37,11 @@ export class AudioEngine {
       return Math.sign(x) * (a <= .8 ? a : .8 + .16 * Math.tanh((a - .8) / .16));
     });
     this.compressor.connect(highpass); highpass.connect(this.master); this.master.connect(ceiling); ceiling.connect(context.destination);
-    this.worldBus = context.createGain(); this.worldBus.gain.value = this.paused ? .12 : 1;
+    this.worldBus = context.createGain(); this.worldBus.gain.value = this.paused ? 0 : 1;
     this.worldBus.connect(this.compressor);
     if (this.mediaFactory || typeof globalThis.Audio === 'function') {
       try {
-        this.music = new MusicPlayer(context, this.worldBus, {mediaFactory: this.mediaFactory});
+        this.music = new MusicPlayer(context, this.compressor, {mediaFactory: this.mediaFactory});
         this.music.setState({enabled: this.musicEnabled, muted: this.muted, backgrounded: this.backgrounded});
       } catch (error) { console.warn('Music unavailable; effects remain enabled.', error); }
     }
@@ -221,7 +223,7 @@ export class AudioEngine {
     const now = this.context.currentTime;
     this.master.gain.cancelScheduledValues(now);
     this.master.gain.setTargetAtTime(this.muted || this.backgrounded ? 0 : this.volume, now, .04);
-    this.worldBus.gain.setTargetAtTime(this.paused ? .12 : 1, now, .1);
+    this.worldBus.gain.setTargetAtTime(this.paused ? 0 : 1, now, .1);
     this.music?.setState({enabled: this.musicEnabled, muted: this.muted, backgrounded: this.backgrounded});
   }
 
@@ -254,10 +256,10 @@ export class AudioEngine {
   }
 
   getState() {
-    return {palette: AUDIO_PALETTE.name, ready: this.ready, muted: this.muted, state: this.context?.state ?? 'not-started',
+    return {palette: AUDIO_PALETTE.name, ready: this.ready, paused: this.paused, muted: this.muted, state: this.context?.state ?? 'not-started',
       effects: Object.keys(this.buffers).length, expected: AUDIO_FILES.length, failed: [...this.failed],
       voices: this.voices.size, beds: this.loops.size, zone: this.world.zone ?? 'ashwick',
-      mix: {...this.targets}, master: this.master?.gain.value ?? 0,
+      mix: {...this.targets}, master: this.master?.gain.value ?? 0, worldVolume: this.worldBus?.gain.value ?? 0,
       music: this.music?.getState() ?? {enabled: this.musicEnabled, playing: false, track: null}};
   }
 }
