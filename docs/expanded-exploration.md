@@ -17,10 +17,12 @@ Optional surface enemies do not advance the twelve afflicted required to awaken
 the Bellkeeper. New overworld areas can be reached before opening the chapel.
 Ashwick's sanctuary is bounded so enemies in the surrounding wilderness can fight.
 
-The minimap and expanded map reveal a radius of eleven world units around the
-authoritative player position, respecting walls. Terrain and stationary landmarks
-remain charted, while enemy markers require nearby line of sight. Unexplored
-terrain, labels, and markers remain hidden beneath fog.
+The minimap and expanded map reveal a radius of 22 world units around the
+authoritative player position, respecting walls. This doubles the original
+11-unit radius and reveals approximately four times the area in open terrain.
+Terrain and stationary landmarks remain charted, while enemy markers require
+line of sight within eleven world units. Unexplored terrain, labels, and markers
+remain hidden beneath fog.
 
 Exploration is saved in browser local storage. Solo discoveries use a stable
 profile, so refreshing or reopening the game restores all charted areas despite
@@ -52,3 +54,8 @@ Ashwick while the full trail and Hearthstead label remained charted at 3.6%,
 with untouched terrain still fogged. The map reported that discoveries were
 saved on this device. No browser console errors appeared. Before/after captures
 are in `screenshots/expanded-exploration/discoveries-{before,after}-return.png`.
+
+Radius review: with the new 22-unit radius, retracing the Ashwick-to-Hearthstead
+route expanded the saved chart from 3.6% to 8.6%. The surrounding terrain revealed
+more broadly while distant areas stayed fogged, with no browser console errors.
+Capture: `screenshots/expanded-exploration/larger-discovery-radius.png`.

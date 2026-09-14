@@ -1,7 +1,7 @@
 import {hasLineOfSight,pointBlocked} from './combat.js';
 import {mapFogTexture} from './map-fog.js';
 
-const CELL=2,RADIUS=11,STORAGE='hallowmere-exploration-v2:';
+const CELL=2,DISCOVERY_RADIUS=22,ENEMY_VISIBILITY_RADIUS=11,STORAGE='hallowmere-exploration-v2:';
 const gridFor=map=>[CELL,map.bounds.minX,map.bounds.maxX,map.bounds.minZ,map.bounds.maxZ].join(':');
 export class ExplorationAtlas{
  constructor(){this.maps=new Map();this.session=null;this.restored={};this.dirty=false;this.timer=null;this.storage=null;this.saved=false;this.storageFailed=false;}
@@ -38,11 +38,11 @@ export class ExplorationAtlas{
  }
  reveal(map,position,obstacles){
   const data=this.map(map);if(data.last&&Math.hypot(data.last.x-position.x,data.last.z-position.z)<.65)return;
-  data.last={x:position.x,z:position.z};const before=data.cells.size,b=map.bounds,col=Math.floor((position.x-b.minX)/CELL),row=Math.floor((position.z-b.minZ)/CELL),reach=Math.ceil(RADIUS/CELL);
+  data.last={x:position.x,z:position.z};const before=data.cells.size,b=map.bounds,col=Math.floor((position.x-b.minX)/CELL),row=Math.floor((position.z-b.minZ)/CELL),reach=Math.ceil(DISCOVERY_RADIUS/CELL);
   // A room behind a wall stays unknown until a doorway or tunnel is explored.
   for(let z=Math.max(0,row-reach);z<=Math.min(data.rows-1,row+reach);z++)for(let x=Math.max(0,col-reach);x<=Math.min(data.columns-1,col+reach);x++){
    const index=z*data.columns+x;if(data.cells.has(index))continue;
-   const p={x:b.minX+(x+.5)*CELL,z:b.minZ+(z+.5)*CELL};if(Math.hypot(position.x-p.x,position.z-p.z)>RADIUS||!hasLineOfSight(position,p,obstacles,0))continue;
+   const p={x:b.minX+(x+.5)*CELL,z:b.minZ+(z+.5)*CELL};if(Math.hypot(position.x-p.x,position.z-p.z)>DISCOVERY_RADIUS||!hasLineOfSight(position,p,obstacles,0))continue;
    data.cells.add(index);data.ctx.fillRect(x,z,1,1);
   }
   if(data.cells.size!==before)this.queueSave();
@@ -113,7 +113,7 @@ export function drawExplorationMap({canvas,atlas,map,player,angle,expanded,envir
   for(const l of labels){if(!seen(l))continue;const p=project(l);ctx.fillText(l.name.toUpperCase(),Math.max(30,Math.min(190,p.x)),p.y-6);}
  }
 
- for(const e of enemies){const p=e.model.position;if(!e.dead&&seen(p)&&Math.hypot(p.x-player.x,p.z-player.z)<RADIUS&&hasLineOfSight(player,p,environment.obstacles,.08))dot(p,bossType(e.type)?'#ecaa68':'#cd7864',bossType(e.type)?3:1.7);}
+ for(const e of enemies){const p=e.model.position;if(!e.dead&&seen(p)&&Math.hypot(p.x-player.x,p.z-player.z)<ENEMY_VISIBILITY_RADIUS&&hasLineOfSight(player,p,environment.obstacles,.08))dot(p,bossType(e.type)?'#ecaa68':'#cd7864',bossType(e.type)?3:1.7);}
  for(const other of players){if(other.id===you||(other.mapId||'overworld')!==map.id||!seen(other))continue;dot(other,other.color,2.8);const p=project(other);ctx.font='8px Arial';ctx.textAlign='center';ctx.fillStyle=other.color;ctx.fillText(String(other.slot+1),p.x,p.y-4);}
  const p=project(player);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(-angle+Math.PI);ctx.fillStyle=players.find(p=>p.id===you)?.color||'#f6df93';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=6;ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(3,3);ctx.lineTo(0,1);ctx.lineTo(-3,3);ctx.closePath();ctx.fill();ctx.restore();
  const percent=Math.min(100,Math.round(data.cells.size/Math.max(1,data.total)*1000)/10);
