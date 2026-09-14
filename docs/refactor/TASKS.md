@@ -32,7 +32,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 |---|---|---|---|---|---|---|---|---|---|---|
 | T0-0 | 0A | orchestrator | Tracker + design doc | docs/refactor/{TASKS,PLAN}.md | — | running | codex/refactor-tracker-e2d76bc0-4044 | 5392 | — | tracker worktree `hm-tracker` |
 | T0-2 | 0A | opus | DOM-free core guard test | tests/core-purity.test.mjs | — | running | codex/core-purity-f011b76a-9744 | 5508 | — | |
-| T0-4 | 0A | opus | Perf + visual baseline (perf-smoke, screenshot/diff tooling, 13 shots) | scripts/perf-smoke.mjs, scripts/screenshot.mjs, scripts/compare-shots.mjs, docs/refactor/{PERF,VISUAL}.md, screenshots/refactor-baseline/ | — | todo | codex/perf-baseline-5e8d08f7-c682 | 6163 | — | model raised from sonnet: task also builds the CDP screenshot + PNG diff tooling |
+| T0-4 | 0A | opus | Perf + visual baseline (perf-smoke, screenshot/diff tooling, 13 shots) | scripts/{perf-smoke,screenshot,compare-shots,perf-browser}.mjs, docs/refactor/{PERF,VISUAL}.md, screenshots/refactor-baseline/ | — | running | codex/perf-baseline-5e8d08f7-c682 | 6163 | — | model raised from sonnet: task also builds the CDP screenshot + PNG diff tooling |
 | T0-5 | 0A | sonnet | Move dev pages to docs/variations; npc-models.js → scripts/ | dist dev pages (PLAN §5.6), scripts/generate-assets.mjs, tests/npc-models.test.mjs, README.md, docs/*.md refs, design-qa.md | — | running | codex/dev-pages-move-c5b59f7e-17a8 | 5791 | — | model raised from haiku: cross-file reference rewriting |
 | T0-1 | 0B | sonnet | tests/helpers, slice guard, audio widening, automation snapshot test | tests/helpers/, 9 main.js-reading tests, ~6 helper-pasting tests, tests/automation-surface.test.mjs | T0-5 | todo | — | — | — | |
 | T0-3 | 0B | opus | Validator: recursive glob + per-page `$()` closure | scripts/validate.mjs | T0-5 | todo | — | — | — | |
@@ -94,4 +94,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 ## Log
 
-- 2026-09-14 — Tracker created. Baseline 269/269 in 84 s. Worktrees registered: hm-tracker (5392), hm-T0-2 (5508), hm-T0-4 (6163), hm-T0-5 (5791). T0-2 and T0-5 launched. T0-4 raised to opus (adds CDP screenshot + PNG diff tooling); T0-5 raised to sonnet (reference rewriting across docs).
+- 2026-09-14 — Tracker created. Baseline 269/269 in 84 s. Worktrees registered: hm-tracker (5392), hm-T0-2 (5508), hm-T0-4 (6163), hm-T0-5 (5791). T0-2, T0-4, T0-5 launched. T0-4 raised to opus (adds CDP screenshot + PNG diff tooling); T0-5 raised to sonnet (reference rewriting across docs).
