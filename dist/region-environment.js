@@ -1,3 +1,4 @@
+import {createGroundFog} from './ground-fog.js';
 import {createOutlandScenery} from './outland-scenery.js';
 import * as T from 'three';
 import {MAPS,PORTALS,mapFor,availablePortal} from './regions.js';
@@ -69,9 +70,9 @@ export function createRegionLandmarks(scene,mapId){
 }
 export function createRegionEnvironment(scene,mapId){
  if(mapFor(mapId).theme==='cave'){
-  const map=mapFor(mapId),scenery=createCaveScenery(scene,map),landmarks=createRegionLandmarks(scene,mapId);scenery.group.add(landmarks.group);
+  const map=mapFor(mapId),scenery=createCaveScenery(scene,map),landmarks=createRegionLandmarks(scene,mapId);scenery.group.add(landmarks.group);const groundFog=createGroundFog(scenery.group,map);
   return{group:scenery.group,obstacles:map.obstacles.map(o=>({...o})),buildings:[],torches:[],mists:[],windowGlows:[],glowTexture:null,currentBuilding:()=>null,pickDoor:()=>null,nearestDoor:()=>null,updateProgress:landmarks.updateProgress,sync:landmarks.sync,
-   update(t,dt,victory,camera,player){scenery.update(t,player);landmarks.update(t);},dispose(){landmarks.dispose();scenery.dispose();}};
+   update(t,dt,victory,camera,player){scenery.update(t,player);landmarks.update(t);groundFog.update(t,player);},dispose(){groundFog.dispose();landmarks.dispose();scenery.dispose();}};
  }
  const map=mapFor(mapId),k=kit(scene,mapId),{mesh,group}=k,b=map.bounds,obstacles=map.obstacles.map(o=>({...o})),gates=[],cover=[];
  let seed=mapId.length*977;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
@@ -114,9 +115,9 @@ export function createRegionEnvironment(scene,mapId){
  if(mapId==='drowned-wood')for(const [x,z]of[[-16,19],[16,16],[-17,-18],[20,-19]]){const pool=mesh('cylinder','dark',x,.025,z,4,.025,3);pool.castShadow=false;}
  if(mapId==='blackvein-quarry')for(const x of[-.9,.9])mesh('box','trim',x,.07,2,.08,.08,32);
  if(mapId==='crownfall-keep'){mesh('box','trim',0,.12,-24,7,.24,5);mesh('box','dark',0,1.4,-26,2.2,2.8,1);}
- const outlands=createOutlandScenery(group,map);
+ const outlands=createOutlandScenery(group,map),groundFog=createGroundFog(group,map);
  const landmarks=createRegionLandmarks(scene,mapId);group.add(landmarks.group);
  function updateProgress(progress){for(const {obstacle,solid}of gates){obstacle.disabled=availablePortal(obstacle,progress);solid.visible=!obstacle.disabled;}landmarks.updateProgress(progress);}
  function updateObstacles(disabledIds=[]){const disabled=new Set(disabledIds);for(const c of cover){c.obstacle.disabled=disabled.has(c.obstacle.id);for(const part of c.parts)part.visible=!c.obstacle.disabled;}}
- return{group,obstacles,updateObstacles,buildings:[],torches:[],mists:[],windowGlows:[],glowTexture:null,currentBuilding:()=>null,pickDoor:()=>null,nearestDoor:()=>null,updateProgress,sync:landmarks.sync,update(t){landmarks.update(t);},dispose(){outlands.dispose();landmarks.dispose();k.dispose();}};
+ return{group,obstacles,updateObstacles,buildings:[],torches:[],mists:[],windowGlows:[],glowTexture:null,currentBuilding:()=>null,pickDoor:()=>null,nearestDoor:()=>null,updateProgress,sync:landmarks.sync,update(t,dt,victory,camera,player){landmarks.update(t);groundFog.update(t,player);},dispose(){groundFog.dispose();outlands.dispose();landmarks.dispose();k.dispose();}};
 }

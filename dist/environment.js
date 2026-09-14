@@ -1,3 +1,4 @@
+import {createGroundFog} from './ground-fog.js';
 import {distanceToRoute} from './expansion-layout.js';
 import {createOutlandScenery} from './outland-scenery.js';
 import {MAPS} from './regions.js';
@@ -8,7 +9,7 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {BUILDING_SPECS,createBuildingLayout,buildingLocal,insideBuilding,setBuildingAccess} from './buildings.js';
 export function createEnvironment(scene){
  let seed=4148;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};const range=(a,b)=>a+(b-a)*rand();
- const statics=new T.Group();scene.add(statics);const obstacles=SCENERY_OBSTACLES.map(o=>({...o})),buildings=[],torches=[],mists=[],windowGlows=[];
+ const statics=new T.Group();scene.add(statics);const obstacles=SCENERY_OBSTACLES.map(o=>({...o})),buildings=[],torches=[],windowGlows=[];
  const material=(color,roughness=.92,metalness=0)=>new T.MeshStandardMaterial({color,roughness,metalness});
  const materials={stone:material(0x646c63),stoneDark:material(0x384441),plaster:material(0x737369),timber:material(0x302e27),wood:material(0x534b37),oak:material(0x3e382c),roof:material(0x313e40),roof2:material(0x3d4c4b),roof3:material(0x293536),iron:material(0x39413c,.6,.55),dirt:material(0x39423b),grave:material(0x737e70),bone:material(0xa5a38a),grass:material(0x626957),dark:material(0x111b1c),red:material(0x65382e)};
  const boxGeo=new T.BoxGeometry(1,1,1),cylinderGeo=new T.CylinderGeometry(1,1,1,10),rockGeo=new T.DodecahedronGeometry(1,0);
@@ -97,7 +98,7 @@ export function createEnvironment(scene){
  const portalMat=new T.ShaderMaterial({uniforms:{time:{value:0},awakened:{value:0}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 vUv;uniform float time;uniform float awakened;void main(){vec2 p=(vUv-.5)*2.;float r=length(p);float a=atan(p.y,p.x);float swirl=sin(a*5.+r*18.-time*1.4)*.5+.5;float edge=smoothstep(1.,.75,r);float ring=pow(max(0.,1.-abs(r-.77)*6.),3.);vec3 col=mix(vec3(.04,.17,.15),vec3(.24,.68,.55),awakened);gl_FragColor=vec4(col*(.3+swirl*.5+ring*2.),edge*(.44+ring*.5));}',transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending});const portal=new T.Mesh(new T.PlaneGeometry(2.3,3.7),portalMat);portal.position.set(0,2.1,-14.2);scene.add(portal);const portalLight=new T.PointLight(0x64dfbb,13,7,2);portalLight.position.set(0,2,-13.3);scene.add(portalLight);
  // Fine drifting ash remains behind the HUD and never blocks attack indicators.
  const ashGeo=new T.BufferGeometry(),ashPos=new Float32Array(450*3);for(let i=0;i<450;i++){ashPos[i*3]=range(-83,32);ashPos[i*3+1]=range(.3,11);ashPos[i*3+2]=range(-32,28);}ashGeo.setAttribute('position',new T.BufferAttribute(ashPos,3));const ash=new T.Points(ashGeo,new T.PointsMaterial({color:0xb7c8b1,size:.032,transparent:true,opacity:.48,depthWrite:false}));scene.add(ash);
- for(let i=0;i<10;i++){const sprite=new T.Sprite(new T.SpriteMaterial({map:glowTexture,color:0x497fae,transparent:true,opacity:.04,depthWrite:false}));sprite.position.set(range(-80,22),range(.2,.6),range(-25,20));sprite.scale.set(range(8,16),range(2,3.5),1);scene.add(sprite);mists.push({sprite,x:sprite.position.x,z:sprite.position.z,phase:rand()*8});}
+ const groundFog=createGroundFog(scene,MAPS.overworld);
  // Collapse the unchanging scenery into one draw call per material.
  function mergeStaticGroup(root,independent=false){root.updateMatrixWorld(true);const batches=new Map();root.traverse(o=>{if(!o.isMesh)return;let b=batches.get(o.material.uuid);if(!b){b={material:independent?o.material.clone():o.material,geometries:[]};if(independent)b.material.transparent=true;batches.set(o.material.uuid,b);}const g=o.geometry.clone();g.applyMatrix4(o.matrixWorld);if(!g.attributes.uv)g.setAttribute('uv',new T.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));b.geometries.push(g.index?g.toNonIndexed():g);});const result=[];for(const b of batches.values()){const g=mergeGeometries(b.geometries,false);if(!g)continue;const m=new T.Mesh(g,b.material);m.castShadow=true;m.receiveShadow=true;scene.add(m);result.push(m);b.geometries.forEach(g=>g.dispose());}return result;}
  for(const b of buildings){
@@ -125,5 +126,5 @@ export function createEnvironment(scene){
   }
  }
  for(const window of windowGlows){window.sprite.material.opacity=.3*(window.building?.fade??1);window.sprite.visible=window.sprite.material.opacity>.01;}
- portalMat.uniforms.time.value=t;portalMat.uniforms.awakened.value=bossDefeated?1:0;for(const a of torches){const flicker=1+Math.sin(t*13+a.offset)*.09+Math.sin(t*21+a.offset*2)*.055;a.flame.scale.set(1,flicker,1);a.flame.rotation.z=Math.sin(t*8+a.offset)*.1;a.light.intensity=68*flicker;a.light.visible=!playerPosition||a.light.position.distanceTo(playerPosition)<24;a.sprite.material.opacity=.64+flicker*.1;}for(const m of mists){m.sprite.position.x=m.x+Math.sin(t*.07+m.phase)*2;m.sprite.position.z=m.z+Math.cos(t*.05+m.phase);}const p=ashGeo.attributes.position.array;for(let i=0;i<450;i++){p[i*3]+=dt*.15;p[i*3+1]-=dt*.085;p[i*3+2]+=dt*.05;if(p[i*3+1]<.2)p[i*3+1]=11;if(p[i*3]>32)p[i*3]=-83;}ashGeo.attributes.position.needsUpdate=true;}};
+ portalMat.uniforms.time.value=t;portalMat.uniforms.awakened.value=bossDefeated?1:0;for(const a of torches){const flicker=1+Math.sin(t*13+a.offset)*.09+Math.sin(t*21+a.offset*2)*.055;a.flame.scale.set(1,flicker,1);a.flame.rotation.z=Math.sin(t*8+a.offset)*.1;a.light.intensity=68*flicker;a.light.visible=!playerPosition||a.light.position.distanceTo(playerPosition)<24;a.sprite.material.opacity=.64+flicker*.1;}groundFog.update(t,playerPosition);const p=ashGeo.attributes.position.array;for(let i=0;i<450;i++){p[i*3]+=dt*.15;p[i*3+1]-=dt*.085;p[i*3+2]+=dt*.05;if(p[i*3+1]<.2)p[i*3+1]=11;if(p[i*3]>32)p[i*3]=-83;}ashGeo.attributes.position.needsUpdate=true;}};
 }

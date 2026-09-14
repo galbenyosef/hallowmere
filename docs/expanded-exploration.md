@@ -59,3 +59,23 @@ Radius review: with the new 22-unit radius, retracing the Ashwick-to-Hearthstead
 route expanded the saved chart from 3.6% to 8.6%. The surrounding terrain revealed
 more broadly while distant areas stayed fogged, with no browser console errors.
 Capture: `screenshots/expanded-exploration/larger-discovery-radius.png`.
+
+## Drifting gameplay fog
+
+Sparse pockets of ground fog sit along selected village paths, outland clearings,
+and cave chambers. Three low, transparent layers drift at different speeds while
+animated cloud noise changes their shape. Most of each map remains clear; these
+pockets belong to fixed locations rather than following the player.
+
+The effect fades near the player to preserve combat visibility and clips to
+walkable ground outside building interiors and rock. Distant pockets fade out
+and are culled; the layers share geometry and materials within each pocket.
+Region changes dispose of their fog resources. Reduced-motion preferences keep
+the fog still. Exploration visibility and saved discoveries are unaffected.
+
+Visual review covered Hearthstead Hamlet, the Crystal Veil encounter, and
+Mosswatch Ruins. Two captures of the stationary hamlet scene show the wisps
+changing shape over time. The fog remained localized and characters, treasure,
+paths, and surrounding scenery stayed readable. Browser shader/error logs were
+clear; automated tests and build validation remain deferred until an authorized
+merge. Captures are named `screenshots/expanded-exploration/drifting-fog-*.png`.
