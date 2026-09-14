@@ -65,7 +65,7 @@ test('mute, backgrounding, and the separate music switch preserve a partially co
     assert.equal(player.getState().position, 2); assert.equal(player.current.level, .4);
     assert.equal(outgoing.media.paused, false);
   }
-  player.setState({paused: true}); assert.equal(player.getState().playing, true, 'menus use the world-bus volume without restarting the score');
+  player.setState({paused: true}); assert.equal(player.getState().playing, true, 'menus keep the score playing without restarting it');
 });
 
 test('a slow next track waits for playable data without cutting off the current song', async () => {

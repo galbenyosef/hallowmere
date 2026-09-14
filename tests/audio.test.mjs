@@ -114,6 +114,7 @@ test('combat spam respects voice limits and preserves high priority damage cues'
 test('mute during pause stays muted; UI services remain audible; hidden tabs suspend', async () => {
   const audio = engine(); audio.startBeds(); assert.equal(audio.loops.size, 5);
   audio.pause(true); assert.equal(audio.play('sword'), null);
+  assert.equal(audio.worldBus.gain.value, 0, 'paused ambience is fully silent');
   assert.ok(audio.play('heal', .6, 1, {ui: true}));
   audio.toggle(); audio.pause(false); assert.equal(audio.master.gain.value, 0);
   assert.equal(audio.play('impact'), null); audio.toggle();
@@ -122,6 +123,35 @@ test('mute during pause stays muted; UI services remain audible; hidden tabs sus
   audio.pause(true, true); assert.equal(audio.master.gain.value, 0);
   await new Promise(resolve => setTimeout(resolve, 210)); assert.equal(audio.context.state, 'suspended');
   audio.pause(false, false); await Promise.resolve(); assert.equal(audio.context.state, 'running');
+  assert.equal(audio.worldBus.gain.value, 1, 'resuming restores world effects');
+});
+
+test('a gesture retries a suspended startup while loading keeps world effects silent', async () => {
+  const ctx = context(); ctx.state = 'suspended';
+  let resumeCalls = 0, allowStartup;
+  const startup = new Promise(resolve => { allowStartup = resolve; });
+  ctx.resume = () => {
+    if (++resumeCalls === 1) return startup;
+    ctx.state = 'running'; allowStartup(); return Promise.resolve();
+  };
+  const audio = new AudioEngine({contextFactory: () => ctx,
+    fetcher: async () => ({ok: true, arrayBuffer: async () => new ArrayBuffer(4)})});
+  audio.pause(true);
+  const loading = audio.unlock();
+  assert.equal(audio.ready, false);
+  let musicGestures = 0;
+  audio.music = {unlock() { musicGestures++; }, setState() {}};
+  const gesture = audio.unlock();
+  assert.equal(resumeCalls, 2, 'the gesture resumes immediately instead of waiting on startup');
+  assert.equal(musicGestures, 1, 'blocked music retries inside the same gesture');
+  await Promise.all([loading, gesture]); await audio.loading;
+  assert.equal(audio.ready, true);
+  assert.equal(audio.worldBus.gain.value, 0);
+  assert.equal(audio.loops.size, 0);
+  assert.equal(audio.play('sword'), null);
+  audio.pause(false);
+  assert.ok(audio.play('sword'));
+  assert.equal(audio.loops.size, 5);
 });
 
 test('concurrent unlocks share initialization and a failed asset can recover', async () => {
