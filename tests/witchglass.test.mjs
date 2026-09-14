@@ -4,7 +4,8 @@ import {readFile} from 'node:fs/promises';
 import {runInNewContext} from 'node:vm';
 import {AUDIO_PALETTE, SOUND_BANKS, AUDIO_FILES} from '../dist/audio-palette.js';
 import {renderWitchglass, WITCHGLASS_RATE, WITCHGLASS_CUES, WITCHGLASS_LOOPS} from '../scripts/witchglass.mjs';
-import {encodeWitchglass, SOURCE_GAIN} from '../scripts/generate-audio.mjs';
+import {encodeWitchglass, encodePcm, SOURCE_GAIN} from '../scripts/generate-audio.mjs';
+import {FOOTSTEP_SURFACES, renderFootstep} from '../scripts/footsteps.mjs';
 
 const directory = new URL('../dist/assets/audio/', import.meta.url);
 test('active Witchglass assets cover every game cue with the existing take counts and quiet background mix', async () => {
@@ -29,11 +30,19 @@ test('active Witchglass assets cover every game cue with the existing take count
   assert.equal(SOUND_BANKS.heartbeat.gain, .4);
 });
 
-test('first takes retain the selected audition recipe, and shipped effects contain that PCM', async () => {
+test('first takes retain the audition recipe except physical footsteps; shipped effects match their sources', async () => {
   const html = await readFile(new URL('../dist/sound-audition.html', import.meta.url), 'utf8');
   const scope = {};
   runInNewContext(html.match(/<script id="audition-engine">([\s\S]*?)<\/script>/)[1], scope);
   for (const [cue, bank] of Object.entries(SOUND_BANKS)) {
+    if (FOOTSTEP_SURFACES[cue]) {
+      for (const [variant, file] of bank.files.entries()) {
+        const {channels} = await renderFootstep(cue, variant);
+        const shipped = await readFile(new URL(`${file}.wav`, directory));
+        assert.deepEqual(encodePcm(channels).buffer, shipped, `${file}: physical source and shipped asset agree`);
+      }
+      continue;
+    }
     const reference = scope.SoundAudition.synthesize('04', cue).data;
     const actual = renderWitchglass(cue);
     assert.equal(actual.length, reference.length);
