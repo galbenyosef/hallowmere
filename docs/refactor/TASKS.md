@@ -31,7 +31,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | T0-0 | 0A | orchestrator | Tracker + design doc | docs/refactor/{TASKS,PLAN}.md | — | running | codex/refactor-tracker-e2d76bc0-4044 | 5392 | — | tracker worktree `hm-tracker` |
-| T0-2 | 0A | opus | DOM-free core guard test | tests/core-purity.test.mjs | — | changes-requested | codex/core-purity-f011b76a-9744 | 5508 | a5a2a6c | 4 tests, closure=19 modules, bite-proof pasted; asked for lookbehind so `x.location` is not flagged |
+| T0-2 | 0A | opus | DOM-free core guard test | tests/core-purity.test.mjs | — | ready-to-merge | codex/core-purity-f011b76a-9744 | 5508 | 7cf3722 | 4 tests, closure=19 modules, bite-proof pasted; 273/273 |
 | T0-4 | 0A | opus | Perf + visual baseline (perf-smoke, screenshot/diff tooling, 13 shots) | scripts/{perf-smoke,screenshot,compare-shots,perf-browser}.mjs, docs/refactor/{PERF,VISUAL}.md, screenshots/refactor-baseline/ | — | running | codex/perf-baseline-5e8d08f7-c682 | 6163 | — | model raised from sonnet: task also builds the CDP screenshot + PNG diff tooling |
 | T0-5 | 0A | sonnet | Move dev pages to docs/variations; npc-models.js → scripts/ | dist dev pages (PLAN §5.6), scripts/generate-assets.mjs, tests/npc-models.test.mjs, README.md, docs/*.md refs, design-qa.md | — | running | codex/dev-pages-move-c5b59f7e-17a8 | 5791 | — | model raised from haiku: cross-file reference rewriting |
 | T0-1 | 0B | sonnet | tests/helpers, slice guard, audio widening, automation snapshot test | tests/helpers/, 9 main.js-reading tests, ~6 helper-pasting tests, tests/automation-surface.test.mjs | T0-5 | todo | — | — | — | |
@@ -96,3 +96,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 - 2026-09-14 — Tracker created. Baseline 269/269 in 84 s. Worktrees registered: hm-tracker (5392), hm-T0-2 (5508), hm-T0-4 (6163), hm-T0-5 (5791). T0-2, T0-4, T0-5 launched. T0-4 raised to opus (adds CDP screenshot + PNG diff tooling); T0-5 raised to sonnet (reference rewriting across docs).
 - 2026-09-14 — T0-2 reported (a5a2a6c, 273/273). Minor change requested (DOM regex lookbehind). Lesson: subagents' Write/Edit tools refuse paths outside this session's worktree; task prompts now say to write files with Bash heredocs/sed.
+- 2026-09-14 — T0-2 ready-to-merge (7cf3722, 273/273).
