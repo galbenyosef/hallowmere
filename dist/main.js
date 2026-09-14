@@ -1,3 +1,4 @@
+import {ExplorationAtlas,drawExplorationMap,bindExplorationSaving} from './exploration-map.js';
 import {readGameSettings,saveGameSettings,applyGameVisuals} from './game-settings.js';
 import {pauseMenuMarkup,bindPauseMenu} from './pause-menu.js';
 import {menuNavigationMarkup,updateMenuNavigation} from './menu-chrome.js';
@@ -44,6 +45,9 @@ const classIconNames={sorcerer:['spark','flame','wind','cloud'],ranger:['bow','b
 function icon(name){return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${icons[name]||icons.sword}"/></svg>`;}
 document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));
 const resourceOrbs=createResourceOrbs();
+const exploration=new ExplorationAtlas();
+const previewMode=['caves','exploration','predator'].includes(new URLSearchParams(location.search).get('preview'));
+bindExplorationSaving(exploration);
 const gameSettings=readGameSettings(),audio=new AudioEngine();audio.musicEnabled=gameSettings.music;let state=Object.assign(createState(),createCampaign(crypto.getRandomValues(new Uint32Array(1))[0])),scene,camera,renderer,environment,player,heroRig,clock,ready=false,started=false,paused=false,backgrounded=document.hidden,mapExpanded=false,modalKind='',angle=0,moveTarget=null,movePath=[],lockedEnemy=null,attackHeld=false,aimActive=false,shake=0,dodgeTime=0,lastMove=new T.Vector3(0,0,-1),targetWorld=new T.Vector3(0,0,-5),accumulated=0,lastStep=0,uiTimer=0,audioTimer=0,audioInterior=null,toastTimer;
 const pointer=new T.Vector2(0,0),raycaster=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0),keys=new Set(),enemies=[],effects=[],floaters=[],prefabs={},cameraOffset=new T.Vector3(17,25,26),cameraTarget=new T.Vector3(0,0,1.6),reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
 let sessionMode=null,assetsReady=false,sessionGeneration=0,mainMenuOpen=false,cavePreviewStarted=false;
@@ -83,7 +87,7 @@ function showModeChoice(){
  ready=false;sessionMode=null;mainMenuOpen=false;
  titleScreen.showModes();$('connection-overlay').hidden=true;
 }
-function chooseMode(mode){if(mode==='single-player')openJourneys();else startSession(mode);}
+function chooseMode(mode){if(mode==='single-player'&&!previewMode)openJourneys();else startSession(mode);}
 function openJourneys(preferredId){
  titleScreen.hide();setModeChoiceInert(true);ready=false;journeysMenu.show(preferredId);
 }
@@ -224,7 +228,7 @@ function toggleMap(){
  $('map-button').setAttribute('aria-label',mapExpanded?'Close map':'Expand map');
  if(mapExpanded){panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','map-title');updateMenuNavigation($('map-navigation'),'map',{canChangeCharacter:!activeJourney&&safeHere(),characterLocked:!!activeJourney});$('map-button').focus({preventScroll:true});}
  else{panel.removeAttribute('role');panel.removeAttribute('aria-modal');panel.removeAttribute('aria-labelledby');$('world').focus({preventScroll:true});}
- paused=mapExpanded;releaseInput();audio.pause(paused||backgrounded,backgrounded);
+ paused=mapExpanded;releaseInput();audio.pause(paused||backgrounded,backgrounded);drawMap();exploration.save();
 }
 function navigateMenu(kind){
  if(!ready||!network?.connected||state.ended)return;
@@ -297,7 +301,12 @@ function updateUI(){if(!player)return;updateClassHud();$('health-value').innerHT
  const quest=questSummary(state);$('quest-kind').lastChild.textContent=mapFor(renderedMap).theme==='cave'?' SIDE CAVE':' MAIN QUEST';if(renderedMap==='overworld'&&state.questCompleted&&!state.questRewarded){quest.objective='Quest complete · Claim your reward from Rowan';quest.hint=sessionMode==='single-player'?'You completed The Last Toll. Your reward awaits in Ashwick.':'Your allies completed The Last Toll. Your reward awaits in Ashwick.';}$('quest-title').textContent=quest.title;$('quest-count').textContent=quest.count;$('objective').textContent=quest.objective;$('quest-hint').textContent=quest.hint;$('quest-marker').classList.toggle('done',state.questRewarded);$('gold-counter').textContent=`${state.gold} CROWNS`;$('location-name').textContent=environment.currentBuilding(player.position)?.name||(renderedMap==='overworld'?zoneName(state.zone):mapFor(renderedMap).name);$('location-type').textContent=safeHere()?'SANCTUARY':mapFor(renderedMap).theme==='cave'?'WORLD I · BENEATH HALLOWMERE':renderedMap!=='overworld'?'THE FORSAKEN REACH':state.zone==='road'?'THE FORSAKEN REACH':'WORLD I · THE LAST TOLL';const interaction=nearbyInteraction(),building=interaction?.building,target=interaction?.target;$('interact-button').hidden=!interaction;$('interaction-name').textContent=interaction?.regional?regionActionName(interaction.regional):building?(!building.doorCollider.disabled?'Chapel sealed':environment.currentBuilding(player.position)?.id===building.id?'Leave '+building.name:'Enter '+building.name):target?(target.kind==='forage'?'Harvest '+target.name:target.kind?'Collect '+target.name:'Speak to '+target.name):'';const boss=enemies.find(e=>!e.dead&&bossType(e.type));$('boss-bar').hidden=!boss;if(boss){$('boss-fill').style.width=`${Math.max(0,boss.hp/boss.maxHp*100)}%`;$('boss-bar').querySelector('span').textContent=renderedMap==='overworld'?'THE LAST TOLL':mapFor(renderedMap).name.toUpperCase();const title=$('boss-bar').querySelector('h2');if(title)title.textContent=`${boss.data.name}${boss.net?.bossStage>1?' · Phase '+boss.net.bossStage:''}${boss.net?.exposedUntil>(lastSnapshot?.time||0)?' · Exposed':''}`;}
  $('enemy-target').hidden=!aimActive||!!boss;if(aimActive&&!enemies.some(e=>!e.dead&&bossType(e.type))){const e=pickEnemy();$('enemy-target').hidden=!e;if(e){$('target-name').textContent=e.data.name;$('target-type').textContent=e.type==='revenant'?'THE AFFLICTED · CASTER':e.type==='hound'?'THE AFFLICTED · BEAST':'THE AFFLICTED';$('target-fill').style.width=`${Math.max(0,e.hp/e.maxHp*100)}%`;}}
  if(state.time>14)$('combat-guide').style.opacity='0';}
-function drawMap(){if(!player)return;const canvas=$('minimap'),ctx=canvas.getContext('2d'),pixelScale=mapExpanded?3:2;if(canvas.width!==220*pixelScale){canvas.width=canvas.height=220*pixelScale;}ctx.setTransform(pixelScale,0,0,pixelScale,0,0);ctx.clearRect(0,0,220,220);ctx.fillStyle='#122023';ctx.fillRect(0,0,220,220);const bounds=worldBounds(),scale=mapExpanded?Math.min(200/(bounds.maxX-bounds.minX),190/(bounds.maxZ-bounds.minZ)):3.8,cx=mapExpanded?(bounds.minX+bounds.maxX)/2:player.position.x,cz=mapExpanded?(bounds.minZ+bounds.maxZ)/2:player.position.z;const project=(x,z)=>({x:110+(x-cx)*scale,y:110+(z-cz)*scale});const caveMap=mapFor(renderedMap).theme==='cave'?mapFor(renderedMap):null;if(caveMap){ctx.fillStyle='#101a20';ctx.fillRect(0,0,220,220);ctx.fillStyle='#485750';for(const floor of caveMap.floors){const q=project(floor.x-floor.w/2,floor.z-floor.d/2);ctx.fillRect(q.x,q.y,floor.w*scale,floor.d*scale);}ctx.fillStyle='#d2aa63';for(const lamp of caveMap.lights){const q=project(lamp.x,lamp.z);ctx.fillRect(q.x-.65,q.y-.65,1.3,1.3);}}ctx.strokeStyle='#666c5366';ctx.lineWidth=mapExpanded?5:13;let p;if(renderedMap==='overworld'){ctx.beginPath();p=project(-78,5);ctx.moveTo(p.x,p.y);p=project(23,5);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();p=project(0,-25);ctx.moveTo(p.x,p.y);p=project(0,25);ctx.lineTo(p.x,p.y);ctx.stroke();for(const b of environment.buildings){p=project(b.x-b.w/2,b.z-b.d/2);ctx.fillStyle=b.chapel?'#748873':'#485b51';ctx.fillRect(p.x,p.y,b.w*scale,b.d*scale);}if(mapExpanded){ctx.font='9px Georgia';ctx.textAlign='center';ctx.fillStyle='#cfc8a3';for(const [name,x,z]of[['ASHWICK',-67,-14],['MOURNING ROAD',-40,-8],['HALLOWMERE',0,-27]]){p=project(x,z);ctx.fillText(name,p.x,p.y);}}}for(const npc of renderedMap==='overworld'?NPCS:[]){p=project(npc.x,npc.z);ctx.fillStyle='#a9c6a4';ctx.fillRect(p.x-2,p.y-2,4,4);}for(const r of regionInteractions()){p=project(r.x,r.z);ctx.fillStyle=r.completed?'#668275':r.locked?'#777775':r.operation==='travel'?'#bd9ed9':r.operation==='checkpoint'?'#ebd283':'#92c8b2';ctx.fillRect(p.x-2.5,p.y-2.5,5,5);}if(renderedMap!=='overworld'){for(const obstacle of environment.obstacles){if(obstacle.disabled)continue;p=project(obstacle.x-obstacle.w/2,obstacle.z-obstacle.d/2);ctx.fillStyle=caveMap?'#101a20':'#455454';ctx.fillRect(p.x,p.y,obstacle.w*scale,obstacle.d*scale);}}if(mapExpanded&&renderedMap!=='overworld'){ctx.font='11px Georgia';ctx.textAlign='center';ctx.fillStyle='#dfd5ae';ctx.fillText(mapFor(renderedMap).name.toUpperCase(),110,17);}for(const d of life?.drops||[]){if(d.claimed||d.kind==='gold')continue;p=project(d.model.position.x,d.model.position.z);ctx.fillStyle=d.rarity==='legendary'?'#efb45d':'#94bdd1';ctx.fillRect(p.x-1.5,p.y-1.5,3,3);}for(const e of enemies){if(e.dead)continue;p=project(e.model.position.x,e.model.position.z);ctx.fillStyle=bossType(e.type)?'#ecaa68':'#cd7864';ctx.beginPath();ctx.arc(p.x,p.y,bossType(e.type)?3.5:1.9,0,6.28);ctx.fill();}for(const other of lastSnapshot?.players||[]){if(other.id===network.id||(other.mapId||'overworld')!==renderedMap)continue;const marker=project(other.x,other.z);ctx.fillStyle=other.color;ctx.beginPath();ctx.arc(marker.x,marker.y,3.2,0,Math.PI*2);ctx.fill();ctx.font='10px Arial';ctx.textAlign='center';ctx.fillText(String(other.slot+1),marker.x,marker.y-5);}p=project(player.position.x,player.position.z);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(-angle+Math.PI);ctx.fillStyle=lastSnapshot?.players.find(p=>p.id===network?.id)?.color||'#f6df93';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(3.6,3.5);ctx.lineTo(0,1.4);ctx.lineTo(-3.6,3.5);ctx.closePath();ctx.fill();ctx.restore();}
+function drawMap(){
+ if(!player)return;const map=mapFor(renderedMap);
+ const percent=drawExplorationMap({canvas:$('minimap'),atlas:exploration,map,player:player.position,angle,expanded:mapExpanded,environment,npcs:renderedMap==='overworld'?NPCS:[],interactions:regionInteractions(),drops:life?.drops||[],enemies,players:lastSnapshot?.players||[],you:network?.id,bossType});
+ $('map-title').textContent=map.name;$('map-exploration').textContent=`${percent}% charted · ${exploration.saveLabel}`;
+}
+
 // Sound locations use the player's ears and the isometric camera's horizontal axis.
 function audioAt(cue,position,volume=1,rate=1){audio.listener={x:player.position.x,z:player.position.z};return audio.play(cue,volume,rate,{position,occluded:!hasLineOfSight(player.position,position,environment.obstacles,.1)});}
 function footstepCue(){const room=environment.currentBuilding(player.position);if(room)return room.chapel?'step':'step-wood';return zoneAt(player.position)==='road'&&Math.abs(player.position.z-5)>1.8?'step-dirt':'step';}
@@ -391,6 +400,9 @@ function applySnapshot(snapshot,changed){
  // The first snapshot is a state baseline; retained server events predate this client.
  if(initialSnapshot){victoryShown=!!state.bossLootClaimed;lastNetworkEvent=Math.max(lastNetworkEvent,...snapshot.events.map(event=>event.id));}
  const me=snapshot.players.find(p=>p.id===snapshot.you);if(!me)return;
+ exploration.setSession(snapshot.worldId,snapshot.you,{mode:sessionMode,preview:previewMode,journeyId:activeJourney?.id});
+ if(changed&&sessionMode==='single-player')exploration.reset();
+ exploration.reveal(mapFor(nextMap),me,environment.obstacles);
  environment.updateProgress?.(state);environment.updateObstacles?.(snapshot.brokenCover||[]);
  const target=predictedPosition(me,network.pending,snapshot.ack,environment.obstacles,worldBounds());
  // Only discontinuities snap. Walking and dodging reconcile on render frames.
@@ -414,7 +426,7 @@ function applySnapshot(snapshot,changed){
 }
 function toggleMapForDeath(){mapExpanded=false;const panel=document.querySelector('.map-panel');panel.classList.remove('expanded');for(const attr of ['role','aria-modal','aria-labelledby'])panel.removeAttribute(attr);$('map-button').setAttribute('aria-label','Expand map');paused=false;}
 function networkEvent(event){
- if(event.type==='result'&&event.operation==='class'){rosterPicker?.resolve(event);if(state.classId&&sessionMode==='single-player'&&!cavePreviewStarted&&new URLSearchParams(location.search).get('preview')==='caves'){cavePreviewStarted=true;const generation=sessionGeneration;import('./cave-preview.js').then(({createCavePreview})=>{if(generation===sessionGeneration)createCavePreview(network,()=>{releaseInput();resetMovement=true;});});}}
+ if(event.type==='result'&&event.operation==='class'){rosterPicker?.resolve(event);if(state.classId&&sessionMode==='single-player'&&!cavePreviewStarted&&['caves','exploration'].includes(new URLSearchParams(location.search).get('preview'))){cavePreviewStarted=true;const generation=sessionGeneration;import('./cave-preview.js').then(({createCavePreview})=>{if(generation===sessionGeneration)createCavePreview(network,()=>{releaseInput();resetMovement=true;});});}}
  if(backgrounded||event.mapId&&event.mapId!==renderedMap)return;
  const pos=new T.Vector3(event.x||0,0,event.z||0);
  if(event.type==='ability'){

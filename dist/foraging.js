@@ -1,3 +1,4 @@
+import {OUTLANDS} from './expansion-layout.js';
 // Shared food rules. Only the server mutates live player state.
 export const POUCH_CAPACITY=5;
 export const FOOD_COOLDOWN=2;
@@ -11,7 +12,7 @@ export const foodFor=id=>FOOD_LIST.find(food=>food.id===id);
 export const foodIcon=food=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${food.icon}"/></svg>`;
 export function createForagingState(){return {pouch:Object.fromEntries(FOOD_LIST.map(food=>[food.id,0])),foodCooldown:0,essenceRegen:0};}
 
-// Six fixed outdoor patches: one in Ashwick, three on the road, two in Hallowmere.
+// The six original patches plus forage beside each new outland clearing.
 // Retained patches keep their IDs, food types, and positions.
 export const FORAGE_PATCHES=Object.freeze([
  [1,'crimson-mushroom','ashwick',-67.5,7.2],
@@ -19,7 +20,8 @@ export const FORAGE_PATCHES=Object.freeze([
  [8,'moonleaf-herb','road',-41,1],
  [12,'bramble-berries','road',-27,6],
  [14,'moonleaf-herb','hallowmere',-18,-10],
- [18,'bramble-berries','hallowmere',6,-22]
+ [18,'bramble-berries','hallowmere',6,-22],
+ ...OUTLANDS.map((s,i)=>[30+i,['crimson-mushroom','moonleaf-herb','bramble-berries'][i%3],s.id,s.x+3,s.z+8])
 ].map(([id,itemId,zone,x,z])=>Object.freeze({id:`forage-${id}`,itemId,zone,x,z})));
 
 export function harvestFood(state,itemId){

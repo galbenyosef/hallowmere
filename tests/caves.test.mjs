@@ -10,12 +10,12 @@ import {discoverEntrances} from '../dist/region-campaign.js';
 const command=(w,p,type,id)=>w.command(p.id,{type,id,worldId:w.id,seq:p.lastSeq+1});
 const at=(p,o)=>{Object.assign(p,{x:o.x,z:o.z,mapId:o.mapId});p.state.mapId=p.mapId;};
 function walk(w,p,goal){
- const path=findPath(p,goal,w.obstaclesFor(p),w.boundsFor(p));assert.ok(path.length);
+ const path=findPath(p,goal,w.obstaclesFor(p),w.boundsFor(p));assert.ok(path.length,`${p.mapId}: (${p.x}, ${p.z}) cannot reach ${goal.id||'destination'} (${goal.x}, ${goal.z})`);
  for(const point of path){let steps=0;while(distance(p,point)>.03&&steps++<500){const d=distance(p,point),step=Math.min(.12,d);Object.assign(p,resolveMove(p,(point.x-p.x)/d*step,(point.z-p.z)/d*step,w.obstaclesFor(p),.42,w.boundsFor(p)));}assert.ok(distance(p,point)<.04);}
  discoverEntrances(w,p);
 }
 test('outdoor and house caves have complete round trips from the starting level before its boss',()=>{
- assert.deepEqual(FIRST_LEVEL_CAVES.map(c=>c.encounters.length),[26,33,46,6,6]);
+ assert.deepEqual(FIRST_LEVEL_CAVES.map(c=>c.encounters.length),[60,66,80,40,40]);
  for(const entrance of CAVE_ENTRANCES){
   const w=new World({seed:17}),p=w.join().player,portal=PORTALS.find(o=>o.id===entrance.id);
   assert.equal(w.snapshot(p.id).interactions.portals.some(o=>o.id===portal.id&&!o.locked),!portal.hidden);

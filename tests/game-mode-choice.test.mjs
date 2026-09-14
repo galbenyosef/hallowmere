@@ -8,7 +8,7 @@ import {createTitleScreen} from '../dist/title-screen.js';
 const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
 const transitions=main.slice(main.indexOf('function setModeChoiceInert'),main.indexOf("$('connection-back').onclick"));
 function setup(){
- const journeyState={activeJourney:null,creatingJourney:false,journeyLeaving:false,journeyConflict:false,autosave:null};
+ const journeyState={activeJourney:null,creatingJourney:false,journeyLeaving:false,journeyConflict:false,autosave:null,previewMode:false};
  const nodes=new Map();const $=id=>{if(!nodes.has(id))nodes.set(id,{id,hidden:false,classList:{remove(){}},focus(){this.focusCalls=(this.focusCalls||0)+1;},children:[]});return nodes.get(id);};
  $('game').children=[$('world'),$('loading')];const sessions=[],snapshots=[],statuses=[];
  class Session{constructor(callbacks){this.callbacks=callbacks;sessions.push(this);}start(){this.started=true;this.connected=true;}close(){this.closed=true;this.connected=false;}}
@@ -63,6 +63,13 @@ test('entrypoint waits for ready assets and an explicit choice; repeated clicks 
  const {run,sessions,context,$}=setup();assert.equal(sessions.length,0);run("startSession('multiplayer')");assert.equal(sessions.length,0);
  context.assetsReady=true;run('showModeChoice()');assert.equal(sessions.length,0);assert.equal($('world').inert,true);
  run("startSession('single-player');startSession('multiplayer');startSession('single-player')");assert.equal(sessions.length,1);assert.ok(sessions[0] instanceof context.LocalSession);assert.equal(sessions[0].started,true);assert.equal($('world').inert,false);
+});
+
+test('ordinary solo opens saved journeys while preview tours start an unsaved session',()=>{
+ const {run,context,sessions}=setup();let menus=0;context.assetsReady=true;context.journeysMenu={show(){menus++;}};
+ run("chooseMode('single-player')");assert.equal(menus,1);assert.equal(sessions.length,0);
+ context.previewMode=true;run("chooseMode('single-player')");
+ assert.equal(menus,1);assert.equal(sessions.length,1);assert.equal(context.activeJourney,null);assert.equal(context.autosave,null);
 });
 
 test('returning from connection and choosing solo discards old multiplayer callbacks',()=>{

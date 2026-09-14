@@ -1,4 +1,5 @@
 import {BUILDING_SPECS,buildingWorld} from './buildings.js';
+import {caveExpansion} from './cave-expansion.js';
 
 // Authored chambers and winding routes are rasterized once. Navigation, the map,
 // and the scenery all use the same solid rock footprint.
@@ -22,8 +23,11 @@ function rectangles(cells,columns,rows,value,w,d){
  return result;
 }
 function cave(id,name,w,d,chambers,tunnels,treasureRooms){
+ const expansion=caveExpansion(id,w,d,chambers),first=chambers.length;
+ chambers=[...chambers,...expansion.chambers];tunnels=[...tunnels,...expansion.tunnels];
+ treasureRooms=[...treasureRooms,first+2,first+4,first+5,first+7,first+9];w*=3;d*=2;
  const columns=w/CELL,rows=d/CELL,cells=new Uint8Array(columns*rows),walls=[],floorTiles=[];
- const carved=p=>chambers.some(r=>((p.x-r.x)/r.rx)**2+((p.z-r.z)/r.rz)**2<1)||tunnels.some(t=>t.points.slice(1).some((b,i)=>distanceToSegment(p,t.points[i],b)<t.width/2));
+ const carved=p=>chambers.some(r=>r.shape==='vault'?Math.abs(p.x-r.x)<r.rx&&Math.abs(p.z-r.z)<r.rz:((p.x-r.x)/r.rx)**2+((p.z-r.z)/r.rz)**2<1)||tunnels.some(t=>t.points.slice(1).some((b,i)=>distanceToSegment(p,t.points[i],b)<t.width/2));
  for(let row=1;row<rows-1;row++)for(let col=1;col<columns-1;col++){
   const p={x:-w/2+(col+.5)*CELL,z:-d/2+(row+.5)*CELL};
   if(carved(p)){cells[row*columns+col]=1;floorTiles.push(p);}
