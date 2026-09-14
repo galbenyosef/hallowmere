@@ -5,6 +5,9 @@ import {renderDialogue,handleDialogueKey} from './dialogue.js';
 import {npcPortraitFor} from './npc-portraits.js';
 import {createTitleScreen} from './title-screen.js';
 import {LocalSession} from './local-session.js';
+import {JourneyStore,createAutosave} from './journey-store.js';
+import {createJourney} from './journey-state.js';
+import {createJourneysMenu} from './journeys-menu.js';
 import {consumeAvailability} from './foraging.js';
 import {updateInventoryResources} from './pouch.js';
 import {CLASS_LIST,CLASSES,abilitiesFor,abilityForEvent,classFor,classAppearance,conceptFor,classColor} from './classes.js';
@@ -44,7 +47,10 @@ const resourceOrbs=createResourceOrbs();
 const gameSettings=readGameSettings(),audio=new AudioEngine();audio.musicEnabled=gameSettings.music;let state=Object.assign(createState(),createCampaign(crypto.getRandomValues(new Uint32Array(1))[0])),scene,camera,renderer,environment,player,heroRig,clock,ready=false,started=false,paused=false,backgrounded=document.hidden,mapExpanded=false,modalKind='',angle=0,moveTarget=null,movePath=[],lockedEnemy=null,attackHeld=false,aimActive=false,shake=0,dodgeTime=0,lastMove=new T.Vector3(0,0,-1),targetWorld=new T.Vector3(0,0,-5),accumulated=0,lastStep=0,uiTimer=0,audioTimer=0,audioInterior=null,toastTimer;
 const pointer=new T.Vector2(0,0),raycaster=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0),keys=new Set(),enemies=[],effects=[],floaters=[],prefabs={},cameraOffset=new T.Vector3(17,25,26),cameraTarget=new T.Vector3(0,0,1.6),reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
 let sessionMode=null,assetsReady=false,sessionGeneration=0,mainMenuOpen=false,cavePreviewStarted=false;
-const titleScreen=createTitleScreen($('loading'),{onBegin:startSession,onResume:resumeFromMainMenu,onChangeCharacter:openRoster});
+let creatingJourney=false,activeJourney=null,autosave=null,journeyLeaving=false,journeyConflict=false,saveStatus={kind:'saved',message:'All progress saved'},saveIndicatorTimer;
+const journeyStore=new JourneyStore();
+const titleScreen=createTitleScreen($('loading'),{onBegin:chooseMode,onResume:resumeFromMainMenu,onChangeCharacter:openRoster});
+const journeysMenu=createJourneysMenu({store:journeyStore,onNew:chooseJourneyCharacter,onContinue:continueJourney,onBack:showModeChoice});
 let worldPreview,rosterPicker,multiplayerView,network,networkDirection={x:0,z:0},lastSnapshot=null,lastNetworkEvent=0,networkProjectiles=new Map(),networkZones=new Map(),life,combatEffects,classEffects,moonLight,hemisphereLight,rimLight,currentNpc=null,victoryShown=false,victoryTimer,playerLight,spellLight,selection,joystickValue={x:0,y:0},joystickPointer=null,previousFocus=null;
 let renderedMap='overworld',overworldEnvironment,overworldObjects=[],landmarks,pendingRegionInteraction=null;const regionLabels=new Map(),networkHazards=new Map();
 const worldBounds=()=>mapFor(renderedMap).bounds;
@@ -66,7 +72,7 @@ async function init(){let loadingFailed=false;try{
  if(new URLSearchParams(location.search).get('preview')==='predator'){worldPreview=createPredatorWorldPreview({scene,player});optimizeModel(worldPreview.root);resize();}
  life=new VillageLife({scene,camera,player,state,cloneModel,reducedMotion,obstacles:environment.obstacles,onTalk:talkTo,onCollect:lootCollected,onLootClick:collectClickedLoot,onApproach:point=>{awaken();return setDestination(point);}});
  multiplayerView=createMultiplayerView({scene,camera,cloneModel,getRig,animateRig,animateHeroAttack,player});
- rosterPicker=createRosterPicker({getState:()=>state,onChoose:choice=>network.send('select-class',choice),onClose:closeRoster,onNavigate:navigateMenu});
+ rosterPicker=createRosterPicker({getState:()=>creatingJourney?{}:state,onChoose:chooseCharacter,onClose:closeRoster,onNavigate:navigateMenu});
  life.requestCollect=id=>!paused&&!backgrounded&&!state.ended&&network.send('collect',{id});life.requestForage=id=>!paused&&!backgrounded&&!state.ended&&network.send('forage',{id});
  clock=new T.Clock();assetsReady=true;updateUI();drawMap();titleScreen.setProgress(100);showModeChoice();renderer.setAnimationLoop(frame);
  }catch(error){loadingFailed=true;console.error(error);titleScreen.showError();}}
@@ -77,12 +83,64 @@ function showModeChoice(){
  ready=false;sessionMode=null;mainMenuOpen=false;
  titleScreen.showModes();$('connection-overlay').hidden=true;
 }
-function startSession(mode){
+function chooseMode(mode){if(mode==='single-player')openJourneys();else startSession(mode);}
+function openJourneys(preferredId){
+ titleScreen.hide();setModeChoiceInert(true);ready=false;journeysMenu.show(preferredId);
+}
+function chooseJourneyCharacter(){creatingJourney=true;rosterPicker.show({journey:true});}
+function chooseCharacter(choice){
+ if(creatingJourney){beginJourney(choice);return true;}
+ return network?.send('select-class',choice);
+}
+async function beginJourney(choice){
+ // Let the existing picker enter its pending state before resolving it.
+ await Promise.resolve();let record;
+ try{
+  record=await journeyStore.create(createJourney(choice));activeJourney=record;
+  startSession('single-player',record.data);attachAutosave(record);
+  creatingJourney=false;rosterPicker.resolve({ok:true});
+ }catch(error){if(record){stopJourneySession();await journeyStore.release(record.id).catch(()=>{});}activeJourney=null;rosterPicker.resolve({ok:false,reason:error.message});}
+}
+async function continueJourney(id){
+ const record=await journeyStore.acquire(id);
+ try{activeJourney=record;startSession('single-player',record.data);attachAutosave(record);if(record.recovered)toast('Journey recovered from its previous save.');}
+ catch(error){stopJourneySession();await journeyStore.release(id).catch(()=>{});throw error;}
+}
+function attachAutosave(record){
+ autosave=createAutosave({store:journeyStore,record,getSave:()=>network.capture(),onStatus:updateSaveStatus,onConflict:error=>{
+  journeyConflict=true;paused=true;releaseInput();audio.pause(true,backgrounded);
+  journeysMenu.showConflict(error.message,()=>{stopJourneySession();openJourneys();});
+  updateSaveStatus({kind:'error',message:error.message});
+ }});
+}
+function updateSaveStatus(value=saveStatus){
+ saveStatus=value;
+ for(const element of document.querySelectorAll('[data-save-status], #journey-save-indicator')){element.textContent=value.message;element.dataset.kind=value.kind;}
+ const indicator=$('journey-save-indicator');indicator.hidden=!activeJourney;clearTimeout(saveIndicatorTimer);
+ if(value.kind==='saved')saveIndicatorTimer=setTimeout(()=>{indicator.hidden=true;},2500);
+}
+async function saveAndExit(){
+ if(!autosave||journeyLeaving||journeyConflict)return;
+ journeyLeaving=true;paused=true;releaseInput();
+ for(const button of document.querySelectorAll('[data-save-exit], [data-resume-game]'))button.disabled=true;
+ try{const id=activeJourney.id;await autosave.exit();stopJourneySession();openJourneys(id);}
+ catch(error){updateSaveStatus({kind:'error',message:error.message});}
+ finally{journeyLeaving=false;for(const button of document.querySelectorAll('[data-save-exit], [data-resume-game]'))button.disabled=false;}
+}
+function stopJourneySession(){
+ autosave?.stop();autosave=null;network?.close();network=null;sessionGeneration++;ready=false;started=false;
+ activeJourney=null;sessionMode=null;lastSnapshot=null;lastNetworkEvent=0;mainMenuOpen=false;journeyConflict=false;
+ clearTimeout(victoryTimer);clearTimeout(saveIndicatorTimer);victoryShown=false;cavePreviewStarted=false;
+ releaseInput();inventoryPreviews.hide();toggleMapForDeath();modalKind='';currentNpc=null;
+ $('modal-shade').hidden=true;$('journey-save-indicator').hidden=true;$('connection-overlay').hidden=true;$('restart-vote').hidden=true;
+ audio.pause(true,backgrounded);accumulated=0;uiTimer=0;audioTimer=0;dodgeTime=0;shake=0;resetMovement=true;
+}
+function startSession(mode,save){
  if(!assetsReady||sessionMode)return;
  sessionMode=mode;ready=true;setModeChoiceInert(false);const generation=++sessionGeneration;
  const current=callback=>(...args)=>{if(generation===sessionGeneration)callback(...args);};
- const callbacks={onSnapshot:current(applySnapshot),onStatus:current(connectionStatus),onWelcome:current(()=>{releaseInput();movementCorrection.reset();resetMovement=true;moveTarget=null;movePath=[];})};
- network=mode==='single-player'?new LocalSession(callbacks):new MultiplayerClient(callbacks);
+ const callbacks={onSnapshot:current(applySnapshot),onProgress:current(soon=>autosave?.changed(soon)),onStatus:current(connectionStatus),onWelcome:current(()=>{releaseInput();movementCorrection.reset();resetMovement=true;moveTarget=null;movePath=[];})};
+ network=mode==='single-player'?new LocalSession({...callbacks,save}):new MultiplayerClient(callbacks);
  titleScreen.hide();clock.getDelta();network.start();awaken();
 }
 function returnToModeChoice(){
@@ -90,7 +148,7 @@ function returnToModeChoice(){
  sessionGeneration++;network?.close();network=null;releaseInput();showModeChoice();
 }
 function mainMenuSession(){
- return {mode:sessionMode,canChangeCharacter:!!network?.connected&&!state.ended&&safeHere(),character:classFor(state).name};
+ return {mode:sessionMode,canChangeCharacter:!activeJourney&&!!network?.connected&&!state.ended&&safeHere(),character:classFor(state).name,characterLocked:!!activeJourney};
 }
 function openMainMenu(){
  if(!ready||!network?.connected||!lastSnapshot||state.ended||rosterPicker?.open)return;
@@ -100,12 +158,14 @@ function openMainMenu(){
  setModeChoiceInert(true);titleScreen.showMainMenu(mainMenuSession());
 }
 function resumeFromMainMenu(){
+ if(journeyLeaving||journeyConflict)return;
  if(!mainMenuOpen||!network?.connected||state.ended)return;
  mainMenuOpen=false;$('loading').inert=false;titleScreen.hide();setModeChoiceInert(false);
  paused=false;releaseInput();clock.getDelta();audio.pause(backgrounded,backgrounded);$('world').focus({preventScroll:true});
 }
 function closeRoster(){
  releaseInput();
+ if(creatingJourney){creatingJourney=false;openJourneys();return;}
  if(mainMenuOpen){paused=true;audio.pause(true,backgrounded);titleScreen.showMainMenu(mainMenuSession());return;}
  paused=false;audio.pause(backgrounded,backgrounded);$('world').focus({preventScroll:true});
 }
@@ -114,7 +174,8 @@ function dismissMainMenu(){
  mainMenuOpen=false;$('loading').inert=false;titleScreen.hide();setModeChoiceInert(false);
 }
 $('connection-back').onclick=returnToModeChoice;
-window.addEventListener('pagehide',()=>network?.close());
+window.addEventListener('pagehide',()=>{autosave?.emergency();autosave?.exit().catch(()=>{});network?.close();});
+window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
 function optimizeModel(root){root.traverse(group=>{if(group.isMesh)return;const batches=new Map();for(const child of [...group.children]){if(!child.isMesh||Array.isArray(child.material)||child.children.length)continue;child.updateMatrix();let b=batches.get(child.material.uuid);if(!b){b={material:child.material,geometries:[]};batches.set(child.material.uuid,b);}const geometry=child.geometry.clone();geometry.applyMatrix4(child.matrix);if(!geometry.attributes.uv)geometry.setAttribute('uv',new T.BufferAttribute(new Float32Array(geometry.attributes.position.count*2),2));b.geometries.push(geometry.index?geometry.toNonIndexed():geometry);group.remove(child);}for(const b of batches.values()){const geometry=mergeGeometries(b.geometries);if(geometry)group.add(new T.Mesh(geometry,b.material));b.geometries.forEach(g=>g.dispose());}});}
 function cloneModel(name){if(!prefabs[name]){const definition=CLASS_LIST.find(c=>c.concept===name);prefabs[name]=createPlayableCharacter(definition?.id||'sorcerer',name);optimizeModel(prefabs[name]);}const model=prefabs[name].clone(true),materials=new Map();model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const cloneMaterial=source=>{if(!materials.has(source.uuid)){const m=source.clone();m.userData.baseEmissive=m.emissive.clone();materials.set(source.uuid,m);}return materials.get(source.uuid);};o.material=Array.isArray(o.material)?o.material.map(cloneMaterial):cloneMaterial(o.material);});return model;}
 function getRig(root){const body=root.getObjectByName('body'),rig={root,body,baseY:body?.userData.baseY??body?.position.y,arms:[],legs:[]};root.traverse(o=>{if(o.name.startsWith('leg'))rig.legs.push(o);if(o.name.startsWith('arm'))rig.arms.push(o);});if(root.getObjectByName('ranger-quiver'))rig.rangerWeapons={bow:root.getObjectByName('weapon'),stowed:root.getObjectByName('ranger-stowed-bow'),right:root.getObjectByName('ranger-knife-right'),left:root.getObjectByName('ranger-knife-left'),sheathed:root.getObjectByName('ranger-sheathed-knives')};if(root.getObjectByName('oathkeeper-wing-harness'))rig.oathkeeper={wings:[root.getObjectByName('oathkeeper-wing-left'),root.getObjectByName('oathkeeper-wing-right')],blaster:root.getObjectByName('oathkeeper-blaster'),holster:root.getObjectByName('oathkeeper-holstered-blaster')};return rig;}
@@ -150,9 +211,9 @@ function nearestEnemy(range=9){let best=null,dist=range;for(const e of enemies){
 $('world').addEventListener('pointermove',updatePointer);
 $('world').addEventListener('pointerdown',event=>{if(!ready||paused||backgrounded||state.ended||!network?.connected)return;event.preventDefault();$('world').focus({preventScroll:true});awaken();updatePointer(event);if(event.button===2){perform('bolt');return;}if(event.button!==0)return;raycaster.setFromCamera(pointer,camera);if(!event.shiftKey){const drop=life.pickLoot(raycaster);if(drop){collectClickedLoot(drop.id);return;}}const regional=regionInteractions().find(r=>!r.completed&&distance(r,targetWorld)<1.6);if(regional&&!event.shiftKey){interactRegion(regional);return;}const door=environment.pickDoor(raycaster);if(door&&!event.shiftKey){enterBuilding(door);return;}const npc=life.visibleNpcs().find(n=>distance(n.model.position,targetWorld)<1.1);if(npc){life.interact(npc.id);return;}const enemy=pickEnemy();lockedEnemy=enemy;if(enemy){attackHeld=true;moveTarget=null;angle=Math.atan2(enemy.model.position.x-player.position.x,enemy.model.position.z-player.position.z);if(distance(player.position,enemy.model.position)<abilitiesFor(state).attack.range)perform('attack');}else if(event.shiftKey||distance(player.position,targetWorld)<2.4){moveTarget=null;attackHeld=true;perform('attack');}else{setDestination(targetWorld);}});
 window.addEventListener('pointerup',event=>{if(event.button===0)attackHeld=false;});window.addEventListener('pointercancel',()=>{attackHeld=false;});$('world').addEventListener('contextmenu',e=>e.preventDefault());
-window.addEventListener('keydown',event=>{if(event.defaultPrevented||!ready||!network?.connected||!$('loading').hidden)return;if(event.key!=='Escape'&&(event.target instanceof HTMLInputElement||event.target instanceof HTMLTextAreaElement||event.target instanceof HTMLSelectElement))return;const key=event.key.toLowerCase();if(rosterPicker?.open)return;if(key==='c'&&!event.repeat){openRoster();return;}if(event.target instanceof HTMLButtonElement&&[' ','enter'].includes(key))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(key)&&key!=='tab')event.preventDefault();if(event.repeat&&['escape','1','2','3','h','j','m','f','i'].includes(key))return;if(key==='escape'){if(mapExpanded)toggleMap();else if(paused)closeModal();else showModal('pause');return;}if(key==='h'){paused?closeModal():showModal('help');return;}if(key==='j'){paused?closeModal():showModal('journal');return;}if(key==='m'){toggleMap();return;}if(key==='i'){paused?closeModal():showModal('inventory');return;}if(!ready||paused||backgrounded||state.ended||!network?.connected)return;keys.add(key);if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','1','2','3'].includes(key))awaken();if(key==='1')perform('dodge');if(key==='2')perform('nova');if(key==='3')perform('heal');if(key==='f'){awaken();const result=interact();if(!result.ok)toast(result.reason);}});window.addEventListener('keyup',event=>keys.delete(event.key.toLowerCase()));
+window.addEventListener('keydown',event=>{if(event.defaultPrevented||journeyLeaving||journeyConflict||!ready||!network?.connected||!$('loading').hidden)return;if(event.key!=='Escape'&&(event.target instanceof HTMLInputElement||event.target instanceof HTMLTextAreaElement||event.target instanceof HTMLSelectElement))return;const key=event.key.toLowerCase();if(rosterPicker?.open)return;if(key==='c'&&!event.repeat){openRoster();return;}if(event.target instanceof HTMLButtonElement&&[' ','enter'].includes(key))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(key)&&key!=='tab')event.preventDefault();if(event.repeat&&['escape','1','2','3','h','j','m','f','i'].includes(key))return;if(key==='escape'){if(mapExpanded)toggleMap();else if(paused)closeModal();else showModal('pause');return;}if(key==='h'){paused?closeModal():showModal('help');return;}if(key==='j'){paused?closeModal():showModal('journal');return;}if(key==='m'){toggleMap();return;}if(key==='i'){paused?closeModal():showModal('inventory');return;}if(!ready||paused||backgrounded||state.ended||!network?.connected)return;keys.add(key);if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','1','2','3'].includes(key))awaken();if(key==='1')perform('dodge');if(key==='2')perform('nova');if(key==='3')perform('heal');if(key==='f'){awaken();const result=interact();if(!result.ok)toast(result.reason);}});window.addEventListener('keyup',event=>keys.delete(event.key.toLowerCase()));
 function releaseInput({resetTouch=true}={}){keys.clear();attackHeld=false;moveTarget=null;movePath=[];lockedEnemy=null;pendingRegionInteraction=null;if(network){network.input={x:0,z:0,angle};network.send('input',network.input);}if(resetTouch)releaseJoystick();}
-bindPageActivity({releaseInput,setBackgrounded:hidden=>{backgrounded=hidden;clock?.getDelta();network?.advance?.(0,true);audio.pause(paused||backgrounded,backgrounded);}});
+bindPageActivity({releaseInput,setBackgrounded:hidden=>{if(hidden){autosave?.emergency();autosave?.changed();autosave?.flush().catch(()=>{});}backgrounded=hidden;clock?.getDelta();network?.advance?.(0,true);audio.pause(paused||backgrounded,backgrounded);}});
 document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(paused||backgrounded||state.ended)return;awaken();if(coarse||!aimActive){const near=nearestEnemy();if(near)angle=Math.atan2(near.model.position.x-player.position.x,near.model.position.z-player.position.z);}perform(button.dataset.action);}));
 document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',event=>{if(event.detail===0&&!paused&&!backgrounded){awaken();perform(button.dataset.action);}}));
 $('sound-button').onclick=async()=>{const wasReady=audio.ready;await audio.unlock();if(!audio.ready){toast('Sound could not start. Try again.');return;}const muted=wasReady?audio.toggle():audio.muted;audio.pause(paused||backgrounded,backgrounded);$('sound-button').innerHTML=icon(muted?'muted':'volume');$('sound-button').setAttribute('aria-label',muted?'Enable sound':'Mute sound');$('audio-prompt').style.opacity='0';toast(muted?'Sound muted':'Sound enabled');};$('help-button').onclick=()=>showModal('help');$('journal-button').onclick=()=>showModal('journal');$('pause-button').onclick=()=>showModal('pause');$('map-button').onclick=toggleMap;$('inventory-button').onclick=()=>showModal('inventory');$('character-button').onclick=openRoster;$('interact-button').onclick=()=>{if(paused||backgrounded)return;awaken();const r=interact();if(!r.ok)toast(r.reason);};$('fullscreen-button').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen?.();else $('game').requestFullscreen?.().catch(()=>toast('Fullscreen is unavailable in this view.'));};
@@ -161,7 +222,7 @@ function toggleMap(){
  mapExpanded=!mapExpanded;audio.play(mapExpanded?'ui-open':'ui-close',.5);
  const panel=document.querySelector('.map-panel');panel.classList.toggle('expanded',mapExpanded);
  $('map-button').setAttribute('aria-label',mapExpanded?'Close map':'Expand map');
- if(mapExpanded){panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','map-title');updateMenuNavigation($('map-navigation'),'map',{canChangeCharacter:safeHere()});$('map-button').focus({preventScroll:true});}
+ if(mapExpanded){panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','map-title');updateMenuNavigation($('map-navigation'),'map',{canChangeCharacter:!activeJourney&&safeHere(),characterLocked:!!activeJourney});$('map-button').focus({preventScroll:true});}
  else{panel.removeAttribute('role');panel.removeAttribute('aria-modal');panel.removeAttribute('aria-labelledby');$('world').focus({preventScroll:true});}
  paused=mapExpanded;releaseInput();audio.pause(paused||backgrounded,backgrounded);
 }
@@ -213,8 +274,10 @@ function floatText(text,pos,kind=''){const element=document.createElement('div')
 function updateFloaters(dt){for(let i=floaters.length-1;i>=0;i--){const f=floaters[i];f.time+=dt;if(f.time>=f.life){f.element.remove();floaters.splice(i,1);continue;}const projected=f.pos.clone().project(camera);const x=(projected.x*.5+.5)*innerWidth,y=(-projected.y*.5+.5)*innerHeight;f.element.style.transform=`translate(${x+f.offset}px,${y-f.time*55}px) translate(-50%,-50%)`;f.element.style.opacity=String(Math.min(1,(f.life-f.time)*3));}}
 let hudClass=null,portraitsRequested=false;
 function updateClassHud(){
- const c=classFor(state),key=conceptFor(state.classId,state.appearanceId);if(hudClass===key)return;hudClass=key;
+ const c=classFor(state),key=conceptFor(state.classId,state.appearanceId)+'|'+!!activeJourney;if(hudClass===key)return;hudClass=key;
  $('character-name').textContent=c.name;$('class-caption').textContent=c.name.toUpperCase();
+ $('character-button').disabled=!!activeJourney;$('character-button').title=activeJourney?'This journey keeps its chosen character.':'Change character (C)';
+ $('world').setAttribute('aria-label','Village play area. Use W A S D to move, mouse to aim and attack, F to speak or collect loot, I for equipment, '+(activeJourney?'':'C to choose a class at a sanctuary, ')+'2 for your class skill, 1 to dodge, and 3 to heal.');
  for(const [action,skill] of Object.entries(c.abilities)){const button=document.querySelector(`[data-action="${action}"]`);button.querySelector('.ability-name').textContent=skill.name;button.title=`${skill.name} · ${skill.cost} essence · ${skill.cooldown}s cooldown. ${skill.description}`;button.setAttribute('aria-label',button.title);const index=['attack','bolt','dodge','nova'].indexOf(action);if(index>=0&&classIconNames[c.id]){const mark=button.querySelector('.ability-icon');mark.innerHTML=icon(classIconNames[c.id][index]);mark.style.color=skill.color||classColor(state);}}
 }
 function syncPlayerCharacter(){
@@ -223,12 +286,13 @@ function syncPlayerCharacter(){
  for(const child of [...player.children])disposeActor(child);player.add(cloneModel(key));player.userData.characterKey=key;heroRig=getRig(player);
 }
 function openRoster(){
+ if(activeJourney){toast('This journey keeps its chosen character. Start a new journey to choose another.');return;}
  if(!ready||!network?.connected||!rosterPicker||rosterPicker.open||state.ended)return;
  if(!safeHere()){if(mainMenuOpen)titleScreen.updateSession(mainMenuSession());else toast('Return to a sanctuary to change class.');return;}
  if(mainMenuOpen)titleScreen.hide();
  if(mapExpanded)toggleMap();inventoryPreviews.hide();$('modal-shade').hidden=true;modalKind='';currentNpc=null;paused=true;releaseInput();audio.pause(true,backgrounded);rosterPicker.show();
 }
-function updateUI(){if(!player)return;updateClassHud();$('health-value').innerHTML=`${Math.ceil(state.hp)}<span>/ ${state.maxHp}</span>`;$('mana-value').innerHTML=`${Math.floor(state.mana)}<span>/ ${state.maxMana}</span>`;$('health-liquid').style.height=`${state.hp/state.maxHp*100}%`;$('mana-liquid').style.height=`${state.mana/state.maxMana*100}%`;$('potion-count').textContent=state.potions;$('souls-counter').textContent=`${state.souls} SOULS`;$('experience-fill').style.width=`${state.souls%100}%`;$('level-label').textContent=`${classAppearance(state.classId,state.appearanceId)?.name||'OATHBOUND'} · LEVEL ${state.level}`;document.querySelector('.rank').textContent=String(state.level).padStart(2,'0');
+function updateUI(){if(!player)return;updateClassHud();$('health-value').innerHTML=`${Math.ceil(state.hp)}<span>/ ${state.maxHp}</span>`;$('mana-value').innerHTML=`${Math.floor(state.mana)}<span>/ ${state.maxMana}</span>`;$('health-liquid').style.height=`${state.hp/state.maxHp*100}%`;$('mana-liquid').style.height=`${state.mana/state.maxMana*100}%`;$('potion-count').textContent=state.potions;$('souls-counter').textContent=`${state.souls} SOULS`;$('experience-fill').style.width=`${state.souls%100}%`;$('level-label').textContent=`${classAppearance(state.classId,state.appearanceId)?.name||classFor(state).name} · LEVEL ${state.level}`;document.querySelector('.rank').textContent=String(state.level).padStart(2,'0');
  for(const[name,data]of Object.entries(abilitiesFor(state))){const button=document.querySelector(`[data-action="${name}"]`);const cd=state.cooldowns[name];button.classList.toggle('on-cooldown',cd>.12&&name!=='attack');button.querySelector('.cooldown').textContent=cd>=1?Math.ceil(cd):cd.toFixed(1);button.classList.toggle('unavailable',state.mana<data.cost||name==='heal'&&!state.potions);}
  const quest=questSummary(state);$('quest-kind').lastChild.textContent=mapFor(renderedMap).theme==='cave'?' SIDE CAVE':' MAIN QUEST';if(renderedMap==='overworld'&&state.questCompleted&&!state.questRewarded){quest.objective='Quest complete · Claim your reward from Rowan';quest.hint=sessionMode==='single-player'?'You completed The Last Toll. Your reward awaits in Ashwick.':'Your allies completed The Last Toll. Your reward awaits in Ashwick.';}$('quest-title').textContent=quest.title;$('quest-count').textContent=quest.count;$('objective').textContent=quest.objective;$('quest-hint').textContent=quest.hint;$('quest-marker').classList.toggle('done',state.questRewarded);$('gold-counter').textContent=`${state.gold} CROWNS`;$('location-name').textContent=environment.currentBuilding(player.position)?.name||(renderedMap==='overworld'?zoneName(state.zone):mapFor(renderedMap).name);$('location-type').textContent=safeHere()?'SANCTUARY':mapFor(renderedMap).theme==='cave'?'WORLD I · BENEATH HALLOWMERE':renderedMap!=='overworld'?'THE FORSAKEN REACH':state.zone==='road'?'THE FORSAKEN REACH':'WORLD I · THE LAST TOLL';const interaction=nearbyInteraction(),building=interaction?.building,target=interaction?.target;$('interact-button').hidden=!interaction;$('interaction-name').textContent=interaction?.regional?regionActionName(interaction.regional):building?(!building.doorCollider.disabled?'Chapel sealed':environment.currentBuilding(player.position)?.id===building.id?'Leave '+building.name:'Enter '+building.name):target?(target.kind==='forage'?'Harvest '+target.name:target.kind?'Collect '+target.name:'Speak to '+target.name):'';const boss=enemies.find(e=>!e.dead&&bossType(e.type));$('boss-bar').hidden=!boss;if(boss){$('boss-fill').style.width=`${Math.max(0,boss.hp/boss.maxHp*100)}%`;$('boss-bar').querySelector('span').textContent=renderedMap==='overworld'?'THE LAST TOLL':mapFor(renderedMap).name.toUpperCase();const title=$('boss-bar').querySelector('h2');if(title)title.textContent=`${boss.data.name}${boss.net?.bossStage>1?' · Phase '+boss.net.bossStage:''}${boss.net?.exposedUntil>(lastSnapshot?.time||0)?' · Exposed':''}`;}
  $('enemy-target').hidden=!aimActive||!!boss;if(aimActive&&!enemies.some(e=>!e.dead&&bossType(e.type))){const e=pickEnemy();$('enemy-target').hidden=!e;if(e){$('target-name').textContent=e.data.name;$('target-type').textContent=e.type==='revenant'?'THE AFFLICTED · CASTER':e.type==='hound'?'THE AFFLICTED · BEAST':'THE AFFLICTED';$('target-fill').style.width=`${Math.max(0,e.hp/e.maxHp*100)}%`;}}
@@ -285,19 +349,20 @@ function consumePouchItem(itemId){
 }
 function showModal(kind){if(mainMenuOpen&&kind!=='death')return;if(!ready||!network?.connected||mapExpanded||state.ended&&kind!=='death')return;inventoryPreviews.hide();if(kind!=='death'&&kind!=='victory')audio.play('ui-open',.55);if(!modalKind)previousFocus=document.activeElement;modalKind=kind;paused=true;releaseInput();audio.pause(true,backgrounded);$('modal-shade').hidden=false;$('modal-secondary').hidden=true;$('inventory-purse').hidden=kind!=='inventory';$('inventory-controls').hidden=kind!=='inventory';document.querySelector('.modal').classList.toggle('inventory-modal',kind==='inventory');document.querySelector('.modal').classList.toggle('pause-modal',kind==='pause');document.querySelector('.modal').classList.toggle('npc-modal',kind==='npc');$('modal-shade').classList.toggle('npc-conversation',kind==='npc');$('modal-primary').hidden=kind==='npc'||kind==='pause';$('dialogue-portrait').hidden=true;document.querySelector('.modal').classList.remove('has-npc-portrait');$('modal-eyebrow').textContent=kind==='victory'?'THE BELLKEEPER DEFEATED':kind==='death'?'THE VEIL TAKES ANOTHER':'THE ASHEN VIGIL';const title=$('modal-title'),content=$('modal-content'),primary=$('modal-primary');
  const modal=content.closest('.modal');modal.dataset.menuKind=kind;
- updateMenuNavigation($('modal-navigation'),kind,{disabled:kind==='death',canChangeCharacter:safeHere()});
+ updateMenuNavigation($('modal-navigation'),kind,{disabled:kind==='death',canChangeCharacter:!activeJourney&&safeHere(),characterLocked:!!activeJourney});
  $('modal-subtitle').textContent=({inventory:'What you carry into the dark.',pause:sessionMode==='single-player'?'A moment before the road calls.':'The shared world keeps moving. Rest in Ashwick to stay safe.',journal:'Every step leaves a story.',help:'Know your calling. Master the vigil.',npc:'A familiar face along the road.',death:'The vigil is not over.',victory:'A new dawn for Hallowmere.'})[kind]||'';
  modal.scrollTop=0;modal.querySelector('.chronicle-stage').scrollTop=0;
- if(kind==='pause'){title.textContent=sessionMode==='single-player'?'Game paused':'Game menu';content.innerHTML=pauseMenuMarkup(gameSettings);}
- if(kind==='help'){title.textContent='Game controls';content.innerHTML='<div class="chronicle-controls"><div class="controls-table"><div><span>Move / attack a creature</span><kbd>WASD / LEFT CLICK</kbd></div><div><span>Stand and attack</span><kbd>SHIFT + CLICK</kbd></div><div><span>Secondary class skill</span><kbd>RIGHT CLICK</kbd></div><div><span>Evade the red attack zones</span><kbd>1</kbd></div><div><span>Major class skill / healing draught</span><kbd>2 / 3</kbd></div><div><span>Interact / enter cave / rest</span><kbd>F</kbd></div><div><span>Inventory & pouch / journal / map</span><kbd>I / J / M</kbd></div></div><p>Hold a creature to attack at your class’s range. Press C at a sanctuary to change class. Activate the lantern in each region to set your return checkpoint. Watch for faint light and displaced stones to discover caves; their tunnels connect the regions as bosses fall. Use F or tap a landmark to enter passages, cleanse shrines, and open caches. Essence regenerates. Crowns are collected by walking over them; equipment and draughts glow on the ground. Forage mushrooms, moonleaf, and berries with F or a plant label. Open Inventory with I and click food in your pouch to restore health or essence. Hold Alt to reveal nearby loot and plants during combat. Ashwick and Rook’s lantern are safe places to rest. Walk through a door or tap Enter to explore a room. Tap Leave to return outside. Hallowmere’s chapel opens after the Bellkeeper falls.</p></div>';primary.textContent='Close controls';}
+ if(kind==='pause'){title.textContent=sessionMode==='single-player'?'Game paused':'Game menu';content.innerHTML=pauseMenuMarkup(gameSettings,{journey:!!activeJourney});if(activeJourney){autosave?.changed();autosave?.flush().catch(()=>{});updateSaveStatus();}}
+ if(kind==='help'){title.textContent='Game controls';content.innerHTML='<div class="chronicle-controls"><div class="controls-table"><div><span>Move / attack a creature</span><kbd>WASD / LEFT CLICK</kbd></div><div><span>Stand and attack</span><kbd>SHIFT + CLICK</kbd></div><div><span>Secondary class skill</span><kbd>RIGHT CLICK</kbd></div><div><span>Evade the red attack zones</span><kbd>1</kbd></div><div><span>Major class skill / healing draught</span><kbd>2 / 3</kbd></div><div><span>Interact / enter cave / rest</span><kbd>F</kbd></div><div><span>Inventory & pouch / journal / map</span><kbd>I / J / M</kbd></div></div><p>Hold a creature to attack at your class’s range. '+(activeJourney?'Each journey keeps its chosen character. Autosave is always on; continuing returns you to your last checkpoint.':'Press C at a sanctuary to change class.')+' Activate the lantern in each region to set your return checkpoint. Watch for faint light and displaced stones to discover caves; their tunnels connect the regions as bosses fall. Use F or tap a landmark to enter passages, cleanse shrines, and open caches. Essence regenerates. Crowns are collected by walking over them; equipment and draughts glow on the ground. Forage mushrooms, moonleaf, and berries with F or a plant label. Open Inventory with I and click food in your pouch to restore health or essence. Hold Alt to reveal nearby loot and plants during combat. Ashwick and Rook’s lantern are safe places to rest. Walk through a door or tap Enter to explore a room. Tap Leave to return outside. Hallowmere’s chapel opens after the Bellkeeper falls.</p></div>';primary.textContent='Close controls';}
  if(kind==='journal'){const quest=questSummary(state);title.textContent=quest.title;content.innerHTML=`<div class="journal-copy"><section><span class="chronicle-label">THE LAST TOLL</span><p>Hallowmere’s chapel bell has rung for thirteen years. The dead now haunt the road from Ashwick, and the Bellkeeper still pulls the rope.</p><p><strong>${quest.objective}</strong><br>${quest.hint}</p></section><section class="journal-progress"><span class="chronicle-label">YOUR JOURNEY</span><p>Mourning Road: ${state.roadKills} monsters slain<br>Hallowmere: ${state.villageKills} / 12 afflicted<br>Bellkeeper: ${state.victory?'Defeated':state.bossSpawned?'Awakened':'Not yet awakened'}${Object.entries(state.regionProgress||{}).map(([id,p])=>`<br>${mapFor(id).name}: ${p.bossDefeated?'Boss defeated':p.bossSpawned?'Boss awakened':'Exploring'}`).join('')}<br>Hidden entrances discovered: ${state.discoveries?.length||0}<br>Spoils collected: ${state.lootCollected}<br>Village reward: ${state.questRewarded?'Claimed':'80 crowns from Elder Rowan'}</p></section></div>`;primary.textContent='Close journal';}
  if(kind==='npc')renderNpc();
  if(kind==='inventory'){title.textContent='Inventory';renderInventory();primary.textContent='Close inventory';}
- if(kind==='death'){title.textContent='Return to the lanterns';content.innerHTML=`<p>${sessionMode==='multiplayer'?'Your allies continue the fight.<br>':''}Return to ${CHECKPOINTS.find(c=>c.id===state.checkpointId)?.name||'Ashwick'} with your equipment intact.</p><div class="victory-stats"><div><strong>${state.kills}</strong><span>SLAIN</span></div><div><strong>${state.souls}</strong><span>SOULS</span></div></div>`;primary.textContent='Respawn at checkpoint';}
+ if(kind==='death'){title.textContent='Return to the lanterns';content.innerHTML=`<p>${sessionMode==='multiplayer'?'Your allies continue the fight.<br>':''}Return to ${CHECKPOINTS.find(c=>c.id===state.checkpointId)?.name||'Ashwick'} with your equipment intact.</p><div class="victory-stats"><div><strong>${state.kills}</strong><span>SLAIN</span></div><div><strong>${state.souls}</strong><span>SOULS</span></div></div>`;primary.textContent='Respawn at checkpoint';if(activeJourney)content.insertAdjacentHTML('beforeend','<button type="button" class="text-button" data-save-exit>Save &amp; exit</button><span class="journey-save-status" data-save-status role="status"></span>');}
  if(kind==='victory'){title.textContent='At last, silence';content.innerHTML=`<p>The Bellkeeper falls. For the first time in thirteen years, Hallowmere hears the wind.</p><div class="legendary-reward"><span>LEGENDARY WEAPON RECOVERED</span><strong>Bellkeeper’s Requiem</strong><p>+18 primary damage · Equip it in your inventory.</p></div><p>Return to Elder Rowan in Ashwick to claim the villages’ thanks.</p>`;primary.textContent='Continue playing';}if(kind==='npc')content.querySelector('.dialogue-response:not(:disabled), [data-dialogue-close]')?.focus({preventScroll:true});else if(kind==='pause')content.querySelector('[data-resume-game]').focus({preventScroll:true});else primary.focus({preventScroll:true});}
-function closeModal(){if(state.ended||rosterPicker?.open)return;if(mainMenuOpen){resumeFromMainMenu();return;}inventoryPreviews.hide();audio.play('ui-close',.5);$('modal-shade').hidden=true;paused=false;audio.pause(backgrounded,backgrounded);modalKind='';currentNpc=null;previousFocus?.focus?.({preventScroll:true});$('world').focus({preventScroll:true});}
+function closeModal(){if(journeyLeaving||journeyConflict)return;if(state.ended||rosterPicker?.open)return;if(mainMenuOpen){resumeFromMainMenu();return;}inventoryPreviews.hide();audio.play('ui-close',.5);$('modal-shade').hidden=true;paused=false;audio.pause(backgrounded,backgrounded);modalKind='';currentNpc=null;previousFocus?.focus?.({preventScroll:true});$('world').focus({preventScroll:true});}
 bindPauseMenu($('modal-content'),{
  onResume:()=>{closeModal();awaken();},
+ onSaveExit:saveAndExit,
  onSetting:(key,value)=>{
   gameSettings[key]=value;saveGameSettings(gameSettings);
   if(key==='music'){audio.musicEnabled=value;audio.applyState();if(value)awaken();}
@@ -318,9 +383,10 @@ function applySnapshot(snapshot,changed){
  const initialSnapshot=!lastSnapshot,wasDead=state.ended,oldLevel=state.level,beforeServices=JSON.stringify([state.gold,state.potions,state.forgeLevel,state.questAccepted,state.questRewarded,state.victory,state.bossLootClaimed,state.rookSupplies]),beforeInventory=JSON.stringify([state.inventory,state.equipped]);
  const nextMap=snapshot.mapId||snapshot.state.mapId||snapshot.players.find(p=>p.id===snapshot.you)?.mapId||'overworld',mapChanged=nextMap!==renderedMap;
  if(mapChanged)switchMap(nextMap);
- if(changed||mapChanged){classEffects.clear();for(const visual of networkZones.values())visual.dispose();networkZones.clear();releaseInput();network.pending=[];if(changed){victoryShown=false;lastNetworkEvent=0;clearTimeout(victoryTimer);}for(const effect of effects)removeObject(effect.mesh);effects.length=0;for(const floater of floaters)floater.element.remove();floaters.length=0;for(const e of enemies){cancelAttack(e);disposeActor(e.model);removeObject(e.bar);e.barTexture.dispose();}enemies.length=0;life.syncLoot([]);life.syncForage([]);for(const b of networkProjectiles.values())b.visual?b.visual.dispose():removeObject(b.mesh);networkProjectiles.clear();if(changed)toast(sessionMode==='single-player'?'A new vigil begins.':'A new vigil begins · The shared world has restarted.');else toast(mapFor(nextMap).name);}
+ if(changed||mapChanged||initialSnapshot){classEffects.clear();for(const visual of networkZones.values())visual.dispose();networkZones.clear();releaseInput();network.pending=[];if(changed){victoryShown=false;lastNetworkEvent=0;clearTimeout(victoryTimer);}for(const effect of effects)removeObject(effect.mesh);effects.length=0;for(const floater of floaters)floater.element.remove();floaters.length=0;for(const e of enemies){cancelAttack(e);disposeActor(e.model);removeObject(e.bar);e.barTexture.dispose();}enemies.length=0;life.syncLoot([]);life.syncForage([]);for(const b of networkProjectiles.values())b.visual?b.visual.dispose():removeObject(b.mesh);networkProjectiles.clear();if(changed)toast(sessionMode==='single-player'?'A new vigil begins.':'A new vigil begins · The shared world has restarted.');else if(mapChanged)toast(mapFor(nextMap).name);}
  // Fresh server sessions omit the old class; clear it before merging so the
  // client cannot show Sorcerer skills while the server awaits a new choice.
+ if(initialSnapshot)for(const key of Object.keys(state))delete state[key];
  Object.assign(state,{classId:undefined,appearanceId:undefined,baseHp:undefined},snapshot.state);lastSnapshot=snapshot;started=true;syncPlayerCharacter();
  // The first snapshot is a state baseline; retained server events predate this client.
  if(initialSnapshot){victoryShown=!!state.bossLootClaimed;lastNetworkEvent=Math.max(lastNetworkEvent,...snapshot.events.map(event=>event.id));}
@@ -329,7 +395,7 @@ function applySnapshot(snapshot,changed){
  const target=predictedPosition(me,network.pending,snapshot.ack,environment.obstacles,worldBounds());
  // Only discontinuities snap. Walking and dodging reconcile on render frames.
  movementCorrection.reconcile(player.position,target,resetMovement||changed||mapChanged||wasDead&&!state.ended||backgrounded,me.dodge>0?4:1.5);player.rotation.z=state.ended?-1.5:0;
- if(mapChanged)cameraTarget.set(target.x,0,target.z-3.4);dodgeTime=me.dodge;if(me.dodge>0)angle=dodgeAngle=me.angle;selection.material.color.set(me.color);multiplayerView.sync(snapshot.players,snapshot.you,snapshot.time,changed||resetMovement);resetMovement=false;
+ if(mapChanged||initialSnapshot)cameraTarget.set(target.x,0,target.z-3.4);dodgeTime=me.dodge;if(me.dodge>0)angle=dodgeAngle=me.angle;selection.material.color.set(me.color);multiplayerView.sync(snapshot.players,snapshot.you,snapshot.time,changed||resetMovement);resetMovement=false;
  const enemyIds=new Set(snapshot.enemies.map(e=>e.id));for(let i=enemies.length-1;i>=0;i--)if(!enemyIds.has(enemies[i].id)){const e=enemies[i];cancelAttack(e);disposeActor(e.model);removeObject(e.bar);e.barTexture.dispose();enemies.splice(i,1);}
  for(const data of snapshot.enemies){let e=enemies.find(e=>e.id===data.id);if(!e)e=spawnEnemy(data.type,data.x,data.z,data.zone,data.id);const oldPhase=e.phase;if(e.dead&&data.hp>0){e.model.visible=true;e.model.position.set(data.x,0,data.z);e.model.rotation.z=0;e.barHealth=data.hp;}e.net=data;e.hp=data.hp;e.dead=data.hp<=0;e.phase=data.phase;e.timer=data.timer;e.maxHp=data.maxHp;e.angle=data.angle;
   if(e.dead||oldPhase!==data.phase||data.phase!=='windup'||!usesLegacyTelegraph(data.type)){cancelAttack(e);if(data.hp>0&&data.phase==='windup'&&usesLegacyTelegraph(data.type))e.telegraph=telegraph(data.type==='revenant'?data.aim:data,data.type==='revenant'?1.5:e.data.range,['hound','hollow'].includes(data.type)?1.9:Math.PI*2,data.attackAngle);}
