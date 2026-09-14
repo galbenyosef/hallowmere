@@ -77,9 +77,7 @@ export function createRegionEnvironment(scene,mapId){
  const map=mapFor(mapId),k=kit(scene,mapId),{mesh,group}=k,b=map.bounds,obstacles=map.obstacles.map(o=>({...o})),gates=[],cover=[];
  let seed=mapId.length*977;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  mesh('box','ground',(b.minX+b.maxX)/2,-.21,(b.minZ+b.maxZ)/2,b.maxX-b.minX,.4,b.maxZ-b.minZ);
- // Worn lanes run through every chamber, with cross-paths to side objectives.
- if(map.theme!=='cave'){const lane=mesh('box','dark',0,.005,0,mapId==='underways'?58:4,.035,mapId==='underways'?4:58);lane.castShadow=false;}
- for(const o of map.objectives){mesh('box','dark',o.x/2,.008,o.z,Math.abs(o.x)+2,.04,2.6);}
+ // The shared authored routes provide each region's roads and objective approaches.
  for(const obstacle of obstacles){
   // Cave hills are rendered by the landmarks from these same footprints.
   if(obstacle.caveScenery||obstacle.sceneryKind)continue;
@@ -113,7 +111,6 @@ export function createRegionEnvironment(scene,mapId){
   for(const [x,z]of [[b.minX+2,b.minZ+3],[b.maxX-2,b.minZ+3]]){mesh('rock','glow',x,.35,z,.18,.35,.18);}
  }
  if(mapId==='drowned-wood')for(const [x,z]of[[-16,19],[16,16],[-17,-18],[20,-19]]){const pool=mesh('cylinder','dark',x,.025,z,4,.025,3);pool.castShadow=false;}
- if(mapId==='blackvein-quarry')for(const x of[-.9,.9])mesh('box','trim',x,.07,2,.08,.08,32);
  if(mapId==='crownfall-keep'){mesh('box','trim',0,.12,-24,7,.24,5);mesh('box','dark',0,1.4,-26,2.2,2.8,1);}
  const outlands=createOutlandScenery(group,map),groundFog=createGroundFog(group,map);
  const landmarks=createRegionLandmarks(scene,mapId);group.add(landmarks.group);

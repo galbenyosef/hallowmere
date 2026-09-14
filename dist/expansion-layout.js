@@ -1,4 +1,5 @@
-// Six times the original area, with the original quest corridor left in place.
+import {road,SURFACE_ROADS} from './road-layout.js';
+// Six times the original area, with quest locations left in place.
 export const OVERWORLD_BOUNDS={minX:-134.5,maxX:79.5,minZ:-81,maxZ:81};
 export const OUTLANDS=[
  ['orchard','The Withered Orchard',-97,-24,'orchard'],
@@ -18,20 +19,29 @@ export const OUTLANDS=[
  ['hollow','Bramble Hollow',-15,31,'stones'],
  ['spring','The Lost Spring',-54,-29,'stones']
 ].map(([id,name,x,z,kind])=>({id,name,x,z,kind,radius:13}));
-const route=(...points)=>({width:3.4,points:points.map(([x,z])=>({x,z}))});
+const route=(...points)=>road(3.4,'cobble',...points);
 export const OUTLAND_ROUTES=[
- route([-78,5],[-88,12],[-111,12],[-120,32],[-115,53],[-98,65],[-77,49],[-39,57],[9,57],[54,62],[64,43],[57,24],[60,-19],[61,-61],[23,-52],[-25,-58],[-73,-57],[-116,-62],[-97,-24],[-111,12]),
- route([-78,5],[-88,-5],[-97,-24],[-73,-57]),
- route([-66,21],[-68,34],[-77,49]),
- route([-45,5],[-51,-9],[-54,-29],[-73,-57]),
- route([-54,-29],[-30,-38],[-25,-58]),
- route([-36,5],[-37,24],[-39,57]),
- route([0,25],[-15,31],[-9,44],[9,57]),
- route([0,-25],[-7,-39],[-25,-58]),
- route([0,-25],[14,-33],[23,-52]),
- route([23,5],[40,11],[57,24]),
- route([57,24],[41,40],[9,57]),
- route([-15,31],[-37,24])
+ road(4.4,'cobble',[-78,5],[-67,5],[-58,5],[-52,7],[-46,2],[-39,2],[-32,7],[-24,5],[-15,2],[-8,2],[0,2]),
+ road(5.2,'slabs',[0,25],[-1,18],[0,9],[0,2],[0,-8],[0,-12.3]),
+ road(3.2,'slabs',[0,2],[5,0],[4,2],[3.5,7.8],[13,8],[23,5]),
+ road(2.8,'trail',[0,-25],[-17,-30],[-34,-34],[-54,-29]),
+ // Hearthstead has a winding fork; Alderbrook has a crescent below its houses.
+ route([-78,5],[-86,8],[-92,16],[-103,17],[-111,12],[-115,20],[-119,34],[-115,53]),
+ route([-111,12],[-111,-2],[-104,-14],[-97,-24],[-108,-33],[-112,-48],[-116,-62]),
+ road(2.8,'trail',[-97,-24],[-82,-35],[-73,-57]),
+ road(3,'trail',[-115,53],[-106,63],[-90,61],[-77,49],[-61,43],[-48,49],[-39,57]),
+ route([-67,5],[-67,22],[-68,34],[-77,49]),
+ road(2.8,'trail',[-46,2],[-51,-9],[-54,-29],[-65,-41],[-73,-57]),
+ road(2.8,'trail',[-54,-29],[-38,-32],[-30,-44],[-25,-58]),
+ road(3,'trail',[-39,2],[-37,24],[-44,39],[-39,57],[-19,63],[9,57],[31,65],[54,62]),
+ road(2.8,'trail',[0,25],[-15,31],[-9,44],[9,57]),
+ road(3,'trail',[0,-25],[-7,-39],[-25,-58]),
+ road(3,'trail',[0,-25],[14,-33],[23,-52],[42,-48],[61,-61]),
+ route([23,5],[36,6],[43,27],[50,31],[57,24],[65,29],[70,16],[68,-4],[60,-19]),
+ road(2.8,'trail',[60,-19],[50,-35],[61,-61]),
+ route([57,24],[50,35],[49,48],[54,62]),
+ road(2.8,'trail',[50,35],[33,34],[25,48],[9,57]),
+ road(2.8,'trail',[-15,31],[-27,34],[-37,24])
 ];
 export const OUTLAND_BUILDINGS=OUTLANDS.filter(s=>s.kind==='hamlet').flatMap(s=>[
  {id:`${s.id}-west`,name:`${s.name.split(' ')[0]} Hearth`,x:s.x-7,z:s.z-6,w:5.2,d:5.5,h:3,rotation:.06,chapel:false,abandoned:false},
@@ -48,7 +58,10 @@ export function populateOutlands(map,sites,routes,types){
    map.caches.push({id:`${map.id}-${s.id}-cache`,name:`${s.name} cache`,x:s.x,z:s.z+1,tier:Math.max(1,map.tier),enemyId:guardId});
   }
   // Solids frame the clearing; its center and trail approaches stay open.
-  for(const dx of [-6,6])if(s.kind!=='hamlet')map.obstacles.push({x:s.x+dx,z:s.z-4,w:s.kind==='ruin'?2.4:1.5,d:2,sceneryKind:s.kind});
+  for(const dx of [-6,6])if(s.kind!=='hamlet'){
+   const o={x:s.x+dx,z:s.z-4,w:s.kind==='ruin'?2.4:1.5,d:2,sceneryKind:s.kind};
+   if(!routes.some(r=>distanceToRoute(o,[r])<r.width/2+Math.hypot(o.w,o.d)/2+.6))map.obstacles.push(o);
+  }
  });
 }
 export function plantOutlands(map){
@@ -64,8 +77,8 @@ export function expandSurfaceRegion(map){
  const b=map.bounds,w=b.maxX-b.minX,d=b.maxZ-b.minZ,cx=(b.minX+b.maxX)/2,cz=(b.minZ+b.maxZ)/2;
  map.bounds={minX:cx-w,maxX:cx+w,minZ:cz-d*1.5,maxZ:cz+d*1.5};
  const names=map.id==='drowned-wood'?['Reedbank Camp','Sunken Orchard','The Willow Graves','Drowned Hermitage','Old Fen Shrine','The Rootgarden','Mosswatch Ruins','Pilgrim’s Grove']:map.id==='blackvein-quarry'?['Survey Camp','Abandoned Stores','The Shattered Lift','Prospector’s Rest','Blackstone Cut','The Old Foundry','Buried Watchpost','Miners’ Refuge']:['Westwatch Camp','The Ash Gardens','Forgotten Barracks','Exiles’ Refuge','The Broken Aqueduct','Royal Burial Ground','The Outer Rampart','Last Hearth'];
- const positions=[[-.78,.72],[-.8,0],[-.75,-.92],[0,-1.23],[.75,-.92],[.8,0],[.78,.72],[0,1.24]];
- const sites=positions.map(([x,z],i)=>({id:`outland-${i}`,name:names[i],x:cx+x*w,z:cz+z*d,kind:i===0||i===3||i===7?'camp':i%2?'ruin':'stones',radius:12}));
- const routes=[route(...[...sites,sites[0]].map(s=>[s.x,s.z])),...sites.map(s=>route([map.start.x,map.start.z],[s.x*.65,s.z*.65],[s.x,s.z]))];
+ const layout=SURFACE_ROADS[map.id];
+ const sites=layout.sites.map(([x,z],i)=>({id:`outland-${i}`,name:names[i],x:cx+x,z:cz+z,kind:i===0||i===3||i===7?'camp':i%2?'ruin':'stones',radius:12}));
+ const routes=layout.routes.map(r=>({...r,points:r.points.map(p=>({x:cx+p.x,z:cz+p.z}))}));
  populateOutlands(map,sites,routes,map.id==='drowned-wood'?['hunter','rootling']:map.id==='blackvein-quarry'?['miner','quarry-mage']:['sentinel','pyromancer']);
 }

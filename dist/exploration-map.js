@@ -89,9 +89,7 @@ export function drawExplorationMap({canvas,atlas,map,player,angle,expanded,envir
  ctx.drawImage(data.mask,origin.x,origin.y,data.columns*CELL*scale,data.rows*CELL*scale);ctx.globalCompositeOperation='source-in';ctx.fillStyle=map.theme==='cave'?'#43544f':'#263b35';ctx.fillRect(0,0,220,220);ctx.globalCompositeOperation='source-atop';
  const rect=(o,color)=>{const p=project(o);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(-(o.rotation||0));ctx.fillStyle=color;ctx.fillRect(-o.w*scale/2,-o.d*scale/2,o.w*scale,o.d*scale);ctx.restore();};
  const line=(points,width,color)=>{ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();points.forEach((point,i)=>{const p=project(point);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);});ctx.stroke();};
- if(map.id==='overworld'){line([{x:-78,z:5},{x:23,z:5}],4.2*scale,'#76806666');line([{x:0,z:-25},{x:0,z:25}],5*scale,'#76806666');}
- else if(map.theme!=='cave')line(map.id==='underways'?[{x:-28,z:0},{x:28,z:0}]:[{x:0,z:27},{x:0,z:-28}],4*scale,'#76806666');
- for(const route of map.routes||[])line(route.points,Math.max(.7,route.width*scale),'#8c907066');
+ for(const route of map.routes||[])line(route.points,Math.max(.7,route.width*scale),route.style==='boardwalk'?'#ba9f7188':route.style==='pavers'?'#a5a3a080':route.style==='rail'?'#9a998788':'#8c907066');
  for(const s of map.sites||[]){const p=project(s);ctx.fillStyle='#77876a33';ctx.beginPath();ctx.ellipse(p.x,p.y,9*scale,8*scale,0,0,Math.PI*2);ctx.fill();}
  for(const o of environment.obstacles){if(o.disabled)continue;rect(o,map.theme==='cave'?'#0b151b':'#182a28');}
  for(const building of environment.buildings||[])rect(building,building.chapel?'#a29773':'#738575');

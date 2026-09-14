@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hallowmere · Roads of the Forsaken Reach</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#10191e;color:#dcd7c4;font:14px system-ui;padding:20px}header{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:16px}.eyebrow{font-size:10px;letter-spacing:3px;color:#afa584}h1{font:30px Georgia;margin:9px 0 0}header p{max-width:380px;color:#9eaaa7;line-height:1.5;font-size:12px;margin:0}.maps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.card{display:block;text-decoration:none;color:inherit;border:1px solid #384541;background:#162126;padding:10px;transition:border-color .2s}.card:hover{border-color:#c3ae78}.number{font:10px system-ui;letter-spacing:2px;color:#b8ab84}h2{font:17px Georgia;margin:9px 0 6px}.description{font-size:11px;color:#a4b0ab;line-height:1.5;margin:0;min-height:34px}canvas{display:block;width:100%;height:150px;margin:8px 0;background:#111b20}.foot{display:flex;justify-content:space-between;align-items:center;color:#9ba79f;font-size:10px}.foot span:last-child{color:#c4b488}footer{font-size:11px;color:#8c9c95;margin-top:12px;display:flex;justify-content:space-between}b{font-weight:500;color:#d5c59a}@media(max-width:950px){.maps{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:550px){body{padding:18px}header{display:block}header p{margin-top:14px}.maps{grid-template-columns:1fr}}
+</style>
+<header><div><div class="eyebrow">HALLOWMERE · THE ASHEN VIGIL</div><h1>Roads of the Forsaken Reach</h1></div><p>Ten distinct journeys, from village lanes to the deepest vaults. Select a level to enter its gameplay tour.</p></header>
+<main class="maps" aria-label="Level route atlas"></main>
+<footer><span><b>●</b> Entrance &nbsp; <b>◇</b> Settlement / chamber &nbsp; <b>✧</b> Objective</span><span>Full layouts shown for review. In gameplay, exploration still reveals the map.</span></footer>
+<script type="module">
+import {MAPS} from './regions.js';
+const levels=[
+ ['overworld','Village forks & country lanes','Curved cobbles · broken stone'],
+ ['drowned-wood','Winding banks & timber crossings','Branching trails · boardwalks'],
+ ['blackvein-quarry','Switchbacks & haul shelves','Gravel ruts · mine rails'],
+ ['crownfall-keep','Processional courts & ramparts','Broad paving · offset streets'],
+ ['underways','Three passages behind old seals','Root loop · mine drift · crypt'],
+ ['moss-hollow','Branching roots & secluded pockets','Narrow bends · split galleries'],
+ ['cellar-depths','Offset vaults & service passages','Square chambers · cross galleries'],
+ ['gloom-cavern','A braided rift through deep rock','Broad caverns · alternate passages'],
+ ['old-road-cellar','The winding smuggler’s descent','Doglegs · long remote branch'],
+ ['gravekeepers-hollow','Funerary galleries & burial wings','Branching crypts · blind chambers']
+];
+for(const [index,[id,description,detail]]of levels.entries()){
+ const map=MAPS[id],card=document.createElement('a');card.className='card';card.href=`/?preview=exploration&cave=${id}`;
+ card.innerHTML=`<span class="number">${String(index+1).padStart(2,'0')} / ${map.theme==='cave'?'BELOW':'THE REACH'}</span><h2>${map.name}</h2><p class="description">${description}</p><canvas aria-label="${map.name} route layout"></canvas><div class="foot"><span>${detail}</span><span>↗</span></div>`;
+ document.querySelector('main').append(card);
+ const canvas=card.querySelector('canvas');canvas.width=Math.round(canvas.getBoundingClientRect().width*2);canvas.height=300;const ctx=canvas.getContext('2d'),b=map.bounds,scale=Math.min((canvas.width-36)/(b.maxX-b.minX),264/(b.maxZ-b.minZ)),cx=(b.minX+b.maxX)/2,cz=(b.minZ+b.maxZ)/2;
+ const p=o=>[canvas.width/2+(o.x-cx)*scale,150+(o.z-cz)*scale];
+ function rect(o,color){const[x,y]=p(o);ctx.fillStyle=color;ctx.fillRect(x-o.w*scale/2,y-o.d*scale/2,o.w*scale,o.d*scale)}
+ if(map.floors)for(const floor of map.floors)rect(floor,'#586b60');
+ else{
+  rect({x:cx,z:cz,w:b.maxX-b.minX,d:b.maxZ-b.minZ},'#1d2c2e');
+  for(const o of map.obstacles)if(!o.requires)rect(o,'#2d3c3c');
+  for(const route of map.routes){ctx.strokeStyle=route.style==='boardwalk'?'#c0a273':route.style==='rail'?'#a6a790':route.style==='pavers'?'#a8a3a0':route.style==='trail'?'#7a947d':'#a2ae8b';ctx.lineWidth=Math.max(2,route.width*scale);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();route.points.forEach((v,i)=>{const[x,y]=p(v);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();}
+  if(id==='underways')for(const o of map.obstacles.filter(o=>o.requires))rect(o,'#b18e5d');
+ }
+ for(const site of map.sites||map.chambers||[]){const[x,y]=p(site);ctx.strokeStyle='#c6c7a7';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y-4);ctx.lineTo(x+4,y);ctx.lineTo(x,y+4);ctx.lineTo(x-4,y);ctx.closePath();ctx.stroke();}
+ for(const o of map.objectives){const[x,y]=p(o);ctx.fillStyle='#d7b379';ctx.fillRect(x-3,y-3,6,6)}
+ const[x,y]=p(map.start);ctx.fillStyle='#f3d991';ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
+}
+</script>
+</html>

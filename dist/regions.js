@@ -1,6 +1,7 @@
 import {OVERWORLD_BOUNDS,OUTLANDS,OUTLAND_ROUTES,populateOutlands,expandSurfaceRegion,plantOutlands} from './expansion-layout.js';
 import {FIRST_LEVEL_CAVES,CAVE_ENTRANCES} from './caves.js';
 import {caveSceneryObstacles} from './cave-scenery-layout.js';
+import {UNDERWAY_ROADS} from './road-layout.js';
 const WORLD_BOUNDS=OVERWORLD_BOUNDS;
 const START={x:-66,z:5};
 
@@ -43,7 +44,7 @@ for(const id of ['overworld','drowned-wood','blackvein-quarry','crownfall-keep']
 const under=MAPS.underways;under.bounds={minX:-60,maxX:60,minZ:-54,maxZ:54};
 for(const o of under.obstacles)if(o.w===1.6&&o.d===15){o.d=51;o.z=Math.sign(o.z)*28.5;}
 const underSites=[[-43,38],[-43,-38],[0,38],[0,-38],[43,38],[43,-38]].map(([x,z],i)=>({id:`deep-${i}`,name:['Western Stores','Pilgrim’s Ossuary','The Deep Cut','Buried Forge','Royal Catacombs','The Ash Vault'][i],x,z,kind:i%2?'ruin':'stones',radius:10}));
-populateOutlands(under,underSites,underSites.map(s=>({width:3.5,points:[{x:s.x<0?-24:s.x>0?24:0,z:0},{x:s.x,z:s.z}]})),['hollow','miner','sentinel']);
+populateOutlands(under,underSites,UNDERWAY_ROADS,['hollow','miner','sentinel']);
 for(const list of [under.encounters,under.caches])for(const o of list)if(o.id.includes('-deep-'))o.requires=o.x<-10?null:o.x>10?'quarry-warden':'rootbound';
 for(const cache of under.caches){const guard=under.encounters.find(e=>e.id===cache.enemyId);if(guard)guard.elite=true;}
 // Objective defenses turn exploration into sustained, readable combat encounters.

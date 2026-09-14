@@ -20,8 +20,9 @@ the Bellkeeper. New overworld areas can be reached before opening the chapel.
 Ashwick's sanctuary is bounded so enemies in the surrounding wilderness can fight.
 
 Only one in every three authored treasure caches is retained: 25 across all maps,
-down from 74 (66.2% fewer, rounded to whole chests). Their original IDs, locations,
-guard requirements, and rewards are preserved. Removed caches have no chest,
+down from 74 (66.2% fewer, rounded to whole chests). Their original IDs,
+guard requirements, and rewards are preserved; positions follow the revised
+level layouts. Removed caches have no chest,
 map marker, interaction, or reward; scenery, encounters, forage, and routes remain.
 Ordinary enemy drops already retain one third of their original rolls. Boss loot,
 the first equipment drop, and quest rewards are unchanged.
@@ -73,6 +74,42 @@ Radius review: with the new 22-unit radius, retracing the Ashwick-to-Hearthstead
 route expanded the saved chart from 3.6% to 8.6%. The surrounding terrain revealed
 more broadly while distant areas stayed fogged, with no browser console errors.
 Capture: `screenshots/expanded-exploration/larger-discovery-radius.png`.
+
+## Distinct roads and passages
+
+Every level has its own authored route layout. The surface regions no longer
+share an outer loop with eight spokes, and caves no longer share a chamber ring.
+
+| Level | Route layout |
+| --- | --- |
+| Hallowmere | Curved country lanes, a fork through Hearthstead, and a crescent below Alderbrook's houses |
+| Drowned Wood | Winding bank trails, branching approaches, and timber crossings |
+| Blackvein Quarry | Haul-road switchbacks, stepped shelves, gravel ruts, and mine rails |
+| Crownfall Keep | Broad paved avenues, offset courts, and rampart streets |
+| The Underways | A western root loop, central mine doglegs, and eastern crypt avenues within the existing seals |
+| Moss Hollow | Split root galleries with secluded side pockets |
+| Cellar Depths | Square vaults linked by offset service passages |
+| Gloom Cavern | Broad, braided passages and alternate routes around the rift |
+| Old Road Cellar | A long smuggling route with doglegs and a remote branch |
+| Gravekeeper's Hollow | Burial wings branching into separate funerary galleries |
+
+Road scenery, vegetation clearance, and map lines consume the same route data.
+The old generic lane overlays are removed. Scenery frames the new roads without
+blocking them. Original village buildings, objectives, entrances, progression
+gates, and the reduced cache count remain in place. Charted cells remain saved;
+the new layouts do not reveal unexplored terrain automatically.
+
+The read-only `/route-atlas.html` overview draws all ten layouts from the actual
+map data and links to each gameplay tour. It shows full terrain for review only;
+ordinary gameplay retains exploration fog. Screenshots are named
+`screenshots/expanded-exploration/roads-*.png`.
+
+Lightweight layout inspection found connected cave floor footprints and clear
+encounter/cache positions. Road approaches were inspected around solid scenery
+and buildings. Gameplay review covered Drowned Wood, Survey Camp, Crownfall Keep,
+Alderbrook, and a square vault in Cellar Depths. Browser error logs were clear.
+Automated tests and build validation remain deferred until an explicitly
+authorized merge.
 
 ## Drifting gameplay fog
 
