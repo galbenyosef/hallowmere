@@ -1,35 +1,81 @@
 import {hasLineOfSight,pointBlocked} from './combat.js';
 import {mapFogTexture} from './map-fog.js';
 
-const CELL=2,RADIUS=11,STORAGE='hallowmere-exploration-v1';
+const CELL=2,RADIUS=11,STORAGE='hallowmere-exploration-v2:';
+const gridFor=map=>[CELL,map.bounds.minX,map.bounds.maxX,map.bounds.minZ,map.bounds.maxZ].join(':');
 export class ExplorationAtlas{
- constructor(){this.maps=new Map();this.session=null;this.savedAt=0;}
- setSession(worldId,playerId){
-  const session=`${worldId}:${playerId}`;if(session===this.session)return;
-  this.maps.clear();this.session=session;this.restored={};
-  try{const saved=JSON.parse(sessionStorage.getItem(STORAGE));if(saved?.session===session)this.restored=saved.maps||{};}catch{}
+ constructor(){this.maps=new Map();this.session=null;this.restored={};this.dirty=false;this.timer=null;this.storage=null;this.saved=false;this.storageFailed=false;}
+ setSession(worldId,playerId,{mode='multiplayer',preview=false}={}){
+  // Solo world/player UUIDs change on every reload. The local chart belongs to
+  // this browser's solo profile; multiplayer charts belong to their adventurer.
+  const session=preview?`preview:${worldId}:${playerId}`:mode==='single-player'?'solo':`multiplayer:${worldId}:${playerId}`;
+  if(session===this.session)return;
+  this.save();this.maps.clear();this.session=session;this.restored={};this.legacy=null;this.preview=preview;this.dirty=false;this.saved=false;this.storageFailed=false;this.storage=null;this.discardStored=false;
+  if(preview)return;
+  try{
+   this.storage=localStorage;
+   const record=this.read();this.restored=record?.maps||{};this.saved=!!record;
+   if(!record){
+    // Retain an older chart when reconnecting to its original world/player.
+    const legacy=JSON.parse(sessionStorage.getItem('hallowmere-exploration-v1'));
+    if(legacy?.session===`${worldId}:${playerId}`&&legacy.maps&&typeof legacy.maps==='object')this.legacy=legacy.maps;
+   }
+  }catch{if(!this.storage)this.storageFailed=true;}
  }
+ read(){try{const record=JSON.parse(this.storage?.getItem(STORAGE+this.session));return record?.version===2&&record.maps&&typeof record.maps==='object'&&!Array.isArray(record.maps)?record:null;}catch{return null;}}
  map(map){
   if(this.maps.has(map.id))return this.maps.get(map.id);
   const b=map.bounds,columns=Math.ceil((b.maxX-b.minX)/CELL),rows=Math.ceil((b.maxZ-b.minZ)/CELL),mask=document.createElement('canvas');mask.width=columns;mask.height=rows;
-  const data={mask,ctx:mask.getContext('2d'),columns,rows,cells:new Set(),last:null,total:0};
+  const data={mask,ctx:mask.getContext('2d'),columns,rows,cells:new Set(),last:null,total:0,grid:gridFor(map)};
   for(let z=0;z<rows;z++)for(let x=0;x<columns;x++){const p={x:b.minX+(x+.5)*CELL,z:b.minZ+(z+.5)*CELL};if(!pointBlocked(p,map.obstacles,0))data.total++;}
-  data.ctx.fillStyle='#fff';for(const index of this.restored?.[map.id]||[]){if(!Number.isInteger(index)||index<0||index>=columns*rows)continue;data.cells.add(index);data.ctx.fillRect(index%columns,Math.floor(index/columns),1,1);}
-  this.maps.set(map.id,data);return data;
+  const saved=this.restored[map.id],cells=saved?.grid===data.grid?saved.cells:this.legacy?.[map.id];
+  data.ctx.fillStyle='#fff';this.mergeCells(data,cells);
+  this.maps.set(map.id,data);if(!saved&&data.cells.size)this.queueSave();return data;
+ }
+ mergeCells(data,cells){
+  if(!Array.isArray(cells))return;
+  for(const index of cells){if(!Number.isInteger(index)||index<0||index>=data.columns*data.rows||data.cells.has(index))continue;data.cells.add(index);data.ctx.fillRect(index%data.columns,Math.floor(index/data.columns),1,1);}
  }
  reveal(map,position,obstacles){
   const data=this.map(map);if(data.last&&Math.hypot(data.last.x-position.x,data.last.z-position.z)<.65)return;
-  data.last={x:position.x,z:position.z};const b=map.bounds,col=Math.floor((position.x-b.minX)/CELL),row=Math.floor((position.z-b.minZ)/CELL),reach=Math.ceil(RADIUS/CELL);
+  data.last={x:position.x,z:position.z};const before=data.cells.size,b=map.bounds,col=Math.floor((position.x-b.minX)/CELL),row=Math.floor((position.z-b.minZ)/CELL),reach=Math.ceil(RADIUS/CELL);
   // A room behind a wall stays unknown until a doorway or tunnel is explored.
   for(let z=Math.max(0,row-reach);z<=Math.min(data.rows-1,row+reach);z++)for(let x=Math.max(0,col-reach);x<=Math.min(data.columns-1,col+reach);x++){
    const index=z*data.columns+x;if(data.cells.has(index))continue;
    const p={x:b.minX+(x+.5)*CELL,z:b.minZ+(z+.5)*CELL};if(Math.hypot(position.x-p.x,position.z-p.z)>RADIUS||!hasLineOfSight(position,p,obstacles,0))continue;
    data.cells.add(index);data.ctx.fillRect(x,z,1,1);
   }
-  if(this.session&&performance.now()-this.savedAt>1000)this.save();
+  if(data.cells.size!==before)this.queueSave();
+ }
+ queueSave(){
+  this.dirty=true;
+  // A trailing write saves the last footsteps even after the player stops.
+  if(this.session&&!this.preview&&this.timer===null)this.timer=setTimeout(()=>{this.timer=null;this.save();},750);
  }
  seen(map,p){const d=this.map(map),x=Math.floor((p.x-map.bounds.minX)/CELL),z=Math.floor((p.z-map.bounds.minZ)/CELL);return x>=0&&x<d.columns&&z>=0&&z<d.rows&&d.cells.has(z*d.columns+x);}
- save(){try{sessionStorage.setItem(STORAGE,JSON.stringify({session:this.session,maps:{...this.restored,...Object.fromEntries([...this.maps].map(([id,d])=>[id,[...d.cells]]))}}));this.savedAt=performance.now();}catch{}}
+ save(){
+  clearTimeout(this.timer);this.timer=null;
+  if(!this.session||this.preview||!this.dirty)return this.saved;
+  try{
+   if(!this.storage)throw Error('Storage unavailable');
+   // Merge matching grids so another tab cannot erase earlier discoveries.
+   const stored=this.discardStored?{}:this.read()?.maps||{},maps={...this.restored,...stored};
+   for(const [id,data]of this.maps){if(stored[id]?.grid===data.grid)this.mergeCells(data,stored[id].cells);maps[id]={grid:data.grid,cells:[...data.cells]};}
+   this.storage.setItem(STORAGE+this.session,JSON.stringify({version:2,maps}));
+   this.restored=maps;this.discardStored=false;this.dirty=false;this.saved=true;this.storageFailed=false;return true;
+  }catch{this.storageFailed=true;return false;}
+ }
+ reset(){
+  clearTimeout(this.timer);this.timer=null;this.maps.clear();this.restored={};this.legacy=null;this.saved=false;this.dirty=true;this.discardStored=true;
+  this.save();
+ }
+ get saveLabel(){return this.preview?'Preview chart · Not saved':this.storageFailed?'Chart kept for this visit · Browser storage unavailable':this.dirty?'Saving discoveries…':this.saved?'Discoveries saved on this device':'Unexplored terrain is hidden';}
+}
+
+export function bindExplorationSaving(atlas,{windowTarget=window,documentTarget=document}={}){
+ const save=()=>atlas.save(),onHidden=()=>{if(documentTarget.hidden)save();};
+ windowTarget.addEventListener('pagehide',save);documentTarget.addEventListener('visibilitychange',onHidden);
+ return()=>{save();windowTarget.removeEventListener('pagehide',save);documentTarget.removeEventListener('visibilitychange',onHidden);};
 }
 
 export function drawExplorationMap({canvas,atlas,map,player,angle,expanded,environment,npcs,interactions,drops,enemies,players,you,bossType}){

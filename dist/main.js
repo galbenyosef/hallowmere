@@ -1,4 +1,4 @@
-import {ExplorationAtlas,drawExplorationMap} from './exploration-map.js';
+import {ExplorationAtlas,drawExplorationMap,bindExplorationSaving} from './exploration-map.js';
 import {readGameSettings,saveGameSettings,applyGameVisuals} from './game-settings.js';
 import {pauseMenuMarkup,bindPauseMenu} from './pause-menu.js';
 import {menuNavigationMarkup,updateMenuNavigation} from './menu-chrome.js';
@@ -43,6 +43,7 @@ function icon(name){return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d=
 document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));
 const resourceOrbs=createResourceOrbs();
 const exploration=new ExplorationAtlas();
+bindExplorationSaving(exploration);
 const gameSettings=readGameSettings(),audio=new AudioEngine();audio.musicEnabled=gameSettings.music;let state=Object.assign(createState(),createCampaign(crypto.getRandomValues(new Uint32Array(1))[0])),scene,camera,renderer,environment,player,heroRig,clock,ready=false,started=false,paused=false,backgrounded=document.hidden,mapExpanded=false,modalKind='',angle=0,moveTarget=null,movePath=[],lockedEnemy=null,attackHeld=false,aimActive=false,shake=0,dodgeTime=0,lastMove=new T.Vector3(0,0,-1),targetWorld=new T.Vector3(0,0,-5),accumulated=0,lastStep=0,uiTimer=0,audioTimer=0,audioInterior=null,toastTimer;
 const pointer=new T.Vector2(0,0),raycaster=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0),keys=new Set(),enemies=[],effects=[],floaters=[],prefabs={},cameraOffset=new T.Vector3(17,25,26),cameraTarget=new T.Vector3(0,0,1.6),reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
 let sessionMode=null,assetsReady=false,sessionGeneration=0,mainMenuOpen=false,cavePreviewStarted=false;
@@ -238,7 +239,7 @@ function updateUI(){if(!player)return;updateClassHud();$('health-value').innerHT
 function drawMap(){
  if(!player)return;const map=mapFor(renderedMap);
  const percent=drawExplorationMap({canvas:$('minimap'),atlas:exploration,map,player:player.position,angle,expanded:mapExpanded,environment,npcs:renderedMap==='overworld'?NPCS:[],interactions:regionInteractions(),drops:life?.drops||[],enemies,players:lastSnapshot?.players||[],you:network?.id,bossType});
- $('map-title').textContent=map.name;$('map-exploration').textContent=`${percent}% charted · Unexplored terrain is hidden`;
+ $('map-title').textContent=map.name;$('map-exploration').textContent=`${percent}% charted · ${exploration.saveLabel}`;
 }
 
 // Sound locations use the player's ears and the isometric camera's horizontal axis.
@@ -332,7 +333,9 @@ function applySnapshot(snapshot,changed){
  // The first snapshot is a state baseline; retained server events predate this client.
  if(initialSnapshot){victoryShown=!!state.bossLootClaimed;lastNetworkEvent=Math.max(lastNetworkEvent,...snapshot.events.map(event=>event.id));}
  const me=snapshot.players.find(p=>p.id===snapshot.you);if(!me)return;
- exploration.setSession(snapshot.worldId,snapshot.you);exploration.reveal(mapFor(nextMap),me,environment.obstacles);
+ exploration.setSession(snapshot.worldId,snapshot.you,{mode:sessionMode,preview:!!new URLSearchParams(location.search).get('preview')});
+ if(changed&&sessionMode==='single-player')exploration.reset();
+ exploration.reveal(mapFor(nextMap),me,environment.obstacles);
  environment.updateProgress?.(state);environment.updateObstacles?.(snapshot.brokenCover||[]);
  const target=predictedPosition(me,network.pending,snapshot.ack,environment.obstacles,worldBounds());
  // Only discontinuities snap. Walking and dodging reconcile on render frames.

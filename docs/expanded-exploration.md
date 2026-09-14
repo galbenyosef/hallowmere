@@ -20,15 +20,35 @@ Ashwick's sanctuary is bounded so enemies in the surrounding wilderness can figh
 The minimap and expanded map reveal a radius of eleven world units around the
 authoritative player position, respecting walls. Terrain and stationary landmarks
 remain charted, while enemy markers require nearby line of sight. Unexplored
-terrain, labels, and markers remain hidden. Exploration is personal, keyed to the
-world and player, retained across travel and death, and cleared for a new world.
-Session storage also retains the chart for a reconnect to that same world/player.
+terrain, labels, and markers remain hidden beneath fog.
+
+Exploration is saved in browser local storage. Solo discoveries use a stable
+profile, so refreshing or reopening the game restores all charted areas despite
+new runtime player/world IDs. Multiplayer charts remain personal to each world
+and adventurer and restore on reconnect. Both retain discoveries across travel
+and death. An explicit solo game restart clears that profile's chart.
+
+New discoveries autosave within 750 ms, including the final footsteps before
+stopping. Opening the map, hiding the tab, and leaving the page flush pending
+changes. The expanded map reports whether discoveries are saved or browser
+storage is unavailable. Saved grids include their bounds and cell size so a
+changed map layout does not restore cells at incorrect coordinates. Saves merge
+discoveries from other tabs, and malformed or unavailable storage cannot prevent
+play. Saves are local to this browser and site address.
 
 For an optional review tour, open `/?preview=exploration`, choose single player,
 and select a character. The tour offers map and location selectors and a safe
-mode. Ordinary play at `/` has no tour controls. The existing `/?preview=caves`
-tour remains available.
+mode. Preview charts stay in memory and do not alter normal saved discoveries.
+Ordinary play at `/` has no tour controls. The existing `/?preview=caves` tour
+remains available.
 
 Validation during implementation is limited to visual review and lightweight
 layout inspection. Automated tests and build validation are deferred until an
 explicitly authorized merge, as required by this repository.
+
+Persistence review: walked from Ashwick to Hearthstead in ordinary solo play,
+charted 3.6%, reloaded, and entered solo play again. The character returned to
+Ashwick while the full trail and Hearthstead label remained charted at 3.6%,
+with untouched terrain still fogged. The map reported that discoveries were
+saved on this device. No browser console errors appeared. Before/after captures
+are in `screenshots/expanded-exploration/discoveries-{before,after}-return.png`.
