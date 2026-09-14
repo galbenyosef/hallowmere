@@ -80,6 +80,4 @@
 .soundtrack-settings a:focus-visible{outline:2px solid #d6c397;outline-offset:4px}
 
 /* Mouse targeting uses the same hand affordance as world interactions. */
-#world.enemy-hover{cursor:grab}
-#world.enemy-attacking{cursor:grabbing}
-#world.loot-hover:not(.enemy-attacking){cursor:pointer}
+#world.enemy-hover,#world.enemy-attacking,#world.loot-hover{cursor:pointer}
