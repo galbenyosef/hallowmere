@@ -4,7 +4,6 @@ import {sameMap,MAPS,availablePortal} from './regions.js';
 import {isSanctuary} from './campaign.js';
 
 const progressFor=world=>({victory:world.shared?.victory??world.victory,regionProgress:world.shared?.regionProgress??world.regionProgress});
-const regionTypes=new Set(['hunter','rootling','miner','quarry-mage','sentinel','pyromancer','rootbound','quarry-warden','ash-regent']);
 const obstacles=(world,e)=>world.obstaclesFor?.(e)||world.obstacles||[];
 function hazard(world,e,kind,position,shape,delay,damage,extra={}){
  world.hazards??=[];
@@ -15,7 +14,9 @@ function attack(world,e,target,data){
  e.attackAngle=Math.atan2(aim.x-e.x,aim.z-e.z);e.aim=aim;
  const circle=(kind,p,r,extra={})=>hazard(world,e,kind,p,{radius:r},delay,data.damage,extra);
  const lane=(kind,p,w,d,angle=e.attackAngle)=>hazard(world,e,kind,p,{w,d,angle},delay,data.damage);
- if(e.type==='rootling'||e.type==='rootbound'&&n%2===0){
+ if(e.type==='hunter'){
+  lane('sweep',{x:e.x+Math.sin(e.attackAngle)*data.range/2,z:e.z+Math.cos(e.attackAngle)*data.range/2},1.4,data.range+.4);
+ }else if(e.type==='rootling'||e.type==='rootbound'&&n%2===0){
   circle('roots',aim,1.5,{root:.7});
   if(data.boss)for(const side of [-1,1])circle('roots',{x:aim.x+side*3.8,z:aim.z},1.4,{root:.7});
  }else if(e.type==='miner'||e.type==='quarry-warden'&&n%2===0){
@@ -40,7 +41,7 @@ function attack(world,e,target,data){
 }
 
 export function updateRegionEnemy(world,e,players,dt){
- if(!regionTypes.has(e.type))return false;
+ if(!ENEMY_TYPES[e.type]?.regionalAttack)return false;
  if(e.hp<=0||!availablePortal(e,progressFor(world)))return true;
  const data=ENEMY_TYPES[e.type],home=e.home||e;e.moving=false;
  const living=players.filter(p=>sameMap(e,p)&&!p.state.ended&&p.state.hp>0&&!isSanctuary(p));
@@ -59,6 +60,7 @@ export function updateRegionEnemy(world,e,players,dt){
  if(e.phase==='windup'){
   e.timer-=dt;
   if(e.timer<=0){
+   world.emit?.('strike',{enemyId:e.id,mapId:e.mapId,x:e.x,z:e.z,angle:e.attackAngle,typeName:e.type});
    if(e.chargeDistance){
     for(const cover of obstacles(world,e))if(cover.destructible&&!cover.disabled){
      const dx=cover.x-e.x,dz=cover.z-e.z,c=Math.cos(e.attackAngle),s=Math.sin(e.attackAngle);

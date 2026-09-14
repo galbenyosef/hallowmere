@@ -1,3 +1,4 @@
+import {generateRoadPacks} from './enemy-encounters.js';
 import {OVERWORLD_BOUNDS,OUTLANDS} from './expansion-layout.js';
 import {mapFor,isMapSanctuary} from './regions.js';
 import {weaponForClass} from './classes.js';
@@ -32,7 +33,7 @@ export function createCampaign(seed){return{seed:seed>>>0,mapId:'overworld',chec
 export function zoneAt(position){if(position.mapId&&position.mapId!=='overworld')return position.mapId;const site=OUTLANDS.find(s=>distance(position,s)<s.radius);if(site)return site.id;if(position.z<-27||position.z>27||position.x<-82||position.x>27)return'outlands';if(position.x<-57)return'ashwick';if(position.x<-24)return'road';return'hallowmere';}
 export function zoneName(zone){if(zone==='outlands')return 'The Forsaken Outlands';const site=OUTLANDS.find(s=>s.id===zone);if(site)return site.name;if(!['ashwick','road','hallowmere'].includes(zone))return mapFor(zone).name;return zone==='ashwick'?'Ashwick Village':zone==='road'?'The Mourning Road':'Hallowmere Village';}
 export function isSanctuary(position){return isMapSanctuary(position);}
-export function generateRoadEncounters(seed){const random=seededRandom(seed);const encounters=[];for(let pack=0;pack<3;pack++){const center=-51+pack*10;const count=2+Math.floor(random()*2);for(let member=0;member<count;member++){const roll=random();const type=roll<.45?'hollow':roll<.83?'hound':'revenant';encounters.push({id:`road-${pack}-${member}`,type,x:center+(random()-.5)*3.2,z:5+(member%2?1:-1)*(1.4+random()*2.5),zone:'road'});}}return encounters;}
+export function generateRoadEncounters(seed){return generateRoadPacks(seed);}
 export function rollLoot(state,type,zone){
  if(['rootbound','quarry-warden','ash-regent'].includes(type))return regionalBossLoot(state,type,zone);
  const serial=++state.dropSerial,random=seededRandom(state.seed^Math.imul(serial,2654435761)),drops=[];

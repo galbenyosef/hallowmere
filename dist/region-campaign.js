@@ -1,3 +1,4 @@
+import {randomizeEncounters} from './enemy-encounters.js';
 import {MAPS,PORTALS,CHECKPOINTS,mapFor,sameMap,availablePortal,createRegionProgress} from './regions.js';
 import {distance,hasLineOfSight,pointBlocked} from './combat.js';
 import {START} from './campaign.js';
@@ -6,7 +7,7 @@ import {insideBuilding} from './buildings.js';
 export function initializeRegions(world){
  world.shared.regionProgress=createRegionProgress();world.shared.discoveries=[];world.shared.campaignComplete=false;world.hazards=[];world.regionHazardCycles=new Map();
  world.mapLayouts=Object.fromEntries(Object.values(MAPS).filter(m=>m.id!=='overworld').map(m=>[m.id,{obstacles:(m.obstacles||[]).map(o=>({...o}))}]));
- for(const map of Object.values(MAPS))for(const spec of map.encounters||[]){
+ for(const map of Object.values(MAPS))for(const spec of randomizeEncounters(map.encounters||[],world.seed,map,world.obstaclesFor({mapId:map.id}))){
   const e=world.spawn(spec.type,spec.x,spec.z,map.id,spec.id,map.id);Object.assign(e,{requires:spec.requires,objectiveId:spec.objectiveId,elite:!!spec.elite,optional:!!spec.optional});
   if(spec.elite){e.hp=Math.round(e.hp*1.65);e.maxHp=e.hp;}
  }
@@ -94,8 +95,8 @@ export function regionalKill(world,e){
 function spawnObjectiveWave(world,map,objective,state){
  const index=state.objectiveWaves[objective.id]||0;
  state.objectiveWaves[objective.id]=index+1;state.defendingObjectives??=[];if(!state.defendingObjectives.includes(objective.id))state.defendingObjectives.push(objective.id);
- for(const [i,spec] of objective.waves[index].entries()){
-  const enemy=world.spawn(spec.type,spec.x,spec.z,map.id,`${objective.id}-wave-${index+1}-${i}`,map.id);
+ for(const spec of randomizeEncounters(objective.waves[index].map((e,i)=>({...e,id:`${objective.id}-wave-${index+1}-${i}`})),world.seed,map,world.obstaclesFor({mapId:map.id}),{varyCount:false})){
+  const enemy=world.spawn(spec.type,spec.x,spec.z,map.id,spec.id,map.id);
   enemy.objectiveId=objective.id;enemy.waveObjective=objective.id;enemy.cooldown=1.8;
  }
 }

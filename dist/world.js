@@ -1,4 +1,5 @@
-import {mapFor,sameMap} from './regions.js';
+import {generateVillageEncounters,enemySpawnTiming} from './enemy-encounters.js';
+import {mapFor,sameMap,availablePortal} from './regions.js';
 import {initializeRegions,refreshGates,discoverEntrances,returnToCheckpoint,regionCommand,regionInteractions,regionalKill} from './region-campaign.js';
 import {updateRegionEnemy,stepRegionHazards} from './region-combat.js';
 import {FORAGE_PATCHES,FORAGE_REGROW_SECONDS,harvestFood,consumeFood} from './foraging.js';
@@ -18,7 +19,7 @@ export class World {
  reset(seed=randomSeed()){
   this.id=randomUUID();this.seed=seed;this.shared={questAccepted:false,villageKills:0,roadKills:0,bossSpawned:false,victory:false,bossLootClaimed:false,completed:false};
   Object.assign(this,createWorldLayout());this.enemies=[];this.projectiles=[];this.hits=[];this.zones=[];this.votes=new Set();this.voteDeadline=0;this.events=[];
-  SPAWNS.forEach(([type,x,z],i)=>this.spawn(type,x,z,'hallowmere',`village-${i}`));
+  for(const e of generateVillageEncounters(seed,this.obstacles))this.spawn(e.type,e.x,e.z,'hallowmere',e.id);
   for(const e of generateRoadEncounters(seed))this.spawn(e.type,e.x,e.z,e.zone,e.id);
   initializeRegions(this);
   for(const p of this.players.values())this.resetPlayer(p);
@@ -26,7 +27,7 @@ export class World {
  }
  resetPlayer(p){const choice={classId:p.state?.classId,appearanceId:p.state?.appearanceId};Object.assign(p,{state:Object.assign(createState(),createCampaign(this.seed)),mapId:'overworld',x:START.x+(p.slot%4)*.7,z:START.z+Math.floor(p.slot/4)*.7,angle:0,input:{x:0,z:0},moving:false,lastInput:0,rootUntil:0,dodge:0,dodgeDir:{x:0,z:1},loot:[],forageReadyAt:{},lastSeq:0});if(choice.classId){applyClass(p.state,choice.classId,choice.appearanceId);p.state.inventory=p.state.inventory.map(item=>weaponForClass(item,p.state));}}
  spawn(type,x,z,zone,id=randomUUID(),mapId='overworld'){
-  const e={id,type,x,z,zone,mapId,hp:ENEMY_TYPES[type].hp,maxHp:ENEMY_TYPES[type].hp,phase:'idle',timer:0,cooldown:1,angle:0,attackAngle:0,aim:{x,z},home:{x,z},attackCount:0,path:[],navAt:0,moving:false};this.enemies.push(e);return e;
+  const e={id,type,x,z,zone,mapId,hp:ENEMY_TYPES[type].hp,maxHp:ENEMY_TYPES[type].hp,phase:'idle',timer:0,cooldown:enemySpawnTiming(this.seed,id),angle:0,attackAngle:0,aim:{x,z},home:{x,z},attackCount:0,path:[],navAt:0,moving:false};this.enemies.push(e);return e;
  }
  emit(type,data={}){const actor=data.enemyId?this.enemies?.find(e=>e.id===data.enemyId):data.playerId?this.players.get(data.playerId):null;if(actor&&!data.mapId)data={...data,mapId:actor.mapId||'overworld'};const event={id:++this.eventId,type,...data};this.events.push(event);if(this.events.length>256)this.events.shift();return event;}
  connected(){return [...this.players.values()].filter(p=>p.connected);}
@@ -88,7 +89,7 @@ export class World {
   this.result(p,{...result,operation:'forage'});return result.ok;
  }
  ability(p,m){return castClassAbility(this,p,m);}
- projectile(origin,angle,speed,damage,hostile,ownerId,offset=0){this.projectiles.push({id:randomUUID(),mapId:origin.mapId||'overworld',x:origin.x+Math.sin(angle)*offset,z:origin.z+Math.cos(angle)*offset,angle,speed,damage,hostile,ownerId,life:2.5});}
+ projectile(origin,angle,speed,damage,hostile,ownerId,offset=0){this.projectiles.push({id:randomUUID(),mapId:origin.mapId||'overworld',x:origin.x+Math.sin(angle)*offset,z:origin.z+Math.cos(angle)*offset,angle,speed,damage,hostile,ownerId,life:2.5,...(hostile?{visual:'enemy-orb',color:ENEMY_TYPES[origin.type]?.orbColor||'#ff714b'}:{})});}
  damagePlayer(p,amount){if(!p.connected||isSanctuary(p))return;const damage=hurtPlayer(p.state,amount);if(!damage)return;this.emit('hurt',{playerId:p.id,damage,x:p.x,z:p.z});if(p.state.ended){p.input={x:0,z:0};p.dodge=0;}}
  damageEnemy(e,amount,magic=false,color,visual){
   if(e.hp<=0)return;const damage=Math.min(e.hp,Math.round(amount*(e.exposedUntil>this.time?1.2:1)));e.hp-=damage;this.emit('hit',{enemyId:e.id,x:e.x,z:e.z,damage,magic,color,visual});
@@ -130,22 +131,22 @@ export class World {
   });
  }
  updateEnemy(e,players,dt){
-  if(e.hp<=0)return;if(updateRegionEnemy(this,e,players,dt))return;const data=ENEMY_TYPES[e.type];e.moving=false;if(this.time<(e.rootUntil||0))return;e.cooldown=Math.max(0,e.cooldown-dt);
+  if(e.hp<=0||!availablePortal(e,this.shared))return;if(updateRegionEnemy(this,e,players,dt))return;const data=ENEMY_TYPES[e.type];e.moving=false;if(this.time<(e.rootUntil||0))return;e.cooldown=Math.max(0,e.cooldown-dt);
   const candidates=players.filter(p=>sameMap(p,e)&&!p.state.ended&&!p.state.concealed&&!isSanctuary(p));const target=candidates.sort((a,b)=>distance(e,a)-distance(e,b))[0];
   if(!target){e.phase='idle';if(distance(e,e.home)>.5)this.seek(e,e.home,dt);return;}
   if(e.phase==='windup'){e.timer-=dt;if(e.timer<=0){e.phase='recover';e.timer=e.type==='boss'?1.05:.55;e.cooldown=data.cooldown;e.attackCount++;
     this.emit('strike',{enemyId:e.id,x:e.x,z:e.z,angle:e.attackAngle,typeName:e.type});
-    if(e.type==='revenant')this.projectile(e,Math.atan2(e.aim.x-e.x,e.aim.z-e.z),6.2,data.damage,true,e.id);
+    if(data.attackStyle==='orb'&&!data.boss&&e.type!=='boss')this.projectile(e,Math.atan2(e.aim.x-e.x,e.aim.z-e.z),6.2,data.damage,true,e.id);
     else {for(const p of candidates)if(hasLineOfSight(e,p,this.obstaclesFor(e))&&(e.type==='boss'?distance(e,p)<data.range+.3:withinArc(e,p,e.attackAngle,data.range+.35,1.9)))this.damagePlayer(p,data.damage);
      if(e.type==='boss'&&e.attackCount%2===0)for(let i=0;i<8;i++)this.projectile(e,i/8*Math.PI*2,4.1,18,true,e.id);
-     if(e.type==='hound')this.move(e,Math.sin(e.attackAngle)*.45,Math.cos(e.attackAngle)*.45,.35);
+     if(data.attackStyle==='bite')this.move(e,Math.sin(e.attackAngle)*.45,Math.cos(e.attackAngle)*.45,.35);
     }
    }return;
   }
   if(e.phase==='recover'){e.timer-=dt;if(e.timer<=0)e.phase='idle';return;}
   const dist=distance(e,target);if(dist>=(e.type==='boss'?23:10.5)&&e.hp===e.maxHp){if(distance(e,e.home)>.5)this.seek(e,e.home,dt);return;}
   e.angle=Math.atan2(target.x-e.x,target.z-e.z);
-  if(dist>(e.type==='revenant'?5.4:data.range*.9)||!hasLineOfSight(e,target,this.obstaclesFor(e),.43))this.seek(e,target,dt);
+  if(dist>(data.attackStyle==='orb'&&!data.boss&&e.type!=='boss'?data.range*.72:data.range*.9)||!hasLineOfSight(e,target,this.obstaclesFor(e),.43))this.seek(e,target,dt);
   if(distance(e,target)<=data.range&&e.cooldown<=0&&hasLineOfSight(e,target,this.obstaclesFor(e))){
    e.phase='windup';e.timer=data.windup;e.attackAngle=e.angle;e.aim={x:target.x,z:target.z};this.emit('windup',{enemyId:e.id});
   }
@@ -155,7 +156,7 @@ export class World {
    if(this.time>=e.navAt){e.path=findPath(e,target,this.obstaclesFor(e),this.boundsFor(e));e.navAt=this.time+1.1;}
    while(e.path.length&&distance(e,e.path[0])<.35)e.path.shift();if(!e.path.length)return;goal=e.path[0];
   }else e.path=[];
-  const a=Math.atan2(goal.x-e.x,goal.z-e.z);e.angle=a;this.move(e,Math.sin(a)*ENEMY_TYPES[e.type].speed*(1-(e.slow||0))*dt,Math.cos(a)*ENEMY_TYPES[e.type].speed*(1-(e.slow||0))*dt,ENEMY_TYPES[e.type].boss||e.type==='boss'?.85:.37);
+  const a=Math.atan2(goal.x-e.x,goal.z-e.z);e.angle=a;this.move(e,Math.sin(a)*ENEMY_TYPES[e.type].speed*(1-(e.slow||0))*dt,Math.cos(a)*ENEMY_TYPES[e.type].speed*(1-(e.slow||0))*dt,ENEMY_TYPES[e.type].modelType==='boss'||e.type==='boss'?.85:.37);
  }
  snapshot(id,afterEvent=0){const p=this.players.get(id);return {type:'snapshot',worldId:this.id,tick:this.tick,time:this.time,ack:p.lastSeq,mapId:p.mapId,interactions:regionInteractions(this,p),brokenCover:this.obstaclesFor(p).filter(o=>o.destructible&&o.disabled).map(o=>o.id),hazards:this.hazards.filter(h=>sameMap(h,p)).map(({hitIds,damage,...h})=>h),state:this.viewState(p),you:id,
   players:this.connected().map(q=>({id:q.id,mapId:q.mapId,slot:q.slot,color:q.color,x:q.x,z:q.z,angle:q.angle,moving:q.moving,hp:q.state.hp,maxHp:q.state.maxHp,ended:q.state.ended,dodge:q.dodge,classId:q.state.classId,appearanceId:q.state.appearanceId,rooted:q.rootUntil>this.time,speed:q.rootUntil>this.time?0:speedFor(q.state),valkyrieTime:q.state.valkyrieTime||0,damageBoost:q.state.damageBoost||0,boostTime:q.state.boostTime||0,shield:q.state.shield||0,shieldTime:q.state.shieldTime||0,guard:q.state.guard||0,guardTime:q.state.guardTime||0,concealed:q.state.concealed||0,zone:zoneAt(q)})),
