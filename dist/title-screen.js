@@ -21,9 +21,9 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
   q('loading-status').hidden = screen !== 'loading';
   q('loading-retry').hidden = true;
  }
- function updateSession({mode, canChangeCharacter, character}) {
+ function updateSession({mode, canChangeCharacter, character,characterLocked=false}) {
   q('menu-change-character').disabled = !canChangeCharacter;
-  q('menu-character-note').textContent = canChangeCharacter
+  q('menu-character-note').textContent = characterLocked?'This journey keeps its chosen character. Start another journey to play a different character.':canChangeCharacter
    ? `${character} · Your equipment and progress travel with you.`
    : 'Return to a sanctuary to change character.';
   q('loading-message').textContent = mode === 'multiplayer'

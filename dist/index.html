@@ -39,10 +39,12 @@
  <link rel="stylesheet" href="./inventory.css">
  <link rel="stylesheet" href="./dialogue.css">
  <link rel="stylesheet" href="./chronicle.css">
+ <link rel="stylesheet" href="./journeys.css">
  <link rel="stylesheet" href="./predator-world-preview.css">
  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}</script>
 </head>
 <body>
+<span id="journey-save-indicator" class="journey-save-status" role="status" aria-live="polite" hidden></span>
 <div id="multiplayer-status" role="status" aria-live="polite" hidden></div>
 <div id="connection-overlay" hidden><div class="connection-card"><div class="connection-brand"><img src="./assets/menu/hallowmere-wordmark.png" alt="Hallowmere"><span>THE ASHEN VIGIL</span></div><span id="connection-spinner" class="connection-spinner" aria-hidden="true"></span><h2 id="connection-title">Loading game</h2><p id="connection-message" role="status" aria-live="polite">Connecting to game server…</p><button id="connection-retry" class="text-button" hidden>Retry connection</button><button id="connection-back" class="text-button">Back to game modes</button></div></div>
 <div id="restart-vote" hidden><p id="restart-vote-text"></p><button id="restart-yes">Vote to restart</button><button id="restart-no">Vote to keep playing</button></div>
