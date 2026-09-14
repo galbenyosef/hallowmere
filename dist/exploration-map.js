@@ -1,4 +1,5 @@
 import {hasLineOfSight,pointBlocked} from './combat.js';
+import {mapFogTexture} from './map-fog.js';
 
 const CELL=2,RADIUS=11,STORAGE='hallowmere-exploration-v1';
 export class ExplorationAtlas{
@@ -54,8 +55,12 @@ export function drawExplorationMap({canvas,atlas,map,player,angle,expanded,envir
  for(const d of drops)if(!d.claimed&&d.kind!=='gold')dot(d.model.position,d.rarity==='legendary'?'#efb45d':'#94bdd1',1.5,true);
 
  ctx.restore();
- // Uncharted terrain is opaque, including labels, enemies and passage markers.
- ctx.globalCompositeOperation='destination-over';ctx.fillStyle='#09131a';ctx.fillRect(0,0,220,220);ctx.globalCompositeOperation='source-over';
+ // Feather inward into discovered terrain; the existing clip still prevents
+ // hidden geometry from appearing beyond the explored footprint.
+ ctx.save();ctx.globalCompositeOperation='destination-in';ctx.filter=`blur(${pixels*1.25}px)`;
+ ctx.drawImage(data.mask,origin.x,origin.y,data.columns*CELL*scale,data.rows*CELL*scale);ctx.restore();
+ // Opaque mist replaces the flat dark void, behind the explored terrain.
+ ctx.globalCompositeOperation='destination-over';ctx.drawImage(mapFogTexture(),0,0,220,220);ctx.globalCompositeOperation='source-over';
  if(expanded){
   ctx.font='6px Georgia';ctx.textAlign='center';ctx.fillStyle='#d3cfb0';
   const labels=map.id==='overworld'?[{name:'Ashwick',x:-67,z:5},{name:'Hallowmere',x:0,z:-8},...(map.sites||[])]:[...(map.sites||[]),...(map.chambers||[])];
