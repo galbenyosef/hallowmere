@@ -56,7 +56,10 @@ export function findPath(start,goal,obstacles,bounds={minX:-25,maxX:25,minZ:-25,
  const step=.5,key=(x,z)=>`${x},${z}`,cache=new Map();
  const outside=p=>p.x<bounds.minX||p.x>bounds.maxX||p.z<bounds.minZ||p.z>bounds.maxZ;
  if(outside(goal)||pointBlocked(goal,obstacles))return[];
- if(!outside(start)&&distance(start,goal)<=48&&hasLineOfSight(start,goal,obstacles,.42))return[{x:goal.x,z:goal.z}];
+ if(!outside(start)&&hasLineOfSight(start,goal,obstacles,.42)){
+  const count=Math.max(1,Math.ceil(distance(start,goal)/step));
+  return Array.from({length:count},(_,i)=>i===count-1?{x:goal.x,z:goal.z}:{x:start.x+(goal.x-start.x)*(i+1)/count,z:start.z+(goal.z-start.z)*(i+1)/count});
+ }
  const blocked=(x,z)=>{const k=key(x,z);if(!cache.has(k)){const p={x:x*step,z:z*step};cache.set(k,outside(p)||pointBlocked(p,obstacles));}return cache.get(k);};
  const cell=p=>{const x=Math.round(p.x/step),z=Math.round(p.z/step),candidates=[];for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){const q={x:x+dx,z:z+dz},world={x:q.x*step,z:q.z*step};if(!blocked(q.x,q.z)&&hasLineOfSight(p,world,obstacles,.42))candidates.push({...q,d:distance(p,world)});}return candidates.sort((a,b)=>a.d-b.d)[0];};
  const from=cell(start),to=cell(goal);if(!from||!to)return[];
