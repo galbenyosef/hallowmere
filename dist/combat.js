@@ -56,18 +56,23 @@ export function findPath(start,goal,obstacles,bounds={minX:-25,maxX:25,minZ:-25,
  const step=.5,key=(x,z)=>`${x},${z}`,cache=new Map();
  const outside=p=>p.x<bounds.minX||p.x>bounds.maxX||p.z<bounds.minZ||p.z>bounds.maxZ;
  if(outside(goal)||pointBlocked(goal,obstacles))return[];
+ if(!outside(start)&&distance(start,goal)<=48&&hasLineOfSight(start,goal,obstacles,.42))return[{x:goal.x,z:goal.z}];
  const blocked=(x,z)=>{const k=key(x,z);if(!cache.has(k)){const p={x:x*step,z:z*step};cache.set(k,outside(p)||pointBlocked(p,obstacles));}return cache.get(k);};
  const cell=p=>{const x=Math.round(p.x/step),z=Math.round(p.z/step),candidates=[];for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++){const q={x:x+dx,z:z+dz},world={x:q.x*step,z:q.z*step};if(!blocked(q.x,q.z)&&hasLineOfSight(p,world,obstacles,.42))candidates.push({...q,d:distance(p,world)});}return candidates.sort((a,b)=>a.d-b.d)[0];};
  const from=cell(start),to=cell(goal);if(!from||!to)return[];
  if(from.x===to.x&&from.z===to.z&&hasLineOfSight(start,goal,obstacles,.42))return[{x:goal.x,z:goal.z}];
  const heuristic=(x,z)=>Math.hypot(x-to.x,z-to.z),open=[{...from,g:0,f:heuristic(from.x,from.z)}],scores=new Map([[key(from.x,from.z),0]]),parents=new Map(),closed=new Set();let found=null;
- for(let iteration=0;iteration<16000&&open.length;iteration++){
-  let best=0;for(let i=1;i<open.length;i++)if(open[i].f<open[best].f)best=i;
-  const current=open.splice(best,1)[0],k=key(current.x,current.z);if(closed.has(k))continue;if(current.x===to.x&&current.z===to.z){found=k;break;}closed.add(k);
+ // A heap keeps long detours efficient. The finite map grid bounds the search;
+ // a fixed pop limit incorrectly marked distant expanded chambers unreachable.
+ const before=(a,b)=>a.f<b.f||(a.f===b.f&&a.g>b.g);
+ const push=node=>{let i=open.length;open.push(node);while(i){const parent=(i-1)>>1;if(!before(node,open[parent]))break;open[i]=open[parent];i=parent;}open[i]=node;};
+ const pop=()=>{const first=open[0],last=open.pop();if(open.length){let i=0;while(i*2+1<open.length){let child=i*2+1;if(child+1<open.length&&before(open[child+1],open[child]))child++;if(!before(open[child],last))break;open[i]=open[child];i=child;}open[i]=last;}return first;};
+ while(open.length){
+  const current=pop(),k=key(current.x,current.z);if(closed.has(k))continue;if(current.x===to.x&&current.z===to.z){found=k;break;}closed.add(k);
   for(const[dx,dz]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){
    const x=current.x+dx,z=current.z+dz,n=key(x,z);if(closed.has(n)||blocked(x,z)||(dx&&dz&&(blocked(current.x+dx,current.z)||blocked(current.x,current.z+dz))))continue;
    if(!hasLineOfSight({x:current.x*step,z:current.z*step},{x:x*step,z:z*step},obstacles,.42))continue;
-   const g=current.g+Math.hypot(dx,dz);if(g>=(scores.get(n)??Infinity))continue;scores.set(n,g);parents.set(n,k);open.push({x,z,g,f:g+heuristic(x,z)});
+   const g=current.g+Math.hypot(dx,dz);if(g>=(scores.get(n)??Infinity))continue;scores.set(n,g);parents.set(n,k);push({x,z,g,f:g+heuristic(x,z)});
   }
  }
  if(!found)return[];const path=[{x:goal.x,z:goal.z}];while(found){const[x,z]=found.split(',').map(Number);path.unshift({x:x*step,z:z*step});found=parents.get(found);}return path;

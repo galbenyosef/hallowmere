@@ -69,7 +69,7 @@ test('checkpoints stay personal across death and reconnect; a new vigil resets t
 });
 
 test('cave caches require guards cleared and give each player exactly one personal reward',()=>{
- const {w,p}=setup(),ally=w.join().player,cache=MAPS.underways.caches[0];unlock(w);at(p,cache);at(ally,cache);
+ const {w,p}=setup(),ally=w.join().player,cache=MAPS.underways.caches.find(c=>c.x<-10&&!c.requires);assert.ok(cache);unlock(w);at(p,cache);at(ally,cache);
  assert.equal(command(w,p,'cache',{id:cache.id}),false);
  for(const e of w.enemies.filter(e=>e.mapId==='underways'&&e.x<-10))w.damageEnemy(e,100000);
  assert.equal(command(w,p,'cache',{id:cache.id}),true);const gold=p.state.gold;

@@ -99,6 +99,11 @@ blocking them. Original village buildings, objectives, entrances, progression
 gates, and the reduced cache count remain in place. Charted cells remain saved;
 the new layouts do not reveal unexplored terrain automatically.
 
+Navigation searches the finite map grid with a priority queue. It no longer stops
+after the old 16,000-entry limit, which could incorrectly report distant chambers
+or forage as unreachable. Nearby clear routes use a direct segment; long routes
+retain intermediate waypoints and all paths respect the shared collision geometry.
+
 The read-only `/route-atlas.html` overview draws all ten layouts from the actual
 map data and links to each gameplay tour. It shows full terrain for review only;
 ordinary gameplay retains exploration fog. Screenshots are named

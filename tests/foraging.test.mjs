@@ -68,12 +68,12 @@ test('server harvests privately, regrows at 180 seconds, and rejects range, wall
  a.state.pouch[mushroom]=0;assert.equal(send(world,a,'forage',{id:patch.id}),true);assert.equal(a.state.pouch[mushroom],1);
  const seq=a.lastSeq;assert.equal(world.command(a.id,{type:'forage',id:patch.id,worldId:world.id,seq}),false);
  assert.equal(send(world,a,'forage',{id:patch.id}),false);assert.equal(send(world,a,'forage',{id:'fake'}),false);
- assert.equal(world.snapshot(a.id).forage.length,5);assert.equal(world.snapshot(b.id).forage.length,6);
+ assert.equal(world.snapshot(a.id).forage.length,FORAGE_PATCHES.length-1);assert.equal(world.snapshot(b.id).forage.length,FORAGE_PATCHES.length);
  assert.equal(world.snapshot(b.id).events.some(e=>e.operation==='forage'),false);
  assert.equal(world.snapshot(b.id).players.some(p=>'pouch' in p),false);
  near(b,patch);assert.equal(send(world,b,'forage',{id:patch.id}),true);assert.equal(b.state.pouch[mushroom],1);
- world.time=179.999;assert.equal(world.snapshot(a.id).forage.length,5);assert.equal(send(world,a,'forage',{id:patch.id}),false);
- world.time=180;assert.equal(world.snapshot(a.id).forage.length,6);assert.equal(send(world,a,'forage',{id:patch.id}),true);
+ world.time=179.999;assert.equal(world.snapshot(a.id).forage.length,FORAGE_PATCHES.length-1);assert.equal(send(world,a,'forage',{id:patch.id}),false);
+ world.time=180;assert.equal(world.snapshot(a.id).forage.length,FORAGE_PATCHES.length);assert.equal(send(world,a,'forage',{id:patch.id}),true);
 });
 
 test('food and harvest state survive reconnect and respawn, death clears regen, new vigil resets them',()=>{
@@ -88,7 +88,7 @@ test('food and harvest state survive reconnect and respawn, death clears regen, 
  p.state.pouch[mushroom]=2;hurtPlayer(p.state,999);assert.equal(p.state.essenceRegen,0);assert.equal(p.state.ended,true);
  assert.equal(send(world,p,'consume',{itemId:mushroom}),false);assert.equal(send(world,p,'forage',{id:FORAGE_PATCHES[0].id}),false);
  assert.equal(send(world,p,'respawn'),true);assert.equal(p.state.pouch[mushroom],2);assert.equal(p.forageReadyAt[patch.id],ready);assert.equal(p.state.essenceRegen,0);
- world.reset(13);assert.deepEqual(p.state.pouch,createState().pouch);assert.deepEqual(p.forageReadyAt,{});assert.equal(p.state.foodCooldown,0);assert.equal(world.snapshot(p.id).forage.length,6);
+ world.reset(13);assert.deepEqual(p.state.pouch,createState().pouch);assert.deepEqual(p.forageReadyAt,{});assert.equal(p.state.foodCooldown,0);assert.equal(world.snapshot(p.id).forage.length,FORAGE_PATCHES.length);
 });
 
 test('server consumption keeps pouch ownership and rejects repeated charges',()=>{
