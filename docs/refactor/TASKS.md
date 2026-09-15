@@ -65,7 +65,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T2-1 | 2.0 | haiku | Three import normalization | all dist/*.js | G1.5 | todo | — | — | — | solo wave |
 | M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | todo | — | — | — | |
 | T2-2 | 2.1 | sonnet | tokens.css | dist/tokens.css, :root blocks in 6 css files, index.html, character-studies.css | — | todo | — | — | — | |
-| T2-3 | 2.1 | sonnet | value-noise dedup | dist/{noise,class-effect-materials,loot-effects,map-fog}.js | T1-6 | todo | — | — | — | |
+| T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
 | M7 | 2.2 | sonnet | hud.js, game-audio.js | dist/main.js, 2 new | M6 | todo | — | — | — | |
 | T2-4 | 2.2 | opus | chronicle.css layering map (docs only) | docs/refactor/CSS-LAYERS.md | T2-2 | todo | — | — | — | |
 | T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-2 | todo | — | — | — | |
@@ -130,3 +130,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.2 complete (T1-8 + tracker merged). Fresh tracker branch opened.
 - 2026-09-15 — T1-9 reported (62aa3ac); dist edits correct, two doc links broken (asked to fix). openMainMenu confirmed: no in-game caller, only the vm test calls it.
 - 2026-09-15 — T1-9 ready-to-merge (62aa3ac..01591da).
+- 2026-09-15 — T2-3 dropped after inspection (no real duplication left to remove). hm-T2-3 worktree registered but unused.
