@@ -15,7 +15,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | 5d35fbf, 2c2059a, 0414a23, c1533d7, 3f75255, 7453fc3 |
 | G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | 4a44dfe, 104262a, 44e09ac (+tracker eb359f9) |
 | G1.3 | 1.3 | M2, T1-9, T1-10, T2-4 | 2026-09-15 (user) | 2584e0b, 7bd89fb, 0dd0d90, 6695720 (+tracker 192c828) |
-| G1.4 | 1.4 | M4, T1-7, T1-8 | — | — |
+| G1.4 | 1.4 | M3, T2-5, P1, P2, P3, P5, T0-8 | — | — |
 | G1.5 | 1.5 | M5, T1-9, T1-10 | — | — |
 | G2.0 | 2.0 | T2-1 | — | — |
 | G2.1 | 2.1 | M6 | — | — |
@@ -69,7 +69,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
 | M7 | 2.2 | sonnet | hud.js, game-audio.js | dist/main.js, 2 new | M6 | todo | — | — | — | |
 | T2-4 | 2.2 | opus | chronicle.css layering map (docs only) | docs/refactor/CSS-LAYERS.md | — | merged | codex/css-layers-map-0ee3d5d2-be1b | 5386 | 8629b4f → 6695720 | docs-only (833 lines); 96 shared selectors (not 108) across 8 sheets; 120 deletable whole rules = 5,898 B; §4 is the T2-5 spec (merged overlay block verified via CSSOM at 3 viewports × 4 states, 0 diffs); §5 is the T2-6 execution list; roster/inventory/dialogue screens not live-verified; folded into Gate 1.3 since it is disjoint |
-| T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-4 | review | codex/connection-overlay-87dc45f9-192b | 6130 | — | started early from eb359f9 (disjoint CSS-only); spec = CSS-LAYERS.md §4; orchestrator static review clean: 38 rules deleted + 3 mixed rules rewritten, merged block == T2-4 spec byte-for-byte (whitespace-insensitive) at the old chronicle position, keyframes kept, no empty @media; computed-style golden 707,340 readings / 0 diffs (6 states × 5 viewports, whole-document hashes); bytes style −1107, title-screen −1575, chronicle +1442; awaiting 13-shot compare + commit |
+| T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-4 | ready-to-merge | codex/connection-overlay-87dc45f9-192b | 6130 | 4119482 | started early from eb359f9 (disjoint CSS-only); spec = CSS-LAYERS.md §4; orchestrator static review clean: 38 rules deleted + 3 mixed rules rewritten, merged block == T2-4 spec byte-for-byte (whitespace-insensitive) at the old chronicle position, keyframes kept, no empty @media; computed-style golden 707,340 readings / 0 diffs (6 states × 5 viewports, whole-document hashes); bytes style −1107, title-screen −1575, chronicle +1442; 13-shot compare 11/11 within threshold, 07-connection-overlay 0 px (re-run by orchestrator); committed 4119482 |
 | M8 | 2.3 | sonnet | modals.js, inventory-ui.js | dist/main.js, 2 new, tests/modals.test.mjs | M7 | todo | — | — | — | |
 | T2-6 | 2.3 | opus | chronicle.css dead-rule deletion | dist/chronicle.css + shadowed base files | T2-4, T2-5 | running | codex/chronicle-dead-rules-b0bcefb1-0c97 | 5670 | — | opus; started early stacked on T2-5 (git merge of codex/connection-overlay-87dc45f9-192b, commit 4119482) from 192c828; batches A,B,C,E,F,G,H (D skipped); proof = whole-document computed-style goldens ×5 viewports per stage + 33 shot pairs at 1440/1024/390; captures queue behind M3 and T2-5 |
 | M9 | 2.4 | opus | session-lifecycle.js, connection-ui.js | dist/main.js, 2 new, tests/game-mode-choice.test.mjs | M8 | todo | — | — | — | |
@@ -154,3 +154,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — P5 reported (22cdcdf..c3d5899); approved in substance; one-line robustness change requested (aim copy).
 - 2026-09-15 — P5 ready-to-merge (22cdcdf..953582a).
 - 2026-09-15 — P2 ready-to-merge (9090375..d3b1f78).
+- 2026-09-15 — T2-5 ready-to-merge (4119482). Gate 1.4 requested: M3, T2-5, P1, P2, P3, P5, T0-8.
