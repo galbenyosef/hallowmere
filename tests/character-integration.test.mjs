@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
 import {CLASS_LIST,CLASSES,classAppearance} from '../dist/classes.js';
 import {createPlayableCharacter} from '../dist/playable-characters.js';
 import {menuNavigationMarkup,updateMenuNavigation} from '../dist/menu-chrome.js';
+import {sliceBetween,readDist} from './helpers/source.mjs';
+import {loadMergeGeometries} from './helpers/three-shim.mjs';
 
-const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
-const utilities=await readFile(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url),'utf8');
-const {mergeGeometries}=await import('data:text/javascript;base64,'+Buffer.from(utilities.replace("from 'three'",`from '${new URL('../dist/vendor/three.core.js',import.meta.url).href}'`)).toString('base64'));
+const main=readDist('main.js');
+const mergeGeometries=await loadMergeGeometries();
 
 test('Reaver armor and axe survive gameplay batching and follow their animated joints',()=>{
  const prefabs={},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs,mergeGeometries,Float32Array});
- vm.runInContext(main.slice(main.indexOf('function optimizeModel'),main.indexOf('function spawnEnemy')),context);
+ vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
  const model=vm.runInContext("cloneModel('C03')",context),study=createPlayableCharacter('reaver');
  const triangles=root=>{let count=0;root.traverse(n=>{if(n.isMesh)count+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;});return count;};
  assert.equal(triangles(model),triangles(study));
@@ -35,7 +35,7 @@ test('Reaver armor and axe survive gameplay batching and follow their animated j
 
 test('gameplay optimization and actor cloning preserve Geralt face materials and attached equipment',()=>{
  const prefabs={},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs,mergeGeometries,Float32Array});
- vm.runInContext(main.slice(main.indexOf('function optimizeModel'),main.indexOf('function spawnEnemy')),context);
+ vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
  const first=vm.runInContext("cloneModel('geralt')",context),second=vm.runInContext("cloneModel('geralt')",context);
  const face=root=>{let result;root.traverse(n=>{if(Array.isArray(n.material))result=n;});return result;};
  const originalFace=face(prefabs.geralt),firstFace=face(first),secondFace=face(second);
@@ -56,7 +56,7 @@ test('gameplay optimization and actor cloning preserve Geralt face materials and
  const rig=context.getRig(first);assert.equal(rig.arms.length,2);assert.equal(rig.legs.length,2);assert.equal(rig.baseY,1.3);
 });
 
-const pickerSource=(await readFile(new URL('../dist/roster-picker.js',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace('export function','function');
+const pickerSource=readDist('roster-picker.js').replace(/^import .*;\n/gm,'').replace('export function','function');
 function pickerHarness(state={classId:'sorcerer',appearanceId:'W10'}){
  const nodes=new Map(),handlers={},choices=[];let saved=JSON.stringify({classId:'sorcerer',appearanceId:'W06'});
  const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{style:{},attributes:{},setAttribute(key,value){this.attributes[key]=value;},focus(){this.focused=true;},addEventListener(event,handler){handlers[`${selector}:${event}`]=handler;}});return nodes.get(selector);};

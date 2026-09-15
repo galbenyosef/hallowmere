@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import {createTitleScreen} from '../dist/title-screen.js';
+import {sliceBetween,readDist} from './helpers/source.mjs';
 
 // Exercise the real entrypoint's mode transitions without requiring WebGL.
-const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
-const transitions=main.slice(main.indexOf('function setModeChoiceInert'),main.indexOf("$('connection-back').onclick"));
+const main=readDist('main.js');
+const transitions=sliceBetween(main,'function setModeChoiceInert',"$('connection-back').onclick",{file:'dist/main.js'});
 function setup(){
  const journeyState={activeJourney:null,creatingJourney:false,journeyLeaving:false,journeyConflict:false,autosave:null,previewMode:false};
  const nodes=new Map();const $=id=>{if(!nodes.has(id))nodes.set(id,{id,hidden:false,classList:{remove(){}},focus(){this.focusCalls=(this.focusCalls||0)+1;},children:[]});return nodes.get(id);};
@@ -54,7 +54,7 @@ test('keyboard focus controls the mode highlight and native Enter/Space activati
   const before=modes.length;assert.equal(ui.key(key).defaultPrevented,false);assert.equal(modes.length,before);
   ui.focused().onclick();assert.equal(modes.length,before+1);assert.equal(modes.at(-1),'single-player');
  }
- const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8');
+ const html=readDist('index.html');
  assert.doesNotMatch(html,/id="begin-vigil"/);
  for(const id of ['single-player','multi-player'])assert.match(html,new RegExp(`<button id="${id}"[^>]*type="button"`));
 });
@@ -118,7 +118,7 @@ test('main-menu navigation cannot revive a dead or disconnected player',()=>{
 test('reconnect controls remain reachable while the main menu is open',()=>{
  const {run,context,$}=setup();context.assetsReady=true;run("startSession('multiplayer')");context.lastSnapshot={};
  run('openMainMenu()');context.rosterPicker.resolve=()=>{};
- run(main.slice(main.indexOf('function connectionStatus('),main.indexOf("$('connection-retry').onclick")));
+ run(sliceBetween(main,'function connectionStatus(',"$('connection-retry').onclick",{file:'dist/main.js'}));
  run("connectionStatus('Reconnecting',false)");
  assert.equal($('loading').inert,true);assert.equal($('connection-title').focusCalls,1);
  run("connectionStatus('Unable to connect',false,{retryable:true,failed:true})");
