@@ -10,21 +10,22 @@ const main=readDist('main.js');
 function attackFrame({classId,range,clear,shift=false}){
  const player=new T.Group(),enemy=new T.Group(),attacks=[];
  enemy.position.set(0,0,range);
- const context={T,abilitiesFor,classFor,distance,state:{classId,ended:false},player,
-  lockedEnemy:{model:enemy,dead:false},attackHeld:true,pointerShift:shift,aimActive:true,
+ const ctx={state:{classId,ended:false},player,
+  lockedEnemy:{model:enemy,dead:false},attackHeld:true,aimActive:true,
   keys:new Set(),joystickValue:{x:0,y:0},dodgeTime:0,angle:0,moveTarget:null,movePath:[],lastMove:new T.Vector3(),
-  network:{id:'local'},lastSnapshot:null,environment:{obstacles:[]},
-  hasLineOfSight:()=>clear,findPath:()=>[{x:0,z:range}],worldBounds:()=>({}),
+  network:{id:'local'},lastSnapshot:null,environment:{obstacles:[]},worldBounds:()=>({}),
+  heroRig:{},selection:{position:new T.Vector3(),material:{}},playerLight:{position:new T.Vector3()}};
+ const context={T,ctx,abilitiesFor,classFor,distance,pointerShift:shift,
+  hasLineOfSight:()=>clear,findPath:()=>[{x:0,z:range}],
   moveEntity(){assert.fail('A stationary attack must not request walking');},
-  perform:action=>attacks.push(action),animateRig(){},animateHeroAttack(){},heroRig:{},
-  selection:{position:new T.Vector3(),material:{}},playerLight:{position:new T.Vector3()}};
+  perform:action=>attacks.push(action),animateRig(){},animateHeroAttack(){}};
  vm.createContext(context);
  vm.runInContext(sliceBetween(main,'function attacksFromHere(','function stopAttackMovement(',{file:'dist/main.js'}),context);
  vm.runInContext(sliceBetween(main,'function updatePlayer(','function updateEffects(',{file:'dist/main.js'}),context);
  context.updatePlayer(.016,1);context.updatePlayer(.016,1.016);
  assert.deepEqual(attacks,['attack','attack']);
  assert.equal(player.position.length(),0);
- assert.equal(context.network.input.x,0);assert.equal(context.network.input.z,0);
+ assert.equal(ctx.network.input.x,0);assert.equal(ctx.network.input.z,0);
 }
 
 test('held ranged attacks fire in place at near, distant, and obstructed enemies for every ranged class',()=>{

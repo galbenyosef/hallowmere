@@ -12,7 +12,7 @@ const mergeGeometries=await loadMergeGeometries();
 
 test('updated villagers keep complete geometry, grounded feet, and working world rigs after game optimization',()=>{
   const equipment={elder:['astrolabe-staff','archive-volume'],healer:['ward-lantern','apothecary-vial'],smith:['forging-hammer','forge-apron'],watchman:['watch-shield','roadwarden-sword']};
-  const context=vm.createContext({T,mergeGeometries,Float32Array,prefabs:{}});
+  const context=vm.createContext({T,mergeGeometries,Float32Array,ctx:{prefabs:{}}});
   vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
   for(const kind of NPC_MODEL_IDS){
     const root=createNpcCharacter(kind),bounds=new T.Box3().setFromObject(root);
