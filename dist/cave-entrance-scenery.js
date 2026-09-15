@@ -1,5 +1,6 @@
 import * as T from 'three';
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {createGeometryBatcher} from './geometry-batch.js';
+import {createPalette} from './palette.js';
 import {caveSceneryFor} from './cave-scenery-layout.js';
 import {bareTreeSegments} from './bare-tree.js';
 import {lcg,hashString} from './random.js';
@@ -9,16 +10,14 @@ export function createCaveEntranceScenery(parent,portal){
  const layout=caveSceneryFor(portal);if(!layout)return null;
  const {mouthZ,crag,hills}=layout,group=new T.Group();group.name=`cave-scenery-${portal.id}`;parent.add(group);
  const colors={rock:0x646c63,shade:0x384441,moss:0x50594a,grass:0x626957,bark:0x302e27};
- const materials=Object.fromEntries(Object.entries(colors).map(([key,color])=>[key,new T.MeshStandardMaterial({color,roughness:1,flatShading:true})]));
+ const materials=createPalette(colors,{params:()=>({roughness:1,flatShading:true})});
  const geometries={rock:new T.DodecahedronGeometry(1,0),beam:new T.CylinderGeometry(1,1,1,10)};
- const batches=new Map(),owned=[];
+ const batcher=createGeometryBatcher();
  const rand=lcg(hashString(portal.id,{seed:17,imul:true}));
  function add(geometry,material,x,y,z,sx=1,sy=1,sz=1,rotation=0){
   const transform=new T.Object3D();transform.position.set(x,y,z);transform.scale.set(sx,sy,sz);transform.rotation.y=rotation;transform.updateMatrix();
-  const copy=geometry.index?geometry.toNonIndexed():geometry.clone();copy.applyMatrix4(transform.matrix);
   // Only positions and normals are needed by these untextured materials.
-  for(const key of Object.keys(copy.attributes))if(!['position','normal'].includes(key))copy.deleteAttribute(key);
-  if(!batches.has(material))batches.set(material,[]);batches.get(material).push(copy);
+  batcher.add(geometry,material,transform.matrix,{deindexFirst:true,keepAttributes:['position','normal']});
  }
  function rock(mat,x,y,z,sx,sy,sz,rotation=0){add(geometries.rock,mat,x,y,z,sx,sy,sz,rotation);}
  function beam(a,b,r){
@@ -87,7 +86,7 @@ export function createCaveEntranceScenery(parent,portal){
   }
  }
  grass.dispose();materials.grass.side=T.DoubleSide;
- for(const [mat,parts]of batches){const g=mergeGeometries(parts);owned.push(g);const mesh=new T.Mesh(g,materials[mat]);mesh.castShadow=mesh.receiveShadow=true;group.add(mesh);for(const part of parts)part.dispose();}
+ const owned=batcher.build(group,{materialFor:key=>materials[key]}).map(mesh=>mesh.geometry);
  for(const g of Object.values(geometries))g.dispose();
  return{group,dispose(){disposeSubtree(group,{removeFromParent:'before',traverse:false,extraGeometries:owned,extraMaterials:Object.values(materials)});}};
 }
