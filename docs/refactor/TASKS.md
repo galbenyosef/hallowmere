@@ -12,8 +12,8 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 |---|---|---|---|---|
 | G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, c62368e |
 | G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | bcc7b62, d744fb4, 7c82fe9, 0803197 (+tracker) |
-| G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | in progress |
-| G1.2 | 1.2 | T1-5, T1-6, T1-8 | — | — |
+| G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | 5d35fbf, 2c2059a, 0414a23, c1533d7, 3f75255, 7453fc3 |
+| G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | in progress |
 | G1.3 | 1.3 | M2, T1-9, T1-10 | — | — |
 | G1.4 | 1.4 | M4, T1-7, T1-8 | — | — |
 | G1.5 | 1.5 | M5, T1-9, T1-10 | — | — |
@@ -42,7 +42,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, 8 vm-slicing tests | 0B | ready-to-merge | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | 3c16270..6a3f690 | ctx has 107 pre-declared fields; agent proved stripping `ctx.` reproduces main:dist/main.js character-for-character; 0 top-level let; assert/test counts identical in 8 tests; compare-shots 11/11 (orchestrator-run); perf within ±15% band; draw calls vary with the random world seed (521–549 idle across unmodified runs) so that column is not an identity check; 301/301 |
+| M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, 8 vm-slicing tests | 0B | merged | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | 3c16270..6a3f690 → main 7453fc3 | ctx has 107 pre-declared fields; agent proved stripping `ctx.` reproduces main:dist/main.js character-for-character; 0 top-level let; assert/test counts identical in 8 tests; compare-shots 11/11 (orchestrator-run); perf within ±15% band; draw calls vary with the random world seed (521–549 idle across unmodified runs) so that column is not an identity check; 301/301 |
 | T1-1 | 1.1 | sonnet | model-primitives → geralt, nightblade | dist/{geralt,nightblade}-character-model.js + golden tests | T0-7 | merged | codex/primitives-geralt-nightblade-94b5ab29-38bb | 5985 | f2d8dea..477d9da → main 5d35fbf | golden tests verified by orchestrator against main originals AND adopted files (2/2 both); geralt 17106→16470 B, nightblade 13986→13269 B; 303/303; `visible` fingerprinted (477d9da), re-verified vs originals |
 | T1-2 | 1.1 | sonnet | model-primitives → oathkeeper, ranger | dist/{oathkeeper,ranger}-character-model.js + golden tests | T0-7 | merged | codex/primitives-oathkeeper-ranger-6dd19ea9-56aa | 5342 | 605c711..46d397d → main 2c2059a | goldens verified by orchestrator vs main originals (4/4) and adopted (4/4); oathkeeper 12471→11987 B, ranger 11879→11391 B; 305/305; found Shape.uuid leaking into ExtrudeGeometry.parameters (stripped); `visible` fingerprinted (46d397d), re-verified vs originals |
 | M2 | 1.2 | sonnet | model-kit.js, icon-atlas.js | dist/main.js, 2 new, 5 appearance tests | M1 | todo | — | — | — | |
@@ -52,7 +52,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T1-5 | 1.3 | sonnet | dispose.js adoption, effects tier | dist/{combat-effects,class-effects,multiplayer-view,enemy-visuals}.js + tests/dispose-adoption.test.mjs | T0-7 | ready-to-merge | codex/dispose-effects-39ac6bd3-a22e | 6265 | 3b8705c..2e2f33b | call-log parity test with verbatim references (orchestrator-checked) + 4 mutation checks; all 4 header option rows confirmed; 307/307 |
 | T1-6 | 1.3 | sonnet | random.js + dispose.js adoption, scenery tier | dist/{environment,cave-entrance-scenery,cave-scenery,expansion-layout,outland-scenery,region-environment}.js + tests/golden-scenery.test.mjs | T0-7 | ready-to-merge | codex/random-dispose-scenery-a62cb65b-ec3b | 6178 | ff6218c..2b4831c | 18 scene goldens verified by orchestrator vs originals and adopted; core closure now 20 (random.js) and pure; cave-scenery.js dispose() left as-is (no matching options row); 319/319 |
 | M4 | 1.4 | sonnet | interaction.js, region-travel.js, pointer-targeting.js | dist/main.js, 3 new, tests/loot-pickup.test.mjs, perf-smoke row | M3 | todo | — | — | — | |
-| T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | ready-to-merge | codex/util-adoption-ce4f8d26-6a2a | 6294 | d5c74cc | 4 helper swaps, imports verified per file; 301/301 |
+| T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | merged | codex/util-adoption-ce4f8d26-6a2a | 6294 | d5c74cc → main 3f75255 | 4 helper swaps, imports verified per file; 301/301 |
 | T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,inventory-portraits,npc-portraits}.js + tests/golden-portrait-fit.test.mjs | T0-7 | ready-to-merge | codex/portrait-fit-f50000b5-752a | 5647 | caa6e35..f01fb2d | camera-state goldens (14 subjects) verified by orchestrator vs originals; real pads 1.055/1.065 preserved; character-portraits.js untouched (different framing math); 309/309 |
 | M5 | 1.5 | opus | input-bindings.js | dist/main.js, dist/input-bindings.js, tests loot-pickup/mouse-targeting/input-bindings | M4 | todo | — | — | — | |
 | T1-9 | 1.5 | haiku | Dead code | dist/campaign.js VILLAGES, 10 internal-only exports, app-icon.png + doc refs | — | todo | — | — | — | also check `openMainMenu()` in main.js: T0-4 found it has no caller |
@@ -124,3 +124,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.1: T1-1 merged (5d35fbf), T1-2 merged (2c2059a). Chain 2 (T1-3, T1-4) next; T1-8 worktree registered.
 - 2026-09-15 — Gate 1.1: T1-3 merged (0414a23), T1-4 merged (c1533d7). Chain 3 (T1-7, M1) integrating.
 - 2026-09-15 — T1-8 ready-to-merge (caa6e35..f01fb2d). Gate plan adjusted: G1.2 = T1-5, T1-6, T1-8 (all ready, disjoint from M2) so T1-9/T1-10 can start sooner; G1.3 = M2, T1-9, T1-10.
+- 2026-09-15 — Gate 1.1 complete: T1-7 (3f75255), M1 (7453fc3). Gate 1.2 authorized (T1-5, T1-6, T1-8). M2 worktree registered from 7453fc3.
