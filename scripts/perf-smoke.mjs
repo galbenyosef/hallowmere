@@ -3,9 +3,21 @@
 // Without --expose-gc the timings stay valid but bytes/op is reported as n/a.
 // Every batch rebuilds a world from a fixed seed, so the workload is identical run to run.
 // Reporting tool only: never wired into `npm test`; exits 0 unless it throws.
+import {registerHooks} from 'node:module';
 import {World} from '../dist/world.js';
 import {LocalSession} from '../dist/local-session.js';
 import {TICK_SECONDS} from '../dist/multiplayer-protocol.js';
+
+// dist/interaction.js imports the bare 'three' specifier, which only the page's import map
+// resolves; match it in Node the way tests/effects-factory.test.mjs and
+// tests/enemy-spawner.test.mjs do. regionInteractions() itself never touches T, so no other
+// specifier needs redirecting.
+const threeHook=registerHooks({resolve(specifier,context,nextResolve){
+ if(specifier==='three')return nextResolve(new URL('../dist/vendor/three.module.js',import.meta.url).href,context);
+ return nextResolve(specifier,context);
+}});
+const {createInteraction}=await import('../dist/interaction.js');
+threeHook.deregister();
 
 const SEED=20240915,args=process.argv.slice(2);
 const flag=(name,fallback)=>{const i=args.indexOf(name);return i<0?fallback:Number(args[i+1]);};
@@ -24,9 +36,13 @@ const cases=[
  {name:'World#step(TICK_SECONDS)',setup(){const {world}=fixture();return n=>{for(let i=0;i<n;i++)world.step(TICK_SECONDS);};}},
  {name:'World#snapshot(playerId, lastEvent)',setup(){const {world,id}=warmWorld();return n=>{for(let i=0;i<n;i++)world.snapshot(id,0);};}},
  {name:'structuredClone(snapshot)',setup(){const {world,id}=warmWorld();const snapshot=world.snapshot(id,0);return n=>{for(let i=0;i<n;i++)structuredClone(snapshot);};}},
- {name:'LocalSession#advance(1/60)',setup(){const s=session();return n=>{for(let i=0;i<n;i++)s.advance(1/60);};}}
- // hooks for later phases: add rows for regionInteractions(world, player) and VillageLife.renderLabels
- // once those are importable outside the browser bundle (both need a DOM/three.js surface today).
+ {name:'LocalSession#advance(1/60)',setup(){const s=session();return n=>{for(let i=0;i<n;i++)s.advance(1/60);};}},
+ // M4 extracted regionInteractions() into dist/interaction.js as createInteraction(ctx), so it is
+ // now importable outside the browser bundle: a stub ctx with a warm World snapshot as
+ // ctx.lastSnapshot is enough, no DOM/three.js surface required.
+ {name:'createInteraction(ctx).regionInteractions()',setup(){const {world,id}=warmWorld();const ctx={lastSnapshot:world.snapshot(id,0),state:{discoveries:[]}};const {regionInteractions}=createInteraction(ctx);return n=>{for(let i=0;i<n;i++)regionInteractions();};}}
+ // hook for a later phase: add a row for VillageLife.renderLabels once it is importable outside
+ // the browser bundle (it still needs a DOM/three.js surface today).
 ];
 
 function measure({name,setup}){
