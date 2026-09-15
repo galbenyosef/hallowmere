@@ -11,7 +11,7 @@ import {loadMergeGeometries} from './helpers/three-shim.mjs';
 const main=readDist('main.js');
 const mergeGeometries=await loadMergeGeometries();
 function gameplay(){
- const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs:{},mergeGeometries,Float32Array});
+ const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,ctx:{prefabs:{}},mergeGeometries,Float32Array});
  vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
  return context;
 }

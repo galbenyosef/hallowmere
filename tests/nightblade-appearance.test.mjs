@@ -13,7 +13,7 @@ import {loadMergeGeometries} from './helpers/three-shim.mjs';
 const main=readDist('main.js');
 const mergeGeometries=await loadMergeGeometries();
 function gameplay(){
- const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs:{},mergeGeometries,Float32Array});
+ const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,ctx:{prefabs:{}},mergeGeometries,Float32Array});
  vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
  return context;
 }
@@ -44,7 +44,8 @@ test('Nightblade ornaments survive batching and follow the body, hands, and legs
 
 test('authoritative Twin Cut animates both Nightblade blades without changing another actor',()=>{
  const context=gameplay(),first=context.cloneModel('C04'),second=context.cloneModel('C04'),rig=context.getRig(first),other=context.getRig(second);
- Object.assign(context,{backgrounded:false,renderedMap:'overworld',network:{id:'local'},player:first,heroRig:rig,multiplayerView:{actors:new Map([['remote',{model:second,rig:other}]])},abilityForEvent,classColor,classEffects:{ability:()=>true},audioAt(){}});
+ Object.assign(context.ctx,{backgrounded:false,renderedMap:'overworld',network:{id:'local'},player:first,heroRig:rig,multiplayerView:{actors:new Map([['remote',{model:second,rig:other}]])},classEffects:{ability:()=>true}});
+ Object.assign(context,{abilityForEvent,classColor,audioAt(){}});
  // Exercise the real melee event path, through its existing animation selection.
  vm.runInContext(sliceBetween(main,'function networkEvent(event)',"  if(skill?.kind==='projectile')",{file:'dist/main.js'})+'}}',context);
  context.networkEvent({type:'ability',action:'attack',classId:'nightblade',playerId:'local'});

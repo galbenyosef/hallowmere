@@ -12,7 +12,7 @@ const main=readDist('main.js');
 const mergeGeometries=await loadMergeGeometries();
 
 test('Reaver armor and axe survive gameplay batching and follow their animated joints',()=>{
- const prefabs={},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs,mergeGeometries,Float32Array});
+ const ctx={prefabs:{}},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,ctx,mergeGeometries,Float32Array});
  vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
  const model=vm.runInContext("cloneModel('C03')",context),study=createPlayableCharacter('reaver');
  const triangles=root=>{let count=0;root.traverse(n=>{if(n.isMesh)count+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;});return count;};
@@ -34,11 +34,11 @@ test('Reaver armor and axe survive gameplay batching and follow their animated j
 });
 
 test('gameplay optimization and actor cloning preserve Geralt face materials and attached equipment',()=>{
- const prefabs={},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs,mergeGeometries,Float32Array});
+ const ctx={prefabs:{}},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,ctx,mergeGeometries,Float32Array});
  vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
  const first=vm.runInContext("cloneModel('geralt')",context),second=vm.runInContext("cloneModel('geralt')",context);
  const face=root=>{let result;root.traverse(n=>{if(Array.isArray(n.material))result=n;});return result;};
- const originalFace=face(prefabs.geralt),firstFace=face(first),secondFace=face(second);
+ const originalFace=face(ctx.prefabs.geralt),firstFace=face(first),secondFace=face(second);
  assert.equal(firstFace.geometry.groups.length,6);
  for(let i=0;i<2;i++){
   assert.notEqual(firstFace.material[i],originalFace.material[i]);

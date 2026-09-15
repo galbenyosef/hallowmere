@@ -11,7 +11,7 @@ import {loadMergeGeometries} from './helpers/three-shim.mjs';
 
 const main=readDist('main.js');
 const mergeGeometries=await loadMergeGeometries();
-function gameplay(){const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs:{},mergeGeometries,Float32Array});vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);return context;}
+function gameplay(){const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,ctx:{prefabs:{}},mergeGeometries,Float32Array});vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);return context;}
 const triangles=root=>{let n=0;root.traverse(o=>{if(o.isMesh)n+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});return n;};
 
 test('Oathkeeper reference details survive batching, clone independently, and remain attached to the rig',()=>{
