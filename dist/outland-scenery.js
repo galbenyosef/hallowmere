@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {createPalette} from './palette.js';
 import {lcg} from './random.js';
 
 // Instanced scenery keeps the larger footprint from multiplying draw calls.
@@ -9,7 +10,7 @@ export function createOutlandScenery(scene,map){
  if(map.id==='drowned-wood')Object.assign(colors,{earth:0x4e5140,path:0x657266,plank:0x807454});
  if(map.id==='blackvein-quarry')Object.assign(colors,{earth:0x48423a,leaf:0x5b5b46,path:0x655f52});
  if(map.id==='crownfall-keep')Object.assign(colors,{earth:0x454048,leaf:0x504950,path:0x635e60});
- const materials=Object.fromEntries(Object.entries(colors).map(([id,color])=>[id,new T.MeshStandardMaterial({color,roughness:id==='water'?.3:.96})]));
+ const materials=createPalette(colors,{params:id=>({roughness:id==='water'?.3:.96})});
  const batches=new Map(),dummy=new T.Object3D();const rand=lcg(1847);
  const put=(shape,mat,x,y,z,w,h,d,rotation=0)=>{const key=`${shape}:${mat}`;if(!batches.has(key))batches.set(key,[]);batches.get(key).push({x,y,z,w,h,d,rotation});};
  for(const route of map.routes||[])for(let i=1;i<route.points.length;i++){

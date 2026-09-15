@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {createPalette} from './palette.js';
 import {lcg,hashString} from './random.js';
 
 // Batched ruins and debris keep the expanded caves inexpensive to draw.
@@ -8,7 +9,7 @@ export function createCaveScenery(scene,map){
  const rand=lcg(hashString(map.id,{seed:7,imul:false}));
  const moss=map.id==='moss-hollow',cellar=map.id==='cellar-depths';
  const colors={floor:moss?0x303930:cellar?0x39332d:0x30373c,stone:moss?0x4e5548:cellar?0x595249:0x4c555c,edge:0x252c2e,dark:0x101417,wood:0x423127,iron:0x303236,bone:0x8f8976,moss:0x3c4935,water:0x152a2a,crystal:0x448e89,flame:0xffae50,ash:0x37332f,cloth:0x423c39,ember:0xa22f0a,cold:0x74d4d0};
- const materials=Object.fromEntries(Object.entries(colors).map(([key,color])=>[key,new T.MeshStandardMaterial({color,roughness:key==='water'?.22:.93,...(key==='crystal'?{emissive:0x193734,emissiveIntensity:.25}:key==='flame'?{emissive:0xff6414,emissiveIntensity:3}:key==='ember'?{emissive:0xa82604,emissiveIntensity:1.5}:key==='cold'?{emissive:0x499d9d,emissiveIntensity:1.7}:{})})]));
+ const materials=createPalette(colors,{params:key=>({roughness:key==='water'?.22:.93,...(key==='crystal'?{emissive:0x193734,emissiveIntensity:.25}:key==='flame'?{emissive:0xff6414,emissiveIntensity:3}:key==='ember'?{emissive:0xa82604,emissiveIntensity:1.5}:key==='cold'?{emissive:0x499d9d,emissiveIntensity:1.7}:{})})});
  const arch=new T.Shape();arch.moveTo(-.8,0);arch.lineTo(-.8,1.75);arch.quadraticCurveTo(-.8,2.5,0,3.15);arch.quadraticCurveTo(.8,2.5,.8,1.75);arch.lineTo(.8,0);arch.lineTo(-.8,0);
  const opening=new T.Path();opening.moveTo(-.53,0);opening.lineTo(.53,0);opening.lineTo(.53,1.75);opening.quadraticCurveTo(.53,2.28,0,2.76);opening.quadraticCurveTo(-.53,2.28,-.53,1.75);opening.lineTo(-.53,0);arch.holes.push(opening);
  const coffin=new T.Shape();coffin.moveTo(-.27,0);coffin.lineTo(-.48,1.38);coffin.lineTo(-.34,1.95);coffin.lineTo(.34,1.95);coffin.lineTo(.48,1.38);coffin.lineTo(.27,0);coffin.closePath();
