@@ -15,7 +15,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | 5d35fbf, 2c2059a, 0414a23, c1533d7, 3f75255, 7453fc3 |
 | G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | 4a44dfe, 104262a, 44e09ac (+tracker eb359f9) |
 | G1.3 | 1.3 | M2, T1-9, T1-10, T2-4 | 2026-09-15 (user) | 2584e0b, 7bd89fb, 0dd0d90, 6695720 (+tracker 192c828) |
-| G1.4 | 1.4 | M3, T2-5, P1, P2, P3, P5, T0-8 | 2026-09-15 (user) | fedac5e, 124d7ad, 1044804, 83bc689, fd0404e, 72ec9e0, 22b7207 (tracker follows) |
+| G1.4 | 1.4 | M3, T2-5, P1, P2, P3, P5, T0-8 | 2026-09-15 (user) | fedac5e, 124d7ad, 1044804, 83bc689, fd0404e, 72ec9e0, 22b7207 (+tracker 76b757a) |
 | G1.5 | 1.5 | M4, T2-6 (+ any ready P task) | — | — |
 | G2.0 | 2.0 | T2-1 | — | — |
 | G2.1 | 2.1 | M6 | — | — |
@@ -159,3 +159,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.4: M3 merged (fedac5e), T2-5 merged (124d7ad). T0-8 + P1 integrating.
 - 2026-09-15 — Gate 1.4: T0-8 merged (1044804), P1 merged (83bc689). P2 + P3 integrating.
 - 2026-09-15 — Gate 1.4: P2 merged (fd0404e), P3 merged (72ec9e0), P5 merged (22b7207). Tracker integrating; fresh tracker branch follows. Running: M4 (stacked on M3, now on main), T2-6 (stacked on T2-5, now on main).
+- 2026-09-15 — Gate 1.4 complete (tracker merged 76b757a). main = 76b757a; 27 tasks merged. Fresh tracker branch codex/refactor-tracker-e2d76bc0-2243. Running: M4, T2-6. Next candidates: M5 (stack on M4 after it commits), P7/P8 after M4/M7 land, T2-1 solo after M5.
