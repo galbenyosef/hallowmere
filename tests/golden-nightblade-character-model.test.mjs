@@ -30,7 +30,7 @@ function describe(node){
   node.position.toArray().map(n=>n.toFixed(6)).join(','),
   node.quaternion.toArray().map(n=>n.toFixed(6)).join(','),
   node.scale.toArray().map(n=>n.toFixed(6)).join(','),
-  String(node.castShadow),String(node.receiveShadow),
+  String(node.castShadow),String(node.receiveShadow),String(node.visible),
  ];
  if(node.isMesh){
   const g=node.geometry;
@@ -55,5 +55,5 @@ function fingerprint(root){return hashString(flatten(root).map(describe).join('\
 // single build is the only distinct argument combination the game uses.
 test('createNightbladeCharacter builds an identical tree',()=>{
  const root=createNightbladeCharacter();
- assert.equal(fingerprint(root),'755e2f8d61e1156be36c7cc0de1fa46f3544e7edcf076e7a1e1ac8b6278878f0');
+ assert.equal(fingerprint(root),'0f85f75217ca0605f1423a6a4b4a54d5464538dfc5b16b4a20926fb3242c098b');
 });

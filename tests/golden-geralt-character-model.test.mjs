@@ -30,7 +30,7 @@ function describe(node){
   node.position.toArray().map(n=>n.toFixed(6)).join(','),
   node.quaternion.toArray().map(n=>n.toFixed(6)).join(','),
   node.scale.toArray().map(n=>n.toFixed(6)).join(','),
-  String(node.castShadow),String(node.receiveShadow),
+  String(node.castShadow),String(node.receiveShadow),String(node.visible),
  ];
  if(node.isMesh){
   const g=node.geometry;
@@ -64,9 +64,9 @@ test('createGeraltCharacter builds an identical tree in every pose',()=>{
   hashes[pose]=fingerprint(character.root);
  }
  assert.deepEqual(hashes,{
-  sheathed:'446b4f8063c84b8f98572780a2ac9e9c20757d0b6359c878e4ce2a199a4f5a4f',
-  steel:'6005ddb2bb24d8368ada15ed8e383f2aa72a0163cbac32ec5b6ea65585462e52',
-  silver:'254ca0f3f52a08ea461961ad7d53e13e5cbcb0fc99c7729e5c7e447f9368314c',
-  dagger:'de0c2859bd16ff5cadf24bd47df516dfceb9faf018dead94370eca24318d6f3c',
+  sheathed:'f0d25357bab2c7ed005aa26c4ecd0e0d3110f416b68d5de005fda238b470aa9d',
+  steel:'b4ed4cc462b462d1afbe4de4c40bb7e31adfe6648146068566fe46ca2f1e11a0',
+  silver:'b9eccba582cae9429c31a6718b3c608f9b76d1c01f7011742a823c251c3f5b91',
+  dagger:'f5ac343088d044f46f54584bb9ab8dbaa938c1b306b7e2155d16fb693acc944a',
  });
 });
