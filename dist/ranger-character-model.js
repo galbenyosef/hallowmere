@@ -1,15 +1,17 @@
 import * as T from './vendor/three.core.js';
+import * as P from './model-primitives.js';
 
 // A native mesh shared by the roster, inventory, and animated Ranger prefab.
-const up=new T.Vector3(0,1,0);
-const material=(color,metalness=0)=>new T.MeshStandardMaterial({color,metalness,roughness:metalness?.5:.88,flatShading:true});
-function group(parent,name,x=0,y=0,z=0){const g=new T.Group();g.name=name;g.position.set(x,y,z);parent.add(g);return g;}
-function mesh(parent,geometry,mat,x=0,y=0,z=0,sx=1,sy=1,sz=1){const o=new T.Mesh(geometry,mat);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=o.receiveShadow=true;parent.add(o);return o;}
-const ball=(p,m,x,y,z,sx,sy=sx,sz=sx)=>mesh(p,new T.SphereGeometry(1,12,8),m,x,y,z,sx,sy,sz);
-const box=(p,m,x,y,z,sx,sy,sz)=>mesh(p,new T.BoxGeometry(1,1,1),m,x,y,z,sx,sy,sz);
-function rod(p,m,a,b,r=.02,r2=r){const av=new T.Vector3(...a),bv=new T.Vector3(...b),d=bv.clone().sub(av),o=mesh(p,new T.CylinderGeometry(r2,r,d.length(),6),m);o.position.copy(av.add(bv).multiplyScalar(.5));o.quaternion.setFromUnitVectors(up,d.normalize());return o;}
-function path(p,m,points,r=.01){for(let i=0;i<points.length-1;i++)rod(p,m,points[i],points[i+1],r*(1-i/points.length*.7),r*(1-(i+1)/points.length*.7));}
-function plate(p,m,points,depth=.012){const shape=new T.Shape();points.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();return mesh(p,new T.ExtrudeGeometry(shape,{depth,bevelEnabled:false}),m);}
+// Builders forward to dist/model-primitives.js with the parameters that reproduce
+// this kit's old vertices/quaternions/materials (see that file's header table).
+const material=(color,metalness=0)=>P.material(color,{metalness,roughness:metalness?.5:.88});
+const group=(parent,name,x=0,y=0,z=0)=>P.group(parent,name,x,y,z);
+const mesh=(parent,geometry,mat,x=0,y=0,z=0,sx=1,sy=1,sz=1)=>P.mesh(parent,geometry,mat,x,y,z,sx,sy,sz);
+const ball=(p,m,x,y,z,sx,sy=sx,sz=sx)=>P.ball(p,m,x,y,z,sx,sy,sz);
+const box=(p,m,x,y,z,sx,sy,sz)=>P.box(p,m,x,y,z,sx,sy,sz);
+const rod=(p,m,a,b,r=.02,r2=r)=>P.rod(p,m,a,b,r,r2,6);
+const path=(p,m,points,r=.01)=>P.path(p,m,points,r,{taper:'falloff',falloff:.7,sides:6});
+const plate=(p,m,points,depth=.012)=>P.plate(p,m,points,depth);
 function ribbon(p,m,points,width){const positions=[],indices=[];points.forEach(([x,y,z],i)=>{const w=width*(1-.8*(i/(points.length-1))**3);positions.push(x-w,y,z,x+w,y,z);if(i){const a=(i-1)*2;indices.push(a,a+1,a+2,a+1,a+3,a+2);}});const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();return mesh(p,g,m);}
 
 function makeBow(parent,m,name){
