@@ -1,11 +1,11 @@
 import * as T from 'three';
+import {lcg,hashString} from './random.js';
 
 // Batched ruins and debris keep the expanded caves inexpensive to draw.
 // Light is tied to sparse landmarks, leaving the passages between them dark.
 export function createCaveScenery(scene,map){
  const group=new T.Group();group.name=`cave-scenery-${map.id}`;scene.add(group);
- let seed=[...map.id].reduce((n,c)=>n*31+c.charCodeAt(0),7)>>>0;
- const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const rand=lcg(hashString(map.id,{seed:7,imul:false}));
  const moss=map.id==='moss-hollow',cellar=map.id==='cellar-depths';
  const colors={floor:moss?0x303930:cellar?0x39332d:0x30373c,stone:moss?0x4e5548:cellar?0x595249:0x4c555c,edge:0x252c2e,dark:0x101417,wood:0x423127,iron:0x303236,bone:0x8f8976,moss:0x3c4935,water:0x152a2a,crystal:0x448e89,flame:0xffae50,ash:0x37332f,cloth:0x423c39,ember:0xa22f0a,cold:0x74d4d0};
  const materials=Object.fromEntries(Object.entries(colors).map(([key,color])=>[key,new T.MeshStandardMaterial({color,roughness:key==='water'?.22:.93,...(key==='crystal'?{emissive:0x193734,emissiveIntensity:.25}:key==='flame'?{emissive:0xff6414,emissiveIntensity:3}:key==='ember'?{emissive:0xa82604,emissiveIntensity:1.5}:key==='cold'?{emissive:0x499d9d,emissiveIntensity:1.7}:{})})]));
