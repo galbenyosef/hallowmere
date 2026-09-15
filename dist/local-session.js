@@ -31,7 +31,7 @@ export class LocalSession {
  }
  publish(){
   const changed=this.worldId!==this.world.id;if(changed){this.lastEvent=0;this.pending=[];this.worldId=this.world.id;}
-  const snapshot=structuredClone(this.world.snapshot(this.id,this.lastEvent));this.lastEvent=this.world.eventId;this.mapId=snapshot.mapId;this.onSnapshot(snapshot,changed);
+  const snapshot=this.world.snapshot(this.id,this.lastEvent);this.lastEvent=this.world.eventId;this.mapId=snapshot.mapId;this.onSnapshot(snapshot,changed);
  }
  close(){this.closed=true;this.connected=false;this.pending=[];this.debt=0;}
  capture(){return captureJourney(this.world,this.id);}
