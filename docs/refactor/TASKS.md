@@ -68,7 +68,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
 | M7 | 2.2 | sonnet | hud.js, game-audio.js | dist/main.js, 2 new | M6 | todo | — | — | — | |
 | T2-4 | 2.2 | opus | chronicle.css layering map (docs only) | docs/refactor/CSS-LAYERS.md | — | ready-to-merge | codex/css-layers-map-0ee3d5d2-be1b | 5386 | 8629b4f | docs-only (833 lines); 96 shared selectors (not 108) across 8 sheets; 120 deletable whole rules = 5,898 B; §4 is the T2-5 spec (merged overlay block verified via CSSOM at 3 viewports × 4 states, 0 diffs); §5 is the T2-6 execution list; roster/inventory/dialogue screens not live-verified; folded into Gate 1.3 since it is disjoint |
-| T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-2 | todo | — | — | — | |
+| T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-4 | running | codex/connection-overlay-87dc45f9-192b | 6130 | — | started early from eb359f9 (disjoint CSS-only); spec = CSS-LAYERS.md §4 (38 rules deleted, 3 rewritten, merged block inserted in chronicle.css); proof = whole-document computed-style golden in 4 overlay states × 5 viewports + 13-shot compare |
 | M8 | 2.3 | sonnet | modals.js, inventory-ui.js | dist/main.js, 2 new, tests/modals.test.mjs | M7 | todo | — | — | — | |
 | T2-6 | 2.3 | opus | chronicle.css dead-rule deletion | dist/chronicle.css + shadowed base files | T2-4, T2-5 | todo | — | — | — | 39 shot pairs |
 | M9 | 2.4 | opus | session-lifecycle.js, connection-ui.js | dist/main.js, 2 new, tests/game-mode-choice.test.mjs | M8 | todo | — | — | — | |
@@ -135,3 +135,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — T1-10 ready-to-merge (1481405..f006275).
 - 2026-09-15 — M2 reported 3 commits (c10d089..0ab66ff); static review clean; visual/perf evidence pending.
 - 2026-09-15 — M2 ready-to-merge: 11/11 shots within threshold. T2-4 reported (8629b4f), docs-only, ready-to-merge and folded into Gate 1.3. Awaiting Gate 1.3 authorization (M2, T1-9, T1-10, T2-4).
+- 2026-09-15 — T2-5 started early (sonnet) from eb359f9 while Gate 1.3 awaits authorization; dependency on T2-2 dropped (T2-2 was dropped), now depends only on T2-4's map.
