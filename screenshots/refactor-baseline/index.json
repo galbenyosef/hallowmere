@@ -1,0 +1,69 @@
+{
+ "capturedAt": "2026-09-15T03:06:05.422Z",
+ "width": 1440,
+ "height": 900,
+ "renderer": "swiftshader",
+ "chromeFlags": [
+  "--headless=new",
+  "--remote-debugging-port=0",
+  "--hide-scrollbars",
+  "--no-first-run",
+  "--no-default-browser-check",
+  "--mute-audio",
+  "--disable-background-timer-throttling",
+  "--disable-renderer-backgrounding",
+  "--disable-backgrounding-occluded-windows",
+  "--force-device-scale-factor=1",
+  "--force-color-profile=srgb",
+  "--window-size=1440,900",
+  "--use-angle=swiftshader",
+  "--enable-unsafe-swiftshader",
+  "about:blank"
+ ],
+ "scenarios": [
+  {
+   "name": "01-title",
+   "shows": "Mode choice / title screen once assets have loaded."
+  },
+  {
+   "name": "02-journeys-menu",
+   "shows": "Single-player journeys menu (empty \"first journey\" state on a fresh profile)."
+  },
+  {
+   "name": "03-roster-picker",
+   "shows": "Character chooser with portraits prepared and the confirm button enabled."
+  },
+  {
+   "name": "04-hud-spawn",
+   "shows": "Solo session at the Ashwick spawn: full HUD, quest panel, minimap, ability bar."
+  },
+  {
+   "name": "05-pause",
+   "shows": "Escape pause menu: resume, autosave notice, sound and visual settings."
+  },
+  {
+   "name": "09-journal",
+   "shows": "Journal modal (J): quest text and per-region progress."
+  },
+  {
+   "name": "10-help",
+   "shows": "Controls modal (H): the full control table and guidance copy."
+  },
+  {
+   "name": "11-npc-dialogue",
+   "shows": "Elder Rowan conversation after walking to him from the spawn."
+  },
+  {
+   "name": "13-map-expanded",
+   "shows": "Expanded world map (M): exploration atlas, legend and menu rail."
+  },
+  {
+   "name": "08-inventory",
+   "shows": "Inventory modal (I): equipment slots, pouch, crowns."
+  },
+  {
+   "name": "07-connection-overlay",
+   "shows": "Multiplayer chosen with no backend reachable: the \"Unable to connect\" overlay."
+  }
+ ]
+}
