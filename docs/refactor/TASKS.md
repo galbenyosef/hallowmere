@@ -42,7 +42,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, vm-slicing tests | 0B | running | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | — | base 0803197 |
+| M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, 8 vm-slicing tests | 0B | review | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | 3c16270..6a3f690 | orchestrator review so far: 0 top-level let, no bare writes to former bindings, construction order preserved, assert/test counts identical in all 8 tests; awaiting compare-shots + perf-browser evidence |
 | T1-1 | 1.1 | sonnet | model-primitives → geralt, nightblade | dist/{geralt,nightblade}-character-model.js + golden tests | T0-7 | ready-to-merge | codex/primitives-geralt-nightblade-94b5ab29-38bb | 5985 | f2d8dea..477d9da | golden tests verified by orchestrator against main originals AND adopted files (2/2 both); geralt 17106→16470 B, nightblade 13986→13269 B; 303/303; `visible` fingerprinted (477d9da), re-verified vs originals |
 | T1-2 | 1.1 | sonnet | model-primitives → oathkeeper, ranger | dist/{oathkeeper,ranger}-character-model.js + golden tests | T0-7 | ready-to-merge | codex/primitives-oathkeeper-ranger-6dd19ea9-56aa | 5342 | 605c711..46d397d | goldens verified by orchestrator vs main originals (4/4) and adopted (4/4); oathkeeper 12471→11987 B, ranger 11879→11391 B; 305/305; found Shape.uuid leaking into ExtrudeGeometry.parameters (stripped); `visible` fingerprinted (46d397d), re-verified vs originals |
 | M2 | 1.2 | sonnet | model-kit.js, icon-atlas.js | dist/main.js, 2 new, 5 appearance tests | M1 | todo | — | — | — | |
@@ -116,3 +116,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — T1-1 ready-to-merge (..477d9da); goldens re-verified vs originals after adding visible.
 - 2026-09-15 — T1-3 ready-to-merge (4c51968..3329674); verified vs originals. Will merge with gate 1.1 since files are disjoint.
 - 2026-09-15 — T1-4 and T1-6 started early in freed slots (3 agents running: M1, T1-4, T1-6).
+- 2026-09-15 — M1 reported 3 commits (3c16270..6a3f690); static review clean; visual/perf evidence still running in the agent.
