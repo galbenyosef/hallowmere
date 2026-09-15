@@ -5,7 +5,7 @@ import {MAPS} from './regions.js';
 import {SCENERY_OBSTACLES} from './world-layout.js';
 import {bareTreeSegments} from './bare-tree.js';
 import * as T from 'three';
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {createGeometryBatcher} from './geometry-batch.js';
 import {BUILDING_SPECS,createBuildingLayout,buildingLocal,insideBuilding,setBuildingAccess} from './buildings.js';
 import {lcg,range as rangeFn} from './random.js';
 export function createEnvironment(scene){
@@ -101,7 +101,7 @@ export function createEnvironment(scene){
  const ashGeo=new T.BufferGeometry(),ashPos=new Float32Array(450*3);for(let i=0;i<450;i++){ashPos[i*3]=range(-83,32);ashPos[i*3+1]=range(.3,11);ashPos[i*3+2]=range(-32,28);}ashGeo.setAttribute('position',new T.BufferAttribute(ashPos,3));const ash=new T.Points(ashGeo,new T.PointsMaterial({color:0xb7c8b1,size:.032,transparent:true,opacity:.48,depthWrite:false}));scene.add(ash);
  const groundFog=createGroundFog(scene,MAPS.overworld);
  // Collapse the unchanging scenery into one draw call per material.
- function mergeStaticGroup(root,independent=false){root.updateMatrixWorld(true);const batches=new Map();root.traverse(o=>{if(!o.isMesh)return;let b=batches.get(o.material.uuid);if(!b){b={material:independent?o.material.clone():o.material,geometries:[]};if(independent)b.material.transparent=true;batches.set(o.material.uuid,b);}const g=o.geometry.clone();g.applyMatrix4(o.matrixWorld);if(!g.attributes.uv)g.setAttribute('uv',new T.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));b.geometries.push(g.index?g.toNonIndexed():g);});const result=[];for(const b of batches.values()){const g=mergeGeometries(b.geometries,false);if(!g)continue;const m=new T.Mesh(g,b.material);m.castShadow=true;m.receiveShadow=true;scene.add(m);result.push(m);b.geometries.forEach(g=>g.dispose());}return result;}
+ function mergeStaticGroup(root,independent=false){root.updateMatrixWorld(true);const batcher=createGeometryBatcher();root.traverse(o=>{if(!o.isMesh)return;batcher.add(o.geometry,o.material,o.matrixWorld,{key:o.material.uuid,ensureUV:true,toNonIndexed:true,resolveMaterial:independent?m=>{const clone=m.clone();clone.transparent=true;return clone;}:undefined});});return batcher.build(scene,{useGroups:false,skipNull:true});}
  for(const b of buildings){
   b.group.updateMatrixWorld(true);statics.attach(b.base);scene.attach(b.hinge);scene.attach(b.hitbox);
   b.bounds=new T.Box3().setFromObject(b.group).expandByScalar(.15);
