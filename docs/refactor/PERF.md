@@ -83,6 +83,8 @@ JS heap delta over the run: **8.79 MB** (ending at 73.5 MB).
 JS heap delta over the run: **3.95 MB** (ending at 76.0 MB).
 
 ### Read these numbers carefully
+> **Draw calls are not an identity check.** The world seed is `crypto.getRandomValues` per page load, so different scenery is in frame on every run: unmodified runs on the same commit ranged 521–549 idle and 564–618 walking. Compare medians of at least 3 runs and treat differences under ~5% as noise; geometry-level identity is proven by the golden fingerprint tests, not by this column.
+
 
 **Headless frame times are not GPU frame times.** Neither table says anything about how the game runs on
 a real machine. They are useful only as a relative before/after comparison on the same machine in the
