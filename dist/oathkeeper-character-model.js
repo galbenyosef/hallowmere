@@ -1,15 +1,17 @@
 import * as T from './vendor/three.core.js';
+import * as P from './model-primitives.js';
 
 // Shared native geometry for the picker, portraits, study, and playable rig.
-const up=new T.Vector3(0,1,0);
-const material=(color,metalness=0,glow=0)=>new T.MeshStandardMaterial({color,metalness,roughness:metalness?.38:.78,flatShading:true,emissive:glow?color:0,emissiveIntensity:glow});
-function group(parent,name,x=0,y=0,z=0){const g=new T.Group();g.name=name;g.position.set(x,y,z);parent.add(g);return g;}
-function mesh(parent,geometry,mat,x=0,y=0,z=0,sx=1,sy=1,sz=1){const m=new T.Mesh(geometry,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=m.receiveShadow=true;parent.add(m);return m;}
-const ball=(p,m,x,y,z,sx,sy=sx,sz=sx)=>mesh(p,new T.SphereGeometry(1,12,8),m,x,y,z,sx,sy,sz);
-const box=(p,m,x,y,z,sx,sy,sz)=>mesh(p,new T.BoxGeometry(1,1,1),m,x,y,z,sx,sy,sz);
-function rod(p,m,a,b,r=.02,r2=r){const start=new T.Vector3(...a),end=new T.Vector3(...b),delta=end.clone().sub(start);const n=mesh(p,new T.CylinderGeometry(r2,r,delta.length(),8),m);n.position.copy(start.add(end).multiplyScalar(.5));n.quaternion.setFromUnitVectors(up,delta.normalize());return n;}
-function path(p,m,points,r=.015){for(let i=1;i<points.length;i++)rod(p,m,points[i-1],points[i],r);}
-function plate(p,m,points,depth=.025){const shape=new T.Shape();points.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();return mesh(p,new T.ExtrudeGeometry(shape,{depth,bevelEnabled:false}),m);}
+// Builders forward to dist/model-primitives.js with the parameters that reproduce
+// this kit's old vertices/quaternions/materials (see that file's header table).
+const material=(color,metalness=0,glow=0)=>P.material(color,{metalness,roughness:metalness?.38:.78,emissive:glow?color:0,emissiveIntensity:glow});
+const group=(parent,name,x=0,y=0,z=0)=>P.group(parent,name,x,y,z);
+const mesh=(parent,geometry,mat,x=0,y=0,z=0,sx=1,sy=1,sz=1)=>P.mesh(parent,geometry,mat,x,y,z,sx,sy,sz);
+const ball=(p,m,x,y,z,sx,sy=sx,sz=sx)=>P.ball(p,m,x,y,z,sx,sy,sz);
+const box=(p,m,x,y,z,sx,sy,sz)=>P.box(p,m,x,y,z,sx,sy,sz);
+const rod=(p,m,a,b,r=.02,r2=r)=>P.rod(p,m,a,b,r,r2);
+const path=(p,m,points,r=.015)=>P.path(p,m,points,r,{taper:'constant'});
+const plate=(p,m,points,depth=.025)=>P.plate(p,m,points,depth);
 const gem=(p,m,x,y,z,s=.045)=>mesh(p,new T.OctahedronGeometry(1),m,x,y,z,s,s*1.55,s*.65);
 
 function makeFace(head,m){
