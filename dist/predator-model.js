@@ -1,33 +1,23 @@
 import * as T from 'three';
+import * as P from './model-primitives.js';
 
 export const PREDATOR_POSES = Object.freeze(['stalk', 'blades', 'aim']);
 export const PREDATOR_APPEARANCES = Object.freeze(['masked', 'unmasked']);
 const UP = new T.Vector3(0, 1, 0);
 
-function add(p, geometry, material, xyz = [0, 0, 0], scale = [1, 1, 1]) {
-  const object = new T.Mesh(geometry, material);
-  object.position.set(...xyz); object.scale.set(...scale);
-  object.castShadow = true; object.receiveShadow = true; p.add(object); return object;
-}
-function group(p, name, xyz = [0, 0, 0]) {
-  const object = new T.Group(); object.name = name; object.position.set(...xyz); p.add(object); return object;
-}
-function box(p, m, x, y, z, sx, sy, sz) {return add(p, new T.BoxGeometry(sx, sy, sz), m, [x, y, z]);}
-function ball(p, m, x, y, z, sx, sy = sx, sz = sx, segments = 12) {return add(p, new T.SphereGeometry(1, segments, 8), m, [x, y, z], [sx, sy, sz]);}
-function rod(p, m, a, b, radius, tip = radius, sides = 8) {
-  const start = new T.Vector3(...a), end = new T.Vector3(...b), direction = end.clone().sub(start);
-  const object = add(p, new T.CylinderGeometry(tip, radius, direction.length(), sides), m);
-  object.position.copy(start.add(end).multiplyScalar(.5)); object.quaternion.setFromUnitVectors(UP, direction.normalize()); return object;
-}
-function path(p, m, points, radius, tip = radius) {
-  for (let i = 1; i < points.length; i++) rod(p, m, points[i - 1], points[i], T.MathUtils.lerp(radius, tip, (i - 1) / (points.length - 1)), T.MathUtils.lerp(radius, tip, i / (points.length - 1)));
-}
-function shapeFrom(points) {
-  const shape = new T.Shape(); points.forEach(([x, y], i) => i ? shape.lineTo(x, y) : shape.moveTo(x, y)); shape.closePath(); return shape;
-}
-function plate(p, m, points, depth = .025, xyz = [0, 0, 0], bevel = .006) {
-  return add(p, new T.ExtrudeGeometry(shapeFrom(points), {depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 1, curveSegments: 1}), m, xyz);
-}
+// add/group/box/ball/rod/path/shapeFrom/plate are one-line adapters over the
+// shared builders in model-primitives.js -- their call shape (array xyz/scale,
+// a `segments` override on ball, an xyz array + bevel on plate) is preserved
+// exactly, so every call site below is unchanged. UP stays: makeTendrils()
+// orients a ring directly, outside any of these builders.
+function add(p, geometry, material, xyz = [0, 0, 0], scale = [1, 1, 1]) { return P.mesh(p, geometry, material, ...xyz, ...scale); }
+function group(p, name, xyz = [0, 0, 0]) { return P.group(p, name, ...xyz); }
+function box(p, m, x, y, z, sx, sy, sz) { return P.box(p, m, x, y, z, sx, sy, sz, {sized: true}); }
+function ball(p, m, x, y, z, sx, sy = sx, sz = sx, segments = 12) { return P.ball(p, m, x, y, z, sx, sy, sz, {widthSegments: segments}); }
+function rod(p, m, a, b, radius, tip = radius, sides = 8) { return P.rod(p, m, a, b, radius, tip, sides); }
+function path(p, m, points, radius, tip = radius) { return P.path(p, m, points, radius, {tip}); }
+const shapeFrom = P.shapeFrom;
+function plate(p, m, points, depth = .025, xyz = [0, 0, 0], bevel = .006) { return P.plate(p, m, points, depth, {x: xyz[0], y: xyz[1], z: xyz[2], bevel}); }
 function skinNetTexture() {
   if (typeof document === 'undefined') return null;
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = 128;
@@ -167,7 +157,7 @@ function makeHand(arm,m,side) {
 
 export function createPredatorCharacter() {
   const root=new T.Group();root.name='Predator hunter study';
-  const mat=(color,metalness=0,roughness=.86)=>new T.MeshStandardMaterial({color,metalness,roughness,flatShading:true});
+  const mat=(color,metalness=0,roughness=.86)=>P.material(color,{metalness,roughness});
   const m={
     skin:mat('#8a896c'),skinDark:mat('#535747'),net:mat('#d4c5a2'),armor:mat('#697875',.57,.52),armorDark:mat('#354449',.64,.48),
     polished:mat('#8b9890',.67,.41),edge:mat('#b4b7a0',.65,.4),bronze:mat('#978265',.61,.5),copper:mat('#895b43',.55,.52),
