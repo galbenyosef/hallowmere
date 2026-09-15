@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
 import {abilitiesFor,classFor} from '../dist/classes.js';
 import {distance} from '../dist/combat.js';
+import {sliceBetween,readDist} from './helpers/source.mjs';
 
-const main=readFileSync(new URL('../dist/main.js',import.meta.url),'utf8');
+const main=readDist('main.js');
 function attackFrame({classId,range,clear,shift=false}){
  const player=new T.Group(),enemy=new T.Group(),attacks=[];
  enemy.position.set(0,0,range);
@@ -19,8 +19,8 @@ function attackFrame({classId,range,clear,shift=false}){
   perform:action=>attacks.push(action),animateRig(){},animateHeroAttack(){},heroRig:{},
   selection:{position:new T.Vector3(),material:{}},playerLight:{position:new T.Vector3()}};
  vm.createContext(context);
- vm.runInContext(main.slice(main.indexOf('function attacksFromHere('),main.indexOf('function stopAttackMovement(')),context);
- vm.runInContext(main.slice(main.indexOf('function updatePlayer('),main.indexOf('function updateEffects(')),context);
+ vm.runInContext(sliceBetween(main,'function attacksFromHere(','function stopAttackMovement(',{file:'dist/main.js'}),context);
+ vm.runInContext(sliceBetween(main,'function updatePlayer(','function updateEffects(',{file:'dist/main.js'}),context);
  context.updatePlayer(.016,1);context.updatePlayer(.016,1.016);
  assert.deepEqual(attacks,['attack','attack']);
  assert.equal(player.position.length(),0);

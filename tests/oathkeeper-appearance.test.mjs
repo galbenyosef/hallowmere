@@ -1,17 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
 import {CLASS_LIST} from '../dist/classes.js';
 import {createPlayableCharacter} from '../dist/playable-characters.js';
 import {animateHeroAttack} from '../dist/combat-effects.js';
 import {createClassEffects} from '../dist/class-effects.js';
+import {sliceBetween,readDist} from './helpers/source.mjs';
+import {loadMergeGeometries} from './helpers/three-shim.mjs';
 
-const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
-const utilities=await readFile(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url),'utf8');
-const {mergeGeometries}=await import('data:text/javascript;base64,'+Buffer.from(utilities.replace("from 'three'",`from '${new URL('../dist/vendor/three.core.js',import.meta.url).href}'`)).toString('base64'));
-function gameplay(){const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs:{},mergeGeometries,Float32Array});vm.runInContext(main.slice(main.indexOf('function optimizeModel'),main.indexOf('function spawnEnemy')),context);return context;}
+const main=readDist('main.js');
+const mergeGeometries=await loadMergeGeometries();
+function gameplay(){const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs:{},mergeGeometries,Float32Array});vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);return context;}
 const triangles=root=>{let n=0;root.traverse(o=>{if(o.isMesh)n+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});return n;};
 
 test('Oathkeeper reference details survive batching, clone independently, and remain attached to the rig',()=>{

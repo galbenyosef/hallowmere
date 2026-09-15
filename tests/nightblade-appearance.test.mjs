@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
 import {CLASS_LIST,abilityForEvent,classColor} from '../dist/classes.js';
@@ -8,13 +7,14 @@ import {createPlayableCharacter,modelBounds} from '../dist/playable-characters.j
 import {createCharacter} from '../dist/character-study-models.js';
 import {roster} from '../dist/character-study-roster.js';
 import {animateHeroAttack} from '../dist/combat-effects.js';
+import {sliceBetween,readDist} from './helpers/source.mjs';
+import {loadMergeGeometries} from './helpers/three-shim.mjs';
 
-const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
-const utilities=await readFile(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url),'utf8');
-const {mergeGeometries}=await import('data:text/javascript;base64,'+Buffer.from(utilities.replace("from 'three'",`from '${new URL('../dist/vendor/three.core.js',import.meta.url).href}'`)).toString('base64'));
+const main=readDist('main.js');
+const mergeGeometries=await loadMergeGeometries();
 function gameplay(){
  const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,prefabs:{},mergeGeometries,Float32Array});
- vm.runInContext(main.slice(main.indexOf('function optimizeModel'),main.indexOf('function spawnEnemy')),context);
+ vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
  return context;
 }
 function triangles(root){let n=0;root.traverse(o=>{if(o.isMesh)n+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});return n;}
@@ -46,7 +46,7 @@ test('authoritative Twin Cut animates both Nightblade blades without changing an
  const context=gameplay(),first=context.cloneModel('C04'),second=context.cloneModel('C04'),rig=context.getRig(first),other=context.getRig(second);
  Object.assign(context,{backgrounded:false,renderedMap:'overworld',network:{id:'local'},player:first,heroRig:rig,multiplayerView:{actors:new Map([['remote',{model:second,rig:other}]])},abilityForEvent,classColor,classEffects:{ability:()=>true},audioAt(){}});
  // Exercise the real melee event path, through its existing animation selection.
- vm.runInContext(main.slice(main.indexOf('function networkEvent(event)'),main.indexOf("  if(skill?.kind==='projectile')"))+'}}',context);
+ vm.runInContext(sliceBetween(main,'function networkEvent(event)',"  if(skill?.kind==='projectile')",{file:'dist/main.js'})+'}}',context);
  context.networkEvent({type:'ability',action:'attack',classId:'nightblade',playerId:'local'});
  assert.equal(rig.attackKind,'paired');assert.equal(other.attack,undefined);
  const blades=['weapon','offhand'].map(name=>first.getObjectByName(name));

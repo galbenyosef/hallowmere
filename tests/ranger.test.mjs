@@ -6,10 +6,9 @@ import {LocalSession} from '../dist/local-session.js';
 import {abilityForEvent,abilitiesFor} from '../dist/classes.js';
 import {animateHeroAttack} from '../dist/combat-effects.js';
 import {predictDodge} from '../dist/multiplayer-motion.js';
+import {tick,cast} from './helpers/sim.mjs';
 
 const command=(w,p,type,data={})=>w.command(p.id,{type,worldId:w.id,seq:p.lastSeq+1,...data});
-const cast=(w,p,action,extra={})=>command(w,p,'ability',{action,angle:0,...extra});
-const tick=(w,n=1)=>{for(let i=0;i<n;i++)w.step();};
 function fixture(){
  const w=new World({seed:17}),p=w.join().player;
  assert.ok(command(w,p,'select-class',{classId:'ranger'}));

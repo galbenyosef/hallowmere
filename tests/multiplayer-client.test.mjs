@@ -2,12 +2,12 @@ import {PROTOCOL_VERSION} from '../dist/multiplayer-protocol.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MultiplayerClient,predictedPosition} from '../dist/multiplayer-client.js';
+import {installGlobals} from './helpers/dom.mjs';
 
-test('transport waits for a snapshot, resumes per-tab identity, reconciles acknowledgments and blocks disconnected actions',async()=>{
- const originals=Object.fromEntries(['fetch','sessionStorage','location','document','window','WebSocket'].map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));
+test('transport waits for a snapshot, resumes per-tab identity, reconciles acknowledgments and blocks disconnected actions',async t=>{
  const storage=new Map([['hallowmere-resume','old-token'],['hallowmere-world','old-world']]);const status=[],snapshots=[];
  class Socket{constructor(url){this.url=url;this.readyState=1;this.sent=[];Socket.latest=this;}send(s){this.sent.push(JSON.parse(s));}close(){this.readyState=3;this.onclose?.();}receive(m){this.onmessage({data:JSON.stringify({v:PROTOCOL_VERSION,...m})});}}
- Object.assign(globalThis,{fetch:async()=>({ok:true,json:async()=>({serverUrl:''})}),sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{protocol:'http:',host:'localhost:5182'},document:{addEventListener(){},removeEventListener(){}},window:{addEventListener(){}},WebSocket:Socket});
+ installGlobals(t,{fetch:async()=>({ok:true,json:async()=>({serverUrl:''})}),sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{protocol:'http:',host:'localhost:5182'},document:{addEventListener(){},removeEventListener(){}},window:{addEventListener(){}},WebSocket:Socket});
  const client=new MultiplayerClient({onSnapshot:(m,changed)=>snapshots.push({m,changed}),onStatus:(...s)=>status.push(s)});
  try{
   await client.start();let ws=Socket.latest;assert.equal(ws.url,'ws://localhost:5182/multiplayer');assert.deepEqual(status.at(-1),['Connecting to game server…',false,{retryable:false}]);ws.onopen();assert.equal(ws.sent[0].token,'old-token');assert.deepEqual(status.at(-1),['Joining the shared world…',false,{retryable:false}]);
@@ -22,14 +22,13 @@ test('transport waits for a snapshot, resumes per-tab identity, reconciles ackno
   ws.receive({type:'snapshot',worldId:'new-world',ack:0});assert.equal(client.connected,true);assert.equal(client.attempt,0);
   ws.receive({type:'snapshot',v:PROTOCOL_VERSION-1});assert.equal(client.connected,false);assert.match(status.at(-1)[0],/versions differ/);assert.deepEqual(status.at(-1)[2],{retryable:true,failed:true});assert.equal(client.retry,undefined);
   client.close();assert.equal(client.send('ability',{action:'nova'}),false);assert.equal(client.connected,false);
- }finally{client.close();for(const [k,descriptor] of Object.entries(originals))if(descriptor)Object.defineProperty(globalThis,k,descriptor);else delete globalThis[k];}
+ }finally{client.close();}
 });
 
 test('a stalled world sync times out and offers recovery after the server welcomes the player',t=>{
- const originals=Object.fromEntries(['document','WebSocket'].map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));
  const status=[];
  class Socket{constructor(){this.readyState=1;Socket.latest=this;}close(){this.readyState=3;this.onclose?.();}}
- Object.assign(globalThis,{document:{removeEventListener(){}},WebSocket:Socket});
+ installGlobals(t,{document:{removeEventListener(){}},WebSocket:Socket});
  t.mock.timers.enable({apis:['setTimeout']});
  const client=new MultiplayerClient({onSnapshot(){},onStatus:(...s)=>status.push(s)});
  try{
@@ -37,7 +36,7 @@ test('a stalled world sync times out and offers recovery after the server welcom
   ws.onmessage({data:JSON.stringify({v:PROTOCOL_VERSION,type:'welcome',id:'a',token:'token'})});
   assert.equal(status.at(-1)[0],'Syncing game world…');t.mock.timers.tick(7999);assert.equal(ws.readyState,1);
   t.mock.timers.tick(1);assert.equal(ws.readyState,3);assert.equal(client.connected,false);assert.equal(status.at(-1)[2].retryable,true);assert.ok(client.retry);
- }finally{client.close();t.mock.timers.reset();for(const [k,descriptor] of Object.entries(originals))if(descriptor)Object.defineProperty(globalThis,k,descriptor);else delete globalThis[k];}
+ }finally{client.close();t.mock.timers.reset();}
 });
 
 
@@ -54,15 +53,15 @@ test('canceling configuration prevents sockets, intervals and late status update
  let resolveConfig,calls=0;const statuses=[];
  t.mock.method(globalThis,'fetch',()=>{calls++;return new Promise(resolve=>resolveConfig=resolve);});
  t.mock.method(globalThis,'WebSocket',()=>assert.fail('Canceled session opened a socket'));
- const previous=globalThis.document;globalThis.document={removeEventListener(){}};
+ installGlobals(t,{document:{removeEventListener(){}}});
  const client=new MultiplayerClient({onSnapshot(){assert.fail('Late snapshot');},onStatus:(...s)=>statuses.push(s)});
- try{const loading=client.start();await client.start();assert.equal(calls,1);client.close();resolveConfig({ok:true,json:async()=>({serverUrl:'wss://example.test/multiplayer'})});await loading;assert.equal(statuses.length,1);assert.equal(client.interval,undefined);assert.equal(client.abort.signal.aborted,true);}finally{client.close();if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
+ try{const loading=client.start();await client.start();assert.equal(calls,1);client.close();resolveConfig({ok:true,json:async()=>({serverUrl:'wss://example.test/multiplayer'})});await loading;assert.equal(statuses.length,1);assert.equal(client.interval,undefined);assert.equal(client.abort.signal.aborted,true);}finally{client.close();}
 });
 
 test('closed sockets cannot welcome, sync, or reconnect after returning to game modes',t=>{
- const previous=globalThis.document;globalThis.document={removeEventListener(){}};
  class Socket{constructor(){this.readyState=1;}close(){this.readyState=3;this.onclose?.();}send(){assert.fail('Canceled socket sent a join');}}
- const originalSocket=globalThis.WebSocket;globalThis.WebSocket=Socket;t.after(()=>globalThis.WebSocket=originalSocket);const statuses=[];
+ installGlobals(t,{document:{removeEventListener(){}},WebSocket:Socket});
+ const statuses=[];
  const client=new MultiplayerClient({onSnapshot(){assert.fail('Late snapshot');},onWelcome(){assert.fail('Late welcome');},onStatus:s=>statuses.push(s)});
- try{client.url='ws://localhost/multiplayer';client.connect();const ws=client.socket;client.close();ws.onopen();for(const type of ['welcome','snapshot'])ws.onmessage({data:JSON.stringify({v:PROTOCOL_VERSION,type})});ws.onclose();assert.equal(client.connected,false);assert.equal(client.retry,undefined);assert.equal(statuses.length,1);}finally{client.close();if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
+ try{client.url='ws://localhost/multiplayer';client.connect();const ws=client.socket;client.close();ws.onopen();for(const type of ['welcome','snapshot'])ws.onmessage({data:JSON.stringify({v:PROTOCOL_VERSION,type})});ws.onclose();assert.equal(client.connected,false);assert.equal(client.retry,undefined);assert.equal(statuses.length,1);}finally{client.close();}
 });

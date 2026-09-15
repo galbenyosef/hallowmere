@@ -7,16 +7,15 @@ import {createState,awardKill} from '../dist/combat.js';
 import {createCampaign,collectLoot,equipItem,START} from '../dist/campaign.js';
 import {createPlayableCharacter,modelBounds} from '../dist/playable-characters.js';
 import {predictedPosition} from '../dist/multiplayer-client.js';
+import {tick,cast} from './helpers/sim.mjs';
 
 const command=(w,p,type,data={})=>w.command(p.id,{type,worldId:w.id,seq:p.lastSeq+1,...data});
-const tick=(w,n=1)=>{for(let i=0;i<n;i++)w.step();};
 function fixture(classId,appearanceId=classId==='sorcerer'?'C01':undefined){
  const w=new World({seed:17}),p=w.join().player;
  assert.equal(command(w,p,'select-class',{classId,appearanceId}),true);
  w.enemies=[];w.obstacles=[];Object.assign(p,{x:-40,z:5});
  return {w,p,enemy:(x=-40,z=8)=>{const e=w.spawn('hollow',x,z,'road');e.hp=e.maxHp=1000;e.rootUntil=100;return e;}};
 }
-const cast=(w,p,action,extra={})=>command(w,p,'ability',{action,angle:0,...extra});
 
 test('Sorcerer defaults to Bone Oracle across selection, equipment, portraits, and restart',()=>{
  const {w,p}=fixture('sorcerer',null);

@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
 import {createNpcCharacter,NPC_MODEL_IDS} from '../scripts/npc-models.mjs';
 import {NPCS} from '../dist/campaign.js';
+import {sliceBetween,readDist} from './helpers/source.mjs';
+import {loadMergeGeometries} from './helpers/three-shim.mjs';
 
-const main=await readFile(new URL('../dist/main.js',import.meta.url),'utf8');
-const utility=await readFile(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url),'utf8');
-const {mergeGeometries}=await import('data:text/javascript;base64,'+Buffer.from(utility.replace("from 'three'",`from '${new URL('../dist/vendor/three.core.js',import.meta.url).href}'`)).toString('base64'));
+const main=readDist('main.js');
+const mergeGeometries=await loadMergeGeometries();
 
 test('updated villagers keep complete geometry, grounded feet, and working world rigs after game optimization',()=>{
   const equipment={elder:['astrolabe-staff','archive-volume'],healer:['ward-lantern','apothecary-vial'],smith:['forging-hammer','forge-apron'],watchman:['watch-shield','roadwarden-sword']};
   const context=vm.createContext({T,mergeGeometries,Float32Array,prefabs:{}});
-  vm.runInContext(main.slice(main.indexOf('function optimizeModel'),main.indexOf('function spawnEnemy')),context);
+  vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
   for(const kind of NPC_MODEL_IDS){
     const root=createNpcCharacter(kind),bounds=new T.Box3().setFromObject(root);
     assert.ok(bounds.min.y>=0&&bounds.min.y<.06,`${kind} feet are not grounded`);

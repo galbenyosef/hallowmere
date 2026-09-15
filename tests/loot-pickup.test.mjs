@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
 import {VillageLife} from '../dist/world-actors.js';
@@ -8,12 +7,12 @@ import {World} from '../dist/world.js';
 import {LocalSession} from '../dist/local-session.js';
 import {createState} from '../dist/combat.js';
 import {createCampaign,LOOT_PICKUP_RANGE} from '../dist/campaign.js';
+import {sliceBetween,readDist} from './helpers/source.mjs';
+import {installGlobals} from './helpers/dom.mjs';
 
 const item={id:'charm',kind:'item',template:'oak-charm',name:'Warding oak charm',rarity:'uncommon',x:10,z:0,mapId:'overworld'};
 function fixture(t){
- const previous=globalThis.document;
- globalThis.document={getElementById:()=>({append(){}}),createElement:()=>({dataset:{},style:{setProperty(){}},querySelector:()=>({}),remove(){}})};
- t.after(()=>{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;});
+ installGlobals(t,{document:{getElementById:()=>({append(){}}),createElement:()=>({dataset:{},style:{setProperty(){}},querySelector:()=>({}),remove(){}})}});
  const scene=new T.Scene(),player=new T.Group(),state=Object.assign(createState(),createCampaign(17));
  const life=new VillageLife({scene,player,state,camera:new T.OrthographicCamera(),obstacles:[{x:5,z:0,w:1,d:10}],cloneModel:()=>new T.Group(),onApproach(){assert.fail('Loot clicks must never request movement');},onCollect(){}});
  t.after(()=>life.syncLoot([]));
@@ -79,16 +78,16 @@ test('solo collection reaches the inventory in the next snapshot without a simul
 });
 
 test('ground clicks collect before movement or combat and stop previous movement',()=>{
- const main=readFileSync(new URL('../dist/main.js',import.meta.url),'utf8'),handlers={},calls=[];
+ const main=readDist('main.js'),handlers={},calls=[];
  const context={ready:true,paused:false,backgrounded:false,state:{ended:false},network:{connected:true,send:type=>calls.push([type])},pointer:{},camera:{},
   pointerShift:false,mouseAction:null,getPointerWorld(){},angle:0,moveTarget:{x:8,z:0},movePath:[{x:8,z:0}],pendingRegionInteraction:'old-region',networkDirection:{x:1,z:0},
   $:()=>({addEventListener:(name,fn)=>{handlers[name]=fn;},focus(){}}),awaken(){},updatePointer(){context.mouseAction=context.pointerAction();},raycaster:{setFromCamera(){}},
   life:{pending:'old-target',pickLoot:()=>item,interact:id=>{calls.push(['collect',id]);return{ok:true};}},
   releaseInput:()=>calls.push(['stop']),toast:()=>assert.fail('Unexpected failure'),perform:action=>calls.push(['ability',action])};
  vm.createContext(context);
- vm.runInContext(main.slice(main.indexOf('function pointerAction('),main.indexOf('function updateMouseTarget(')),context);
- vm.runInContext(main.slice(main.indexOf('function collectClickedLoot('),main.indexOf('function regionInteractions(')),context);
- vm.runInContext(main.slice(main.indexOf("$('world').addEventListener('pointerdown'"),main.indexOf("window.addEventListener('pointerup'")),context);
+ vm.runInContext(sliceBetween(main,'function pointerAction(','function updateMouseTarget(',{file:'dist/main.js'}),context);
+ vm.runInContext(sliceBetween(main,'function collectClickedLoot(','function regionInteractions(',{file:'dist/main.js'}),context);
+ vm.runInContext(sliceBetween(main,"$('world').addEventListener('pointerdown'","window.addEventListener('pointerup'",{file:'dist/main.js'}),context);
  handlers.pointerdown({button:0,preventDefault(){}});
  assert.deepEqual(calls,[['stop'],['collect',item.id]]);assert.equal(context.life.pending,null);
  calls.length=0;context.paused=true;handlers.pointerdown({button:0});assert.deepEqual(calls,[]);

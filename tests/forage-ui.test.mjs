@@ -8,6 +8,7 @@ import {createCampaign} from '../dist/campaign.js';
 import {inventoryMarkup} from '../dist/inventory.js';
 import {updateInventoryResources} from '../dist/pouch.js';
 import {VillageLife} from '../dist/world-actors.js';
+import {installGlobals} from './helpers/dom.mjs';
 
 function trackResources(model){
  const counts=new Map();model.traverse(node=>{for(const r of [node.geometry,node.material])if(r&&!counts.has(r)){counts.set(r,0);r.addEventListener('dispose',()=>counts.set(r,counts.get(r)+1));}});
@@ -26,9 +27,8 @@ test('plants have finite geometry, stay grounded, respect reduced motion, and re
 });
 
 test('plant labels approach and request harvest, wait for server confirmation, disappear and regrow cleanly',t=>{
- const previous=globalThis.document,labels=new Set();
- globalThis.document={getElementById:()=>({append:label=>labels.add(label)}),createElement:()=>({dataset:{},style:{setProperty(){}},setAttribute(){},remove(){labels.delete(this);}})};
- t.after(()=>{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;});
+ const labels=new Set();
+ installGlobals(t,{document:{getElementById:()=>({append:label=>labels.add(label)}),createElement:()=>({dataset:{},style:{setProperty(){}},setAttribute(){},remove(){labels.delete(this);}})}});
  const scene=new T.Scene(),player=new T.Group(),state=createState();let destination,requested;
  const life=new VillageLife({scene,player,state,camera:new T.OrthographicCamera(),obstacles:[],cloneModel:()=>new T.Group(),onApproach:point=>{destination=point;return true;}});
  life.requestForage=id=>{requested=id;return true;};

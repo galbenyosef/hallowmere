@@ -172,6 +172,13 @@ test('concurrent unlocks share initialization and a failed asset can recover', a
 });
 
 test('every literal gameplay cue exists in the sound palette', async () => {
-  const main = await readFile(new URL('../dist/main.js', import.meta.url), 'utf8');
-  for (const match of main.matchAll(/(?:audio\.play|audioAt)\('([^']+)'/g)) assert.ok(SOUND_BANKS[match[1]], match[1]);
+  // Scan every top-level dist/*.js (not just main.js) so cues keep being verified
+  // once main.js is split into modules; dist/vendor/ is a subdirectory and is
+  // excluded by the flat readdir + .js filter below.
+  const distDir = new URL('../dist/', import.meta.url);
+  const names = (await readdir(distDir)).filter(name => name.endsWith('.js'));
+  for (const name of names) {
+    const source = await readFile(new URL(name, distDir), 'utf8');
+    for (const match of source.matchAll(/(?:audio\.play|audioAt)\('([^']+)'/g)) assert.ok(SOUND_BANKS[match[1]], `${match[1]} (${name})`);
+  }
 });

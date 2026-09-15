@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createResourceOrbs} from '../dist/resource-orbs.js';
+import {installGlobals} from './helpers/dom.mjs';
 
 function setup(t,{healthCanvas=true,reduced=false,missingHealth=false}={}){
  const contexts=[],motion={matches:reduced};
@@ -18,9 +19,7 @@ function setup(t,{healthCanvas=true,reduced=false,missingHealth=false}={}){
 }
 // Restore browser globals after each isolated renderer test.
 function browserTest(name,run){test(name,t=>{
- const oldDocument=Object.getOwnPropertyDescriptor(globalThis,'document'),oldMotion=Object.getOwnPropertyDescriptor(globalThis,'matchMedia');
- Object.defineProperty(globalThis,'document',{configurable:true,writable:true,value:()=>{}});Object.defineProperty(globalThis,'matchMedia',{configurable:true,writable:true,value:()=>{}});
- t.after(()=>{oldDocument?Object.defineProperty(globalThis,'document',oldDocument):delete globalThis.document;oldMotion?Object.defineProperty(globalThis,'matchMedia',oldMotion):delete globalThis.matchMedia;});
+ installGlobals(t,{document:()=>{},matchMedia:()=>{}});
  run(t);
 });}
 browserTest('Tidal glass keeps health and essence independent when one canvas is unavailable',t=>{
