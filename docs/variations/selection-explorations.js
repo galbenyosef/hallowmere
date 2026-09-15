@@ -1,4 +1,4 @@
-import {CLASS_LIST,CLASSES} from './classes.js';
+import {CLASS_LIST,CLASSES} from '../../dist/classes.js';
 import {DIRECTIONS,CLASS_FLAVOR,PATHS} from './selection-directions.js';
 
 const $=selector=>document.querySelector(selector);

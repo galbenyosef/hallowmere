@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {createPredatorCharacter} from './predator-model.js';
+import {createPredatorCharacter} from '../../dist/predator-model.js';
 import {createHuntKingCharacter} from './hunt-king-model.js';
 
 const $ = id => document.getElementById(id);

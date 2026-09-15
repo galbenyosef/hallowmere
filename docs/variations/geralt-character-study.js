@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {createGeraltCharacter} from './geralt-character-model.js';
+import {createGeraltCharacter} from '../../dist/geralt-character-model.js';
 
 const $ = id => document.getElementById(id);
 const stage = $('model-stage');
