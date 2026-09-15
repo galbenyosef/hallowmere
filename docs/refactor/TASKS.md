@@ -13,13 +13,13 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, c62368e |
 | G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | bcc7b62, d744fb4, 7c82fe9, 0803197 (+tracker) |
 | G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | 5d35fbf, 2c2059a, 0414a23, c1533d7, 3f75255, 7453fc3 |
-| G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | in progress |
-| G1.3 | 1.3 | M2, T1-9, T1-10 | — | — |
+| G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | 4a44dfe, 104262a, 44e09ac (+tracker eb359f9) |
+| G1.3 | 1.3 | M2, T1-9, T1-10, T2-4 | 2026-09-15 | 2584e0b, 7bd89fb, 0dd0d90, 6695720 (tracker follows) |
 | G1.4 | 1.4 | M4, T1-7, T1-8 | — | — |
 | G1.5 | 1.5 | M5, T1-9, T1-10 | — | — |
 | G2.0 | 2.0 | T2-1 | — | — |
-| G2.1 | 2.1 | M6, T2-2, T2-3 | — | — |
-| G2.2 | 2.2 | M7, T2-4, T2-5 | — | — |
+| G2.1 | 2.1 | M6 | — | — |
+| G2.2 | 2.2 | M7, T2-5 | — | — |
 | G2.3 | 2.3 | M8, T2-6 | — | — |
 | G2.4 | 2.4 | M9 | — | — |
 | G2.5 | 2.5 | M10 | — | — |
@@ -45,18 +45,18 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, 8 vm-slicing tests | 0B | merged | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | 3c16270..6a3f690 → main 7453fc3 | ctx has 107 pre-declared fields; agent proved stripping `ctx.` reproduces main:dist/main.js character-for-character; 0 top-level let; assert/test counts identical in 8 tests; compare-shots 11/11 (orchestrator-run); perf within ±15% band; draw calls vary with the random world seed (521–549 idle across unmodified runs) so that column is not an identity check; 301/301 |
 | T1-1 | 1.1 | sonnet | model-primitives → geralt, nightblade | dist/{geralt,nightblade}-character-model.js + golden tests | T0-7 | merged | codex/primitives-geralt-nightblade-94b5ab29-38bb | 5985 | f2d8dea..477d9da → main 5d35fbf | golden tests verified by orchestrator against main originals AND adopted files (2/2 both); geralt 17106→16470 B, nightblade 13986→13269 B; 303/303; `visible` fingerprinted (477d9da), re-verified vs originals |
 | T1-2 | 1.1 | sonnet | model-primitives → oathkeeper, ranger | dist/{oathkeeper,ranger}-character-model.js + golden tests | T0-7 | merged | codex/primitives-oathkeeper-ranger-6dd19ea9-56aa | 5342 | 605c711..46d397d → main 2c2059a | goldens verified by orchestrator vs main originals (4/4) and adopted (4/4); oathkeeper 12471→11987 B, ranger 11879→11391 B; 305/305; found Shape.uuid leaking into ExtrudeGeometry.parameters (stripped); `visible` fingerprinted (46d397d), re-verified vs originals |
-| M2 | 1.2 | sonnet | model-kit.js, icon-atlas.js | dist/main.js, dist/game-context.js (WIRED_SLOTS), 2 new, 5 appearance tests, tests/{icon-atlas,model-kit}.test.mjs | M1 | running | codex/model-kit-icon-atlas-1fa61f22-cd7f | 5589 | — | base 7453fc3 |
+| M2 | 1.2 | sonnet | model-kit.js, icon-atlas.js | dist/main.js, dist/game-context.js (WIRED_SLOTS), 2 new, 5 appearance tests, tests/{icon-atlas,model-kit}.test.mjs | M1 | merged | codex/model-kit-icon-atlas-1fa61f22-cd7f | 5589 | c10d089..0ab66ff → 0dd0d90 | static review clean: paintIcons(document) at the same point in module order; cloneModel wired via createModelCache + WIRED_SLOTS; 5 tests migrated with identical assert/test counts; new icon-atlas + model-kit tests; 11/11 shots within threshold (max 0.0677%, under the 0.0905% noise floor), compare re-run by orchestrator; base 7453fc3 |
 | T1-3 | 1.2 | sonnet | model-primitives → reaver, predator-model | dist/{reaver-character-model,predator-model}.js + golden tests | T0-7 | merged | codex/primitives-reaver-predator-97c91695-d10a | 5832 | 4c51968..3329674 → main 0414a23 | goldens (with visible, uuid-stripped) verified by orchestrator vs originals and adopted; reaver 14057→13333 B, predator 18340→17816 B; 309/309; may merge at gate 1.1 (disjoint) |
 | T1-4 | 1.2 | sonnet | model-primitives → character-study-models, generator, npc-models.mjs | dist/character-study-models.js, scripts/generate-assets.mjs, scripts/npc-models.mjs + golden tests | T0-7, T0-5 | merged | codex/primitives-study-generator-f9654cb9-6963 | 5653 | 016b5fe..84a2a06 → main c1533d7 | goldens verified by orchestrator vs originals (5/5) and adopted; orchestrator regenerated all 9 GLBs with original vs adopted generator: ALL EQUAL (uuid names normalised); 306/306 |
-| M3 | 1.3 | sonnet | effects-factory.js, enemy-spawner.js | dist/main.js, 2 new, tests/effects-factory.test.mjs | M2 | todo | — | — | — | |
+| M3 | 1.3 | sonnet | effects-factory.js, enemy-spawner.js | dist/main.js, dist/game-context.js (WIRED_SLOTS), 2 new, tests/{effects-factory,enemy-spawner}.test.mjs | M2 | running | codex/effects-spawner-96498203-006a | 5606 | — | base 6695720; 11 functions moved verbatim (9 effects + spawnEnemy/updateEnemyBar); proof = compare-shots + perf-browser + free-identifier table |
 | T1-5 | 1.3 | sonnet | dispose.js adoption, effects tier | dist/{combat-effects,class-effects,multiplayer-view,enemy-visuals}.js + tests/dispose-adoption.test.mjs | T0-7 | merged | codex/dispose-effects-39ac6bd3-a22e | 6265 | 3b8705c..2e2f33b → main 4a44dfe | call-log parity test with verbatim references (orchestrator-checked) + 4 mutation checks; all 4 header option rows confirmed; 307/307 |
 | T1-6 | 1.3 | sonnet | random.js + dispose.js adoption, scenery tier | dist/{environment,cave-entrance-scenery,cave-scenery,expansion-layout,outland-scenery,region-environment}.js + tests/golden-scenery.test.mjs | T0-7 | merged | codex/random-dispose-scenery-a62cb65b-ec3b | 6178 | ff6218c..2b4831c → main 104262a | 18 scene goldens verified by orchestrator vs originals and adopted; core closure now 20 (random.js) and pure; cave-scenery.js dispose() left as-is (no matching options row); 319/319 |
 | M4 | 1.4 | sonnet | interaction.js, region-travel.js, pointer-targeting.js | dist/main.js, 3 new, tests/loot-pickup.test.mjs, perf-smoke row | M3 | todo | — | — | — | |
 | T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | merged | codex/util-adoption-ce4f8d26-6a2a | 6294 | d5c74cc → main 3f75255 | 4 helper swaps, imports verified per file; 301/301 |
-| T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,inventory-portraits,npc-portraits}.js + tests/golden-portrait-fit.test.mjs | T0-7 | ready-to-merge | codex/portrait-fit-f50000b5-752a | 5647 | caa6e35..f01fb2d | camera-state goldens (14 subjects) verified by orchestrator vs originals; real pads 1.055/1.065 preserved; character-portraits.js untouched (different framing math); 309/309 |
+| T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,inventory-portraits,npc-portraits}.js + tests/golden-portrait-fit.test.mjs | T0-7 | merged | codex/portrait-fit-f50000b5-752a | 5647 | caa6e35..f01fb2d → main 44e09ac | camera-state goldens (14 subjects) verified by orchestrator vs originals; real pads 1.055/1.065 preserved; character-portraits.js untouched (different framing math); 309/309 |
 | M5 | 1.5 | opus | input-bindings.js | dist/main.js, dist/input-bindings.js, tests loot-pickup/mouse-targeting/input-bindings | M4 | todo | — | — | — | |
-| T1-9 | 1.3 | haiku | Dead code | dist/campaign.js VILLAGES, unused exports (re-verified), app-icon.png → docs/assets | — | running | codex/dead-code-ade7a759-c49f | 5806 | — | base 104262a; must not touch main.js (M2 owns it); openMainMenu deferred to M9 |
-| T1-10 | 1.3 | sonnet | Geometry batcher + palette helper | dist/{geometry-batch,palette}.js, dist/{environment,cave-entrance-scenery,cave-scenery,outland-scenery,treasure-chests}.js + tests | T1-6 | running | codex/geometry-batch-palette-b5c979ff-b5e9 | 5590 | — | base 104262a; proof = tests/golden-scenery.test.mjs (+ treasure-chests golden) |
+| T1-9 | 1.3 | haiku | Dead code | dist/campaign.js VILLAGES, unused exports (re-verified), app-icon.png → docs/assets | — | merged | codex/dead-code-ade7a759-c49f | 5806 | 62aa3ac..01591da → 2584e0b | VILLAGES removed; 4 exports dropped (DEFAULT_SORCERER_APPEARANCE, FOOD_COOLDOWN, MUSIC_FADE_SECONDS, colorWarden); 5 kept (consumed by golden/parity tests); app-icon.png → docs/assets; doc links fixed (01591da) and resolved by orchestrator; openMainMenu: no in-game caller, exercised only by game-mode-choice test → M9 decides; base 104262a; must not touch main.js (M2 owns it); openMainMenu deferred to M9 |
+| T1-10 | 1.3 | sonnet | Geometry batcher + palette helper | dist/{geometry-batch,palette}.js, dist/{environment,cave-entrance-scenery,cave-scenery,outland-scenery,treasure-chests}.js + tests | T1-6 | merged | codex/geometry-batch-palette-b5c979ff-b5e9 | 5590 | 1481405..f006275 → 7bd89fb | 18 scene goldens unchanged (test file untouched, re-run by orchestrator); batcher adopted in environment/cave-entrance/treasure-chests, palette in 5 files; cave-scenery/outland-scenery instance batches left (different operation); 363/363; note: batcher API carries 7 add/5 build options to reproduce 3 call sites exactly; base 104262a; proof = tests/golden-scenery.test.mjs (+ treasure-chests golden) |
 
 ## Phase 2 — import normalization, M6–M11, CSS
 
@@ -64,11 +64,11 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 |---|---|---|---|---|---|---|---|---|---|---|
 | T2-1 | 2.0 | haiku | Three import normalization | all dist/*.js | G1.5 | todo | — | — | — | solo wave |
 | M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | todo | — | — | — | |
-| T2-2 | 2.1 | sonnet | tokens.css | dist/tokens.css, :root blocks in 6 css files, index.html, character-studies.css | — | todo | — | — | — | |
-| T2-3 | 2.1 | sonnet | value-noise dedup | dist/{noise,class-effect-materials,loot-effects,map-fog}.js | T1-6 | todo | — | — | — | |
+| T2-2 | 2.1 | — | tokens.css | — | — | dropped | — | — | — | after T0-5 only two :root blocks remain (style.css for the game, character-studies.css for a dev page) and they deliberately differ (--muted, --line, --bright); only --gold/--serif/--sans are shared. Not worth an agent under the no-visible-change rule |
+| T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
 | M7 | 2.2 | sonnet | hud.js, game-audio.js | dist/main.js, 2 new | M6 | todo | — | — | — | |
-| T2-4 | 2.2 | opus | chronicle.css layering map (docs only) | docs/refactor/CSS-LAYERS.md | T2-2 | todo | — | — | — | |
-| T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-2 | todo | — | — | — | |
+| T2-4 | 2.2 | opus | chronicle.css layering map (docs only) | docs/refactor/CSS-LAYERS.md | — | merged | codex/css-layers-map-0ee3d5d2-be1b | 5386 | 8629b4f → 6695720 | docs-only (833 lines); 96 shared selectors (not 108) across 8 sheets; 120 deletable whole rules = 5,898 B; §4 is the T2-5 spec (merged overlay block verified via CSSOM at 3 viewports × 4 states, 0 diffs); §5 is the T2-6 execution list; roster/inventory/dialogue screens not live-verified; folded into Gate 1.3 since it is disjoint |
+| T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-4 | running | codex/connection-overlay-87dc45f9-192b | 6130 | — | started early from eb359f9 (disjoint CSS-only); spec = CSS-LAYERS.md §4 (38 rules deleted, 3 rewritten, merged block inserted in chronicle.css); proof = whole-document computed-style golden in 4 overlay states × 5 viewports + 13-shot compare |
 | M8 | 2.3 | sonnet | modals.js, inventory-ui.js | dist/main.js, 2 new, tests/modals.test.mjs | M7 | todo | — | — | — | |
 | T2-6 | 2.3 | opus | chronicle.css dead-rule deletion | dist/chronicle.css + shadowed base files | T2-4, T2-5 | todo | — | — | — | 39 shot pairs |
 | M9 | 2.4 | opus | session-lifecycle.js, connection-ui.js | dist/main.js, 2 new, tests/game-mode-choice.test.mjs | M8 | todo | — | — | — | |
@@ -127,3 +127,15 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.1 complete: T1-7 (3f75255), M1 (7453fc3). Gate 1.2 authorized (T1-5, T1-6, T1-8). M2 worktree registered from 7453fc3.
 - 2026-09-15 — M2 launched from 7453fc3. Gate 1.2 chain A (T1-5, T1-6) integrating.
 - 2026-09-15 — Gate 1.2: T1-5 merged (4a44dfe), T1-6 merged (104262a). T1-9 and T1-10 registered from 104262a. T1-8 + tracker integrate next.
+- 2026-09-15 — Gate 1.2 complete (T1-8 + tracker merged). Fresh tracker branch opened.
+- 2026-09-15 — T1-9 reported (62aa3ac); dist edits correct, two doc links broken (asked to fix). openMainMenu confirmed: no in-game caller, only the vm test calls it.
+- 2026-09-15 — T1-9 ready-to-merge (62aa3ac..01591da).
+- 2026-09-15 — T2-3 dropped after inspection (no real duplication left to remove). hm-T2-3 worktree registered but unused.
+- 2026-09-15 — T2-2 dropped (nothing meaningful left to unify). T2-4 started early (CSS layering map, docs only).
+- 2026-09-15 — T1-10 ready-to-merge (1481405..f006275).
+- 2026-09-15 — M2 reported 3 commits (c10d089..0ab66ff); static review clean; visual/perf evidence pending.
+- 2026-09-15 — M2 ready-to-merge: 11/11 shots within threshold. T2-4 reported (8629b4f), docs-only, ready-to-merge and folded into Gate 1.3. Awaiting Gate 1.3 authorization (M2, T1-9, T1-10, T2-4).
+- 2026-09-15 — T2-5 started early (sonnet) from eb359f9 while Gate 1.3 awaits authorization; dependency on T2-2 dropped (T2-2 was dropped), now depends only on T2-4's map.
+- 2026-09-15 — Gate 1.3 authorized (M2, T1-9, T1-10, T2-4). T1-9 merged (2584e0b), T1-10 merged (7bd89fb). M2 + T2-4 integrating.
+- 2026-09-15 — Gate 1.3: M2 merged (0dd0d90), T2-4 merged (6695720). main = 6695720. hm-M3 registered from it; tracker integrates next.
+- 2026-09-15 — M3 started (sonnet) from 6695720. Tracker integrating; fresh tracker branch follows.
