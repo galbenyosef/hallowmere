@@ -87,10 +87,10 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | P5 | 3.2 | opus | snapshot + clone | dist/world.js, dist/local-session.js, tests/snapshot-aliasing.test.mjs | G2.6 | merged | codex/snapshot-clone-7e1bfefc-0db0 | 5605 | 22cdcdf..953582a → 22b7207 | aliasing test written first and failing on main (state.*, loot, forage, events, enemies[].aim aliased); fix = 2-line detach() on state/loot/events, {...patch} for FORAGE_PATCHES, aim rebuilt in place; structuredClone dropped in publish; 14/14 on orchestrator re-run; equivalence 80 checkpoints vs tests/fixtures/world-ref.js; perf-smoke advance 0.120→0.075 ms (−37..52%), snapshot+clone 0.227→0.083 ms; aim now copied with {...e.aim} (953582a); 376/376 |
 | P7 | 3.2 | haiku | orb disposal | dist/resource-orbs.js, tests/resource-orbs.test.mjs | G2.6 | dropped | — | — | — | createResourceOrbs() runs once at boot (main.js:51) and the HUD orbs live for the whole page; nothing ever tears them down, so a dispose() would be uncalled dead code (no leak). Revisit only if M9 introduces a teardown path. |
 | P6a | 3.3 | opus | render loop | dist/render-loop.js | G2.6 | todo | — | — | — | proves split cost nothing |
-| P6b | 3.3 | sonnet | region labels + hazards | dist/region-travel.js | G2.6 | todo | — | — | — | |
+| P6b | 3.3 | sonnet | region labels + hazards | dist/region-travel.js | G2.6 | running | codex/region-render-cache-fe44b0f6-8b3c | 6142 | — | sonnet; started after M4 landed (region-travel.js exists); parity vs verbatim renderRegionLabels/renderHazards over ≥500 frames + allocation counts; node-only |
 | P6c | 3.3 | sonnet | HUD writes | dist/hud.js | G2.6 | todo | — | — | — | |
 | P6d | 3.4 | sonnet | enemy sync + bars | dist/shared-world-render.js, dist/enemy-spawner.js | G2.6 | todo | — | — | — | |
-| P6e | 3.4 | sonnet | interaction memo | dist/interaction.js, dist/pointer-targeting.js | G2.6 | todo | — | — | — | |
+| P6e | 3.4 | sonnet | interaction memo | dist/interaction.js, dist/pointer-targeting.js | G2.6 | running | codex/interaction-memo-90ff650c-90f2 | 6134 | — | sonnet; started after M4 landed; memo keyed on lastSnapshot/interactions/state/discoveries identities + length (no main.js hook needed); orchestrator pre-checked that no caller mutates the records; node-only |
 | P8 | 3.4 | sonnet | effect pooling | dist/effects-factory.js, tests/effects-factory.test.mjs | G2.6 | todo | — | — | — | |
 
 ## Log
@@ -164,3 +164,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — M4 ready-to-merge (8e7cf7b..85e0fd5, includes merge of main). Post-Gate-1.4 smoke: 11/11 shots on main+M4. Gate 1.5 requested for M4. M5 running (opus, stacked on M4). T2-6 running.
 - 2026-09-15 — Gate 1.5: M4 merged (2e9d56c). Tracker integrating; fresh tracker branch follows.
 - 2026-09-15 — Gate 1.5 complete (tracker e20872f); main = e20872f. P7 dropped (orbs are page-lifetime). M5 reported (41aa1a5..29f46a4), static review clean. P6b + P6e registering (file-disjoint from M5/T2-6).
+- 2026-09-15 — P6b and P6e started (sonnet) from e20872f. M5 capture queued. Plan: T2-1 solo after P6b/P6e land, then M6.
