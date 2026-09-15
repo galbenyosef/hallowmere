@@ -5,6 +5,7 @@ import {World} from '../server/world.mjs';
 import {World as SharedWorld} from '../dist/world.js';
 import {PORTALS} from '../dist/regions.js';
 import {refreshGates} from '../dist/region-campaign.js';
+import {FORAGE_PATCHES} from '../dist/foraging.js';
 
 const flush=()=>new Promise(resolve=>queueMicrotask(resolve));
 function setup(t){const snapshots=[];const session=new LocalSession({seed:17,onSnapshot:(snapshot,changed)=>snapshots.push({snapshot,changed})});t.after(()=>session.close());session.start();return {session,snapshots,player:session.world.players.get(session.id)};}
@@ -45,4 +46,26 @@ test('solo commands retain combat, loot, travel, respawn and restart behavior',a
 
 test('closing a local session suppresses queued results and future simulation',async t=>{
  const {session,snapshots}=setup(t);session.send('select-class',{classId:'sorcerer',appearanceId:'C01'});const count=snapshots.length;session.close();await flush();session.advance(1);assert.equal(snapshots.length,count);assert.equal(session.send('restart'),false);
+});
+
+// World#snapshot already hands back private plain data, so publish() no longer pays for a
+// defensive structuredClone; this pins the guarantee the renderer relies on.
+test('published snapshots are detached from the running world',t=>{
+ const {session,snapshots,player}=setup(t),world=session.world;
+ session.input={x:1,z:0,angle:Math.PI/2};for(let i=0;i<8;i++)session.advance(.25);
+ const enemy=world.enemies.find(e=>e.zone==='road');Object.assign(player,{x:enemy.x,z:enemy.z-1});enemy.hp=1;
+ session.send('ability',{action:'attack',angle:0});session.advance(.25);
+ const published=snapshots.at(-1).snapshot,frozen=JSON.stringify(published);
+ assert.ok(published.enemies.length&&published.forage.length&&published.events.length&&published.loot.length);
+ for(let i=0;i<8;i++)session.advance(.25);
+ assert.ok(world.tick>=80&&snapshots.length>2);
+ assert.equal(JSON.stringify(published),frozen,'a published snapshot changed while the world kept stepping');
+ published.state.inventory.push({id:'renderer-only'});published.state.pouch['crimson-mushroom']=99;
+ published.enemies[0].aim.x=999;published.forage[0].x=999;published.events[0].type='renderer-only';published.loot[0].claimed=true;
+ assert.equal(player.state.inventory.some(i=>i.id==='renderer-only'),false);
+ assert.equal(player.state.pouch['crimson-mushroom'],0);
+ assert.notEqual(world.enemies.find(e=>e.id===published.enemies[0].id).aim.x,999);
+ assert.notEqual(FORAGE_PATCHES.find(patch=>patch.id===published.forage[0].id).x,999);
+ assert.equal(world.events.some(e=>e.type==='renderer-only'),false);
+ assert.equal(player.loot.find(d=>d.id===published.loot[0].id).claimed,false);
 });
