@@ -52,7 +52,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T1-5 | 1.3 | haiku | dispose.js adoption, effects tier | dist/{combat-effects,class-effects,multiplayer-view,enemy-visuals}.js | T0-7 | todo | — | — | — | |
 | T1-6 | 1.3 | sonnet | random.js + dispose.js adoption, scenery tier | dist/{environment,cave-entrance-scenery,cave-scenery,expansion-layout,outland-scenery,region-environment}.js + golden tests | T0-7 | running | codex/random-dispose-scenery-a62cb65b-ec3b | 6178 | — | started early from 0a50a93; scene fingerprints + draw-call check |
 | M4 | 1.4 | sonnet | interaction.js, region-travel.js, pointer-targeting.js | dist/main.js, 3 new, tests/loot-pickup.test.mjs, perf-smoke row | M3 | todo | — | — | — | |
-| T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | todo | — | — | — | |
+| T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | running | codex/util-adoption-ce4f8d26-6a2a | 6294 | — | started early from 0a50a93 |
 | T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,character-portraits,inventory-portraits,npc-portraits}.js | T0-7 | todo | — | — | — | portrait hashes must match |
 | M5 | 1.5 | opus | input-bindings.js | dist/main.js, dist/input-bindings.js, tests loot-pickup/mouse-targeting/input-bindings | M4 | todo | — | — | — | |
 | T1-9 | 1.5 | haiku | Dead code | dist/campaign.js VILLAGES, 10 internal-only exports, app-icon.png + doc refs | — | todo | — | — | — | also check `openMainMenu()` in main.js: T0-4 found it has no caller |
