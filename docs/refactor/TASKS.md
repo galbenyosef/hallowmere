@@ -13,7 +13,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, c62368e |
 | G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | bcc7b62, d744fb4, 7c82fe9, 0803197 (+tracker) |
 | G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | 5d35fbf, 2c2059a, 0414a23, c1533d7, 3f75255, 7453fc3 |
-| G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | in progress |
+| G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | 4a44dfe, 104262a, 44e09ac (+tracker eb359f9) |
 | G1.3 | 1.3 | M2, T1-9, T1-10 | — | — |
 | G1.4 | 1.4 | M4, T1-7, T1-8 | — | — |
 | G1.5 | 1.5 | M5, T1-9, T1-10 | — | — |
@@ -53,7 +53,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T1-6 | 1.3 | sonnet | random.js + dispose.js adoption, scenery tier | dist/{environment,cave-entrance-scenery,cave-scenery,expansion-layout,outland-scenery,region-environment}.js + tests/golden-scenery.test.mjs | T0-7 | merged | codex/random-dispose-scenery-a62cb65b-ec3b | 6178 | ff6218c..2b4831c → main 104262a | 18 scene goldens verified by orchestrator vs originals and adopted; core closure now 20 (random.js) and pure; cave-scenery.js dispose() left as-is (no matching options row); 319/319 |
 | M4 | 1.4 | sonnet | interaction.js, region-travel.js, pointer-targeting.js | dist/main.js, 3 new, tests/loot-pickup.test.mjs, perf-smoke row | M3 | todo | — | — | — | |
 | T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | merged | codex/util-adoption-ce4f8d26-6a2a | 6294 | d5c74cc → main 3f75255 | 4 helper swaps, imports verified per file; 301/301 |
-| T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,inventory-portraits,npc-portraits}.js + tests/golden-portrait-fit.test.mjs | T0-7 | ready-to-merge | codex/portrait-fit-f50000b5-752a | 5647 | caa6e35..f01fb2d | camera-state goldens (14 subjects) verified by orchestrator vs originals; real pads 1.055/1.065 preserved; character-portraits.js untouched (different framing math); 309/309 |
+| T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,inventory-portraits,npc-portraits}.js + tests/golden-portrait-fit.test.mjs | T0-7 | merged | codex/portrait-fit-f50000b5-752a | 5647 | caa6e35..f01fb2d → main 44e09ac | camera-state goldens (14 subjects) verified by orchestrator vs originals; real pads 1.055/1.065 preserved; character-portraits.js untouched (different framing math); 309/309 |
 | M5 | 1.5 | opus | input-bindings.js | dist/main.js, dist/input-bindings.js, tests loot-pickup/mouse-targeting/input-bindings | M4 | todo | — | — | — | |
 | T1-9 | 1.3 | haiku | Dead code | dist/campaign.js VILLAGES, unused exports (re-verified), app-icon.png → docs/assets | — | running | codex/dead-code-ade7a759-c49f | 5806 | — | base 104262a; must not touch main.js (M2 owns it); openMainMenu deferred to M9 |
 | T1-10 | 1.3 | sonnet | Geometry batcher + palette helper | dist/{geometry-batch,palette}.js, dist/{environment,cave-entrance-scenery,cave-scenery,outland-scenery,treasure-chests}.js + tests | T1-6 | running | codex/geometry-batch-palette-b5c979ff-b5e9 | 5590 | — | base 104262a; proof = tests/golden-scenery.test.mjs (+ treasure-chests golden) |
@@ -127,3 +127,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.1 complete: T1-7 (3f75255), M1 (7453fc3). Gate 1.2 authorized (T1-5, T1-6, T1-8). M2 worktree registered from 7453fc3.
 - 2026-09-15 — M2 launched from 7453fc3. Gate 1.2 chain A (T1-5, T1-6) integrating.
 - 2026-09-15 — Gate 1.2: T1-5 merged (4a44dfe), T1-6 merged (104262a). T1-9 and T1-10 registered from 104262a. T1-8 + tracker integrate next.
+- 2026-09-15 — Gate 1.2 complete (T1-8 + tracker merged). Fresh tracker branch opened.
