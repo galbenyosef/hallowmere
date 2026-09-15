@@ -7,8 +7,9 @@ import {bareTreeSegments} from './bare-tree.js';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {BUILDING_SPECS,createBuildingLayout,buildingLocal,insideBuilding,setBuildingAccess} from './buildings.js';
+import {lcg,range as rangeFn} from './random.js';
 export function createEnvironment(scene){
- let seed=4148;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};const range=(a,b)=>a+(b-a)*rand();
+ const rand=lcg(4148);const range=(a,b)=>rangeFn(rand,a,b);
  const statics=new T.Group();scene.add(statics);const obstacles=SCENERY_OBSTACLES.map(o=>({...o})),buildings=[],torches=[],windowGlows=[];
  const material=(color,roughness=.92,metalness=0)=>new T.MeshStandardMaterial({color,roughness,metalness});
  const materials={stone:material(0x646c63),stoneDark:material(0x384441),plaster:material(0x737369),timber:material(0x302e27),wood:material(0x534b37),oak:material(0x3e382c),roof:material(0x313e40),roof2:material(0x3d4c4b),roof3:material(0x293536),iron:material(0x39413c,.6,.55),dirt:material(0x39423b),grave:material(0x737e70),bone:material(0xa5a38a),grass:material(0x626957),dark:material(0x111b1c),red:material(0x65382e)};
