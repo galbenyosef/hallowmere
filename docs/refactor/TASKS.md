@@ -36,7 +36,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T0-5 | 0A | sonnet | Move dev pages to docs/variations; npc-models.js → scripts/ | dist dev pages (PLAN §5.6), scripts/generate-assets.mjs, tests/npc-models.test.mjs, README.md, docs/*.md refs, design-qa.md | — | ready-to-merge | codex/dev-pages-move-c5b59f7e-17a8 | 5791 | bc42cd3, f051704 | 17 files out of dist/, path edits verified token-by-token; 269/269; build green |
 | T0-1 | 0B | sonnet | tests/helpers, slice guard, audio widening, automation snapshot test | tests/helpers/, 9 main.js-reading tests, ~6 helper-pasting tests, tests/automation-surface.test.mjs | T0-5 | todo | — | — | — | |
 | T0-3 | 0B | opus | Validator: recursive glob + per-page `$()` closure | scripts/validate.mjs | T0-5 | todo | — | — | — | |
-| T0-7 | 0B | opus | New shared modules with zero consumers + tests | dist/{random,dispose,util,dom,model-primitives}.js + tests | — | review | codex/shared-modules-95b6f5f0-1b59 | 6270 | c367e95..7f73544 | 295/295; started early (no deps); opus because it fixes the API every dedup task adopts; util.js split into pure util.js + dom.js so core modules can import util without DOM contamination |
+| T0-7 | 0B | opus | New shared modules with zero consumers + tests | dist/{random,dispose,util,dom,model-primitives}.js + tests | — | ready-to-merge | codex/shared-modules-95b6f5f0-1b59 | 6270 | c367e95..7f73544 | 295/295; reviewed: mapping tables in headers, parity tests vs verbatim kit copies; started early (no deps); opus because it fixes the API every dedup task adopts; util.js split into pure util.js + dom.js so core modules can import util without DOM contamination |
 
 ## Phase 1 — main.js M1–M5 + dedup
 
