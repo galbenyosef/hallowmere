@@ -5,9 +5,9 @@ import {SPAWNS,pointBlocked,distance} from '../dist/combat.js';
 import {START} from '../dist/campaign.js';
 import {predictedPosition} from '../dist/multiplayer-client.js';
 import {createWorldLayout,SCENERY_OBSTACLES} from '../dist/world-layout.js';
+import {tick} from './helpers/sim.mjs';
 const fixture=()=>{let now=0;const w=new World({seed:17,now:()=>now});return {w,join:()=>w.join().player,advance:ms=>{now+=ms;w.expire();}};};
 const command=(w,p,type,data={})=>w.command(p.id,{type,worldId:w.id,seq:p.lastSeq+1,...data});
-const tick=(w,n=1)=>{for(let i=0;i<n;i++)w.step();};
 
 test('eight unique Wardens, capacity, private state, and safe token resume',()=>{
  const {w,join,advance}=fixture(),players=Array.from({length:8},join);

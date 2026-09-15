@@ -5,10 +5,9 @@ import {speedFor} from '../dist/classes.js';
 import {START} from '../dist/campaign.js';
 import {clearTravelEffects} from '../dist/region-campaign.js';
 import {predictedPosition} from '../dist/multiplayer-client.js';
+import {tick,cast} from './helpers/sim.mjs';
 
 const command=(w,p,type,data={})=>w.command(p.id,{type,worldId:w.id,seq:p.lastSeq+1,...data});
-const cast=(w,p,action,extra={})=>command(w,p,'ability',{action,angle:0,...extra});
-const tick=(w,n=1)=>{for(let i=0;i<n;i++)w.step();};
 function fixture(){
  const w=new World({seed:17}),p=w.join().player;
  assert.ok(command(w,p,'select-class',{classId:'oathkeeper'}));
