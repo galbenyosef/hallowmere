@@ -35,7 +35,7 @@ export function createGameContext({audio,gameSettings,exploration,resourceOrbs,j
 // Slots a wiring step must fill before the game runs. Every extraction step that assigns
 // functions onto ctx adds its own names here; data fields that legitimately stay null
 // (activeJourney, lockedEnemy, ...) are deliberately not listed.
-export const WIRED_SLOTS=['worldBounds','safeHere','bossType','enemyModelType'];
+export const WIRED_SLOTS=['worldBounds','safeHere','bossType','enemyModelType','cloneModel'];
 export function assertWired(ctx){
  const missing=WIRED_SLOTS.filter(slot=>ctx[slot]===null||ctx[slot]===undefined);
  if(missing.length)throw Error(`Game context is not wired: ${missing.join(', ')}`);

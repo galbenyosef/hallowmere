@@ -1,25 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
 import {CLASS_LIST,CLASSES,classAppearance} from '../dist/classes.js';
 import {createPlayableCharacter} from '../dist/playable-characters.js';
 import {menuNavigationMarkup,updateMenuNavigation} from '../dist/menu-chrome.js';
 import {sliceBetween,readDist} from './helpers/source.mjs';
-import {loadMergeGeometries} from './helpers/three-shim.mjs';
 
-const main=readDist('main.js');
-const mergeGeometries=await loadMergeGeometries();
+// dist/model-kit.js imports the bare 'three' specifier, which only the page's import map
+// resolves; match it in Node the way tests/npc-portraits.test.mjs does for GLTFLoader.js.
+const hook=registerHooks({resolve(specifier,context,nextResolve){
+ if(specifier==='three')return nextResolve(new URL('../dist/vendor/three.module.js',import.meta.url).href,context);
+ if(specifier==='three/addons/utils/BufferGeometryUtils.js')return nextResolve(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url).href,context);
+ return nextResolve(specifier,context);
+}});
+const {getRig,createModelCache}=await import('../dist/model-kit.js');
+hook.deregister();
 
 test('Reaver armor and axe survive gameplay batching and follow their animated joints',()=>{
- const ctx={prefabs:{}},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,ctx,mergeGeometries,Float32Array});
- vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
- const model=vm.runInContext("cloneModel('C03')",context),study=createPlayableCharacter('reaver');
+ const ctx={prefabs:{}},{cloneModel}=createModelCache(ctx);
+ const model=cloneModel('C03'),study=createPlayableCharacter('reaver');
  const triangles=root=>{let count=0;root.traverse(n=>{if(n.isMesh)count+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;});return count;};
  assert.equal(triangles(model),triangles(study));
  assert.equal(model.userData.characterConcept,'C03');
  assert.equal(model.getObjectByName('head').parent.name,'body');
- const rig=context.getRig(model);assert.equal(rig.arms.length,2);assert.equal(rig.legs.length,2);assert.equal(rig.baseY,1.3);
+ const rig=getRig(model);assert.equal(rig.arms.length,2);assert.equal(rig.legs.length,2);assert.equal(rig.baseY,1.3);
  for(const [piece,joint] of [['bulwark-pauldron','armL'],['gauntlet-1','armR'],['greave--1','legL'],['weapon','armR']]){
   const part=model.getObjectByName(piece),pivot=model.getObjectByName(joint);
   assert.ok(part,piece);
@@ -34,9 +40,8 @@ test('Reaver armor and axe survive gameplay batching and follow their animated j
 });
 
 test('gameplay optimization and actor cloning preserve Geralt face materials and attached equipment',()=>{
- const ctx={prefabs:{}},context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,ctx,mergeGeometries,Float32Array});
- vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
- const first=vm.runInContext("cloneModel('geralt')",context),second=vm.runInContext("cloneModel('geralt')",context);
+ const ctx={prefabs:{}},{cloneModel}=createModelCache(ctx);
+ const first=cloneModel('geralt'),second=cloneModel('geralt');
  const face=root=>{let result;root.traverse(n=>{if(Array.isArray(n.material))result=n;});return result;};
  const originalFace=face(ctx.prefabs.geralt),firstFace=face(first),secondFace=face(second);
  assert.equal(firstFace.geometry.groups.length,6);
@@ -53,7 +58,7 @@ test('gameplay optimization and actor cloning preserve Geralt face materials and
  assert.equal(nestedMeshes(first),nestedMeshes(study));
  const triangles=root=>{let count=0;root.traverse(n=>{if(n.isMesh)count+=(n.geometry.index?.count??n.geometry.getAttribute('position').count)/3;});return count;};
  assert.equal(triangles(first),triangles(study));
- const rig=context.getRig(first);assert.equal(rig.arms.length,2);assert.equal(rig.legs.length,2);assert.equal(rig.baseY,1.3);
+ const rig=getRig(first);assert.equal(rig.arms.length,2);assert.equal(rig.legs.length,2);assert.equal(rig.baseY,1.3);
 });
 
 const pickerSource=readDist('roster-picker.js').replace(/^import .*;\n/gm,'').replace('export function','function');
