@@ -13,8 +13,8 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, c62368e |
 | G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | bcc7b62, d744fb4, 7c82fe9, 0803197 (+tracker) |
 | G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | in progress |
-| G1.2 | 1.2 | M2, T1-5, T1-6 (+ T1-8 if ready) | — | — |
-| G1.3 | 1.3 | M3, T1-5, T1-6 | — | — |
+| G1.2 | 1.2 | T1-5, T1-6, T1-8 | — | — |
+| G1.3 | 1.3 | M2, T1-9, T1-10 | — | — |
 | G1.4 | 1.4 | M4, T1-7, T1-8 | — | — |
 | G1.5 | 1.5 | M5, T1-9, T1-10 | — | — |
 | G2.0 | 2.0 | T2-1 | — | — |
@@ -53,7 +53,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T1-6 | 1.3 | sonnet | random.js + dispose.js adoption, scenery tier | dist/{environment,cave-entrance-scenery,cave-scenery,expansion-layout,outland-scenery,region-environment}.js + tests/golden-scenery.test.mjs | T0-7 | ready-to-merge | codex/random-dispose-scenery-a62cb65b-ec3b | 6178 | ff6218c..2b4831c | 18 scene goldens verified by orchestrator vs originals and adopted; core closure now 20 (random.js) and pure; cave-scenery.js dispose() left as-is (no matching options row); 319/319 |
 | M4 | 1.4 | sonnet | interaction.js, region-travel.js, pointer-targeting.js | dist/main.js, 3 new, tests/loot-pickup.test.mjs, perf-smoke row | M3 | todo | — | — | — | |
 | T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | ready-to-merge | codex/util-adoption-ce4f8d26-6a2a | 6294 | d5c74cc | 4 helper swaps, imports verified per file; 301/301 |
-| T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,inventory-portraits,npc-portraits}.js (+ character-portraits.js only if identical) + tests/golden-portrait-fit.test.mjs | T0-7 | running | codex/portrait-fit-f50000b5-752a | 5647 | — | started early from 2c2059a; proof = camera-state golden (no WebGL in Node) |
+| T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,inventory-portraits,npc-portraits}.js + tests/golden-portrait-fit.test.mjs | T0-7 | ready-to-merge | codex/portrait-fit-f50000b5-752a | 5647 | caa6e35..f01fb2d | camera-state goldens (14 subjects) verified by orchestrator vs originals; real pads 1.055/1.065 preserved; character-portraits.js untouched (different framing math); 309/309 |
 | M5 | 1.5 | opus | input-bindings.js | dist/main.js, dist/input-bindings.js, tests loot-pickup/mouse-targeting/input-bindings | M4 | todo | — | — | — | |
 | T1-9 | 1.5 | haiku | Dead code | dist/campaign.js VILLAGES, 10 internal-only exports, app-icon.png + doc refs | — | todo | — | — | — | also check `openMainMenu()` in main.js: T0-4 found it has no caller |
 | T1-10 | 1.5 | sonnet | Geometry batcher + palette helper | dist/{geometry-batch,palette}.js, dist/{environment,cave-entrance-scenery,treasure-chests,outland-scenery}.js | T1-6 | todo | — | — | — | |
@@ -123,3 +123,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.1 authorized by the user (M1, T1-1, T1-2, T1-3, T1-4, T1-7); chain 1 (T1-1, T1-2) integrating. M1 final evidence in: perf within band; draw-call column found to vary with the random world seed (also seen by T1-6) → PERF.md now says draw calls are not an identity check. T1-5 and T1-6 verified and ready; they join gate 1.2.
 - 2026-09-15 — Gate 1.1: T1-1 merged (5d35fbf), T1-2 merged (2c2059a). Chain 2 (T1-3, T1-4) next; T1-8 worktree registered.
 - 2026-09-15 — Gate 1.1: T1-3 merged (0414a23), T1-4 merged (c1533d7). Chain 3 (T1-7, M1) integrating.
+- 2026-09-15 — T1-8 ready-to-merge (caa6e35..f01fb2d). Gate plan adjusted: G1.2 = T1-5, T1-6, T1-8 (all ready, disjoint from M2) so T1-9/T1-10 can start sooner; G1.3 = M2, T1-9, T1-10.
