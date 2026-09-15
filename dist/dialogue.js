@@ -1,4 +1,5 @@
-const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+import {escapeHtml} from './util.js';
+
 
 export function dialogueMarkup(data, state) {
   const firstAvailable = data.choices.findIndex(choice => !choice.disabled);

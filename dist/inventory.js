@@ -1,7 +1,8 @@
 import {pouchMarkup,pouchDetailMarkup} from './pouch.js';
 import {classFor,primaryDamage,classAppearance} from './classes.js';
 import {portraitFor,weaponPortraitFor,inventoryPortraitFor,inventoryPortraitStatus} from './character-art.js';
-const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+import {escapeHtml} from './util.js';
+const escape = escapeHtml;
 const art=(item,state)=>item.slot==='weapon'?(weaponPortraitFor(state.classId,state.appearanceId)||(!state.classId?'./assets/inventory/sword.png':null)):'./assets/inventory/charm.png';
 const inspectedItem=(state,id)=>state.inventory.find(item=>item.id===id)||state.inventory[0];
 
