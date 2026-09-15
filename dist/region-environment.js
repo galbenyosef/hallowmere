@@ -6,6 +6,8 @@ import {createCaveEntranceEffect} from './cave-entrance-effects.js';
 import {createTreasureChest} from './treasure-chests.js';
 import {createCaveScenery} from './cave-scenery.js';
 import {createCaveEntranceScenery} from './cave-entrance-scenery.js';
+import {lcg} from './random.js';
+import {disposeSubtree} from './dispose.js';
 
 const palettes={
  'drowned-wood':{ground:0x273d37,stone:0x4e6052,dark:0x243129,trim:0x8b9564,glow:0x8fc4a1},
@@ -20,7 +22,7 @@ function kit(scene,mapId){
  const materials={};for(const [key,color] of Object.entries(p))materials[key]=new T.MeshStandardMaterial({color,roughness:.95,...(key==='glow'?{emissive:color,emissiveIntensity:1.6}:{})});
  const geometries={box:new T.BoxGeometry(1,1,1),rock:new T.DodecahedronGeometry(1,0),cylinder:new T.CylinderGeometry(1,1,1,8),cone:new T.ConeGeometry(1,1,7),ring:new T.TorusGeometry(1,.06,5,32)};
  function mesh(shape,mat,x,y,z,sx=1,sy=1,sz=1){const m=new T.Mesh(geometries[shape],materials[mat]);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.receiveShadow=true;m.castShadow=true;group.add(m);return m;}
- function dispose(){group.removeFromParent();for(const g of Object.values(geometries))g.dispose();for(const m of Object.values(materials))m.dispose();}
+ function dispose(){disposeSubtree(group,{removeFromParent:'before',traverse:false,extraGeometries:Object.values(geometries),extraMaterials:Object.values(materials)});}
  return{group,materials,geometries,mesh,dispose};
 }
 export function createRegionLandmarks(scene,mapId){
@@ -75,7 +77,7 @@ export function createRegionEnvironment(scene,mapId){
    update(t,dt,victory,camera,player){scenery.update(t,player);landmarks.update(t);groundFog.update(t,player);},dispose(){groundFog.dispose();landmarks.dispose();scenery.dispose();}};
  }
  const map=mapFor(mapId),k=kit(scene,mapId),{mesh,group}=k,b=map.bounds,obstacles=map.obstacles.map(o=>({...o})),gates=[],cover=[];
- let seed=mapId.length*977;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const rand=lcg(mapId.length*977);
  mesh('box','ground',(b.minX+b.maxX)/2,-.21,(b.minZ+b.maxZ)/2,b.maxX-b.minX,.4,b.maxZ-b.minZ);
  // The shared authored routes provide each region's roads and objective approaches.
  for(const obstacle of obstacles){
