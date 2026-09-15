@@ -1,7 +1,7 @@
 // Tidal glass, selected from study 01. Canvas 2D keeps the effect independent
 // of the game's WebGL context; the existing CSS liquid is the fallback.
 const TAU=Math.PI*2,RADIUS=81;
-const clamp=value=>Number.isFinite(value)?Math.max(0,Math.min(1,value)):0;
+import {clamp01} from './util.js';
 const random=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value);};
 const color=(hue,lightness=55,alpha=1)=>`hsla(${hue},90%,${lightness}%,${alpha})`;
 function circle(ctx,x,y,r,fill){ctx.beginPath();ctx.arc(x,y,r,0,TAU);if(fill){ctx.fillStyle=fill;ctx.fill();}}
@@ -51,7 +51,7 @@ export function createResourceOrbs(){
   const step=Number.isFinite(dt)?Math.max(0,Math.min(dt,.1)):0,reduced=motion.matches;
   if(!reduced)elapsed+=step;
   for(const surface of surfaces){
-   const target=clamp(surface.index===0?health:mana);
+   const target=clamp01(surface.index===0?health:mana);
    surface.host.parentElement.style.setProperty('--potion-strength',String(.15+target*.85));
    if(surface.value===null||reduced||step===0){surface.value=target;surface.kick=0;}
    else{

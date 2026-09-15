@@ -2,7 +2,8 @@ import {CLASSES} from './classes.js';
 import {CHECKPOINTS,mapFor} from './regions.js';
 import {prepareCharacterPortraits,portraitFor} from './character-portraits.js';
 
-const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+import {escapeHtml} from './util.js';
+const escape = escapeHtml;
 const duration=seconds=>{const minutes=Math.floor((seconds||0)/60);return minutes<60?`${minutes}m played`:`${Math.floor(minutes/60)}h ${minutes%60}m played`;};
 const savedTime=time=>{const date=new Date(time);return Number.isFinite(date.getTime())?new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(date):'an earlier session';};
 const checkpoint=s=>CHECKPOINTS.find(c=>c.id===s.checkpointId)?.name||'Ashwick';
