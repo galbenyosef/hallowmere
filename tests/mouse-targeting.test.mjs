@@ -13,9 +13,9 @@ function attackFrame({classId,range,clear,shift=false}){
  const ctx={state:{classId,ended:false},player,
   lockedEnemy:{model:enemy,dead:false},attackHeld:true,aimActive:true,
   keys:new Set(),joystickValue:{x:0,y:0},dodgeTime:0,angle:0,moveTarget:null,movePath:[],lastMove:new T.Vector3(),
-  network:{id:'local'},lastSnapshot:null,environment:{obstacles:[]},worldBounds:()=>({}),
+  network:{id:'local'},lastSnapshot:null,environment:{obstacles:[]},worldBounds:()=>({}),pointerShift:shift,
   heroRig:{},selection:{position:new T.Vector3(),material:{}},playerLight:{position:new T.Vector3()}};
- const context={T,ctx,abilitiesFor,classFor,distance,pointerShift:shift,
+ const context={T,ctx,abilitiesFor,classFor,distance,
   hasLineOfSight:()=>clear,findPath:()=>[{x:0,z:range}],
   moveEntity(){assert.fail('A stationary attack must not request walking');},
   perform:action=>attacks.push(action),animateRig(){},animateHeroAttack(){}};

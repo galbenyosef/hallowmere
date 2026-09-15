@@ -81,9 +81,10 @@ test('ground clicks collect before movement or combat and stop previous movement
  const main=readDist('main.js'),handlers={},calls=[];
  const ctx={ready:true,paused:false,backgrounded:false,state:{ended:false},network:{connected:true,send:type=>calls.push([type])},pointer:{},camera:{},
   angle:0,moveTarget:{x:8,z:0},movePath:[{x:8,z:0}],pendingRegionInteraction:'old-region',networkDirection:{x:1,z:0},raycaster:{setFromCamera(){}},
-  life:{pending:'old-target',pickLoot:()=>item,interact:id=>{calls.push(['collect',id]);return{ok:true};}}};
- const context={ctx,pointerShift:false,mouseAction:null,getPointerWorld(){},
-  $:()=>({addEventListener:(name,fn)=>{handlers[name]=fn;},focus(){}}),awaken(){},updatePointer(){context.mouseAction=context.pointerAction();},
+  life:{pending:'old-target',pickLoot:()=>item,interact:id=>{calls.push(['collect',id]);return{ok:true};}},
+  pointerShift:false,mouseAction:null};
+ const context={ctx,getPointerWorld(){},
+  $:()=>({addEventListener:(name,fn)=>{handlers[name]=fn;},focus(){}}),awaken(){},updatePointer(){ctx.mouseAction=context.pointerAction();},
   releaseInput:()=>calls.push(['stop']),toast:()=>assert.fail('Unexpected failure'),perform:action=>calls.push(['ability',action])};
  vm.createContext(context);
  vm.runInContext(sliceBetween(main,'function pointerAction(','function updateMouseTarget(',{file:'dist/main.js'}),context);

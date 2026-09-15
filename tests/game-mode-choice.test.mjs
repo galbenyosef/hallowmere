@@ -13,9 +13,9 @@ function setup(){
  $('game').children=[$('world'),$('loading')];const sessions=[],snapshots=[],statuses=[];
  class Session{constructor(callbacks){this.callbacks=callbacks;sessions.push(this);}start(){this.started=true;this.connected=true;}close(){this.closed=true;this.connected=false;}}
  const titleScreen={showModes(){},hide(){$('loading').hidden=true;},showMainMenu(session){$('loading').hidden=false;this.session=session;},updateSession(session){this.session=session;}};
- const ctx={paused:false,backgrounded:false,mapExpanded:false,modalKind:'',currentNpc:null,state:{classId:'sorcerer',gold:81},safeHere:()=>context.inSanctuary,audio:{pause(){}},rosterPicker:{open:false},ready:false,network:null,lastSnapshot:null,moveTarget:null,movePath:[],clock:{getDelta(){}},previewMode:false};
- const context=vm.createContext({$,ctx,titleScreen,mainMenuOpen:false,inSanctuary:true,classFor:()=>({name:'Sorcerer'}),inventoryPreviews:{hide(){}},sessionMode:null,assetsReady:false,sessionGeneration:0,MultiplayerClient:class extends Session{},LocalSession:class extends Session{},applySnapshot:s=>snapshots.push(s),connectionStatus:s=>statuses.push(s),releaseInput(){},awaken(){}});
- Object.assign(context,journeyState);
+ const ctx={paused:false,backgrounded:false,mapExpanded:false,modalKind:'',currentNpc:null,state:{classId:'sorcerer',gold:81},safeHere:()=>context.inSanctuary,audio:{pause(){}},rosterPicker:{open:false},ready:false,network:null,lastSnapshot:null,moveTarget:null,movePath:[],clock:{getDelta(){}},previewMode:false,titleScreen,mainMenuOpen:false,sessionMode:null,assetsReady:false,sessionGeneration:0};
+ const context=vm.createContext({$,ctx,inSanctuary:true,classFor:()=>({name:'Sorcerer'}),inventoryPreviews:{hide(){}},MultiplayerClient:class extends Session{},LocalSession:class extends Session{},applySnapshot:s=>snapshots.push(s),connectionStatus:s=>statuses.push(s),releaseInput(){},awaken(){}});
+ Object.assign(ctx,journeyState);
  vm.runInContext(transitions,context);return {context,ctx,sessions,snapshots,statuses,$,run:code=>vm.runInContext(code,context)};
 }
 
@@ -31,8 +31,8 @@ function titleHarness(onBegin){
 
 test('mode cards highlight on hover without starting, and one click starts exactly the chosen mode',()=>{
  for(const [id,Session] of [['single-player','LocalSession'],['multi-player','MultiplayerClient']]){
-  const {context,run,sessions}=setup();
-  const ui=titleHarness(mode=>run(`startSession('${mode}')`));context.titleScreen=ui.screen;context.assetsReady=true;run('showModeChoice()');
+  const {context,ctx,run,sessions}=setup();
+  const ui=titleHarness(mode=>run(`startSession('${mode}')`));ctx.titleScreen=ui.screen;ctx.assetsReady=true;run('showModeChoice()');
   const other=id==='single-player'?'multi-player':'single-player';
   ui.node(other).onpointerenter();ui.node(id).onpointerenter();
   assert.equal(ui.node(id).dataset.highlighted,'true');assert.equal(ui.node(other).dataset.highlighted,'false');
@@ -61,63 +61,63 @@ test('keyboard focus controls the mode highlight and native Enter/Space activati
 });
 
 test('entrypoint waits for ready assets and an explicit choice; repeated clicks create only one session',()=>{
- const {run,sessions,context,$}=setup();assert.equal(sessions.length,0);run("startSession('multiplayer')");assert.equal(sessions.length,0);
- context.assetsReady=true;run('showModeChoice()');assert.equal(sessions.length,0);assert.equal($('world').inert,true);
+ const {run,ctx,sessions,context,$}=setup();assert.equal(sessions.length,0);run("startSession('multiplayer')");assert.equal(sessions.length,0);
+ ctx.assetsReady=true;run('showModeChoice()');assert.equal(sessions.length,0);assert.equal($('world').inert,true);
  run("startSession('single-player');startSession('multiplayer');startSession('single-player')");assert.equal(sessions.length,1);assert.ok(sessions[0] instanceof context.LocalSession);assert.equal(sessions[0].started,true);assert.equal($('world').inert,false);
 });
 
 test('ordinary solo opens saved journeys while preview tours start an unsaved session',()=>{
- const {run,ctx,context,sessions}=setup();let menus=0;context.assetsReady=true;context.journeysMenu={show(){menus++;}};
+ const {run,ctx,context,sessions}=setup();let menus=0;ctx.assetsReady=true;ctx.journeysMenu={show(){menus++;}};
  run("chooseMode('single-player')");assert.equal(menus,1);assert.equal(sessions.length,0);
  ctx.previewMode=true;run("chooseMode('single-player')");
- assert.equal(menus,1);assert.equal(sessions.length,1);assert.equal(context.activeJourney,null);assert.equal(context.autosave,null);
+ assert.equal(menus,1);assert.equal(sessions.length,1);assert.equal(ctx.activeJourney,null);assert.equal(ctx.autosave,null);
 });
 
 test('returning from connection and choosing solo discards old multiplayer callbacks',()=>{
- const {run,ctx,sessions,context,snapshots,statuses}=setup();context.assetsReady=true;run("startSession('multiplayer')");const old=sessions[0];assert.ok(old instanceof context.MultiplayerClient);
+ const {run,ctx,sessions,context,snapshots,statuses}=setup();ctx.assetsReady=true;run("startSession('multiplayer')");const old=sessions[0];assert.ok(old instanceof context.MultiplayerClient);
  run("returnToModeChoice();startSession('single-player')");assert.equal(old.closed,true);assert.equal(sessions.length,2);
  old.callbacks.onSnapshot({late:true});old.callbacks.onStatus('late');assert.equal(snapshots.length,0);assert.equal(statuses.length,0);
  sessions[1].callbacks.onSnapshot({solo:true});assert.equal(snapshots.length,1);
- ctx.lastSnapshot={};run('returnToModeChoice()');assert.equal(context.sessionMode,'single-player');assert.equal(sessions[1].closed,undefined);
+ ctx.lastSnapshot={};run('returnToModeChoice()');assert.equal(ctx.sessionMode,'single-player');assert.equal(sessions[1].closed,undefined);
 });
 
 test('pause to main menu and resume retain the same journey, character, snapshot, and progress',()=>{
- const {run,ctx,sessions,context,$}=setup();context.assetsReady=true;run("startSession('single-player')");
- const journey={id:'saved-journey'};context.activeJourney=journey;
+ const {run,ctx,sessions,context,$}=setup();ctx.assetsReady=true;run("startSession('single-player')");
+ const journey={id:'saved-journey'};ctx.activeJourney=journey;
  const session=ctx.network,snapshot={worldId:'current-vigil'};ctx.lastSnapshot=snapshot;
  run('openMainMenu()');
- assert.equal(context.mainMenuOpen,true);assert.equal(ctx.paused,true);assert.equal(ctx.ready,true);
+ assert.equal(ctx.mainMenuOpen,true);assert.equal(ctx.paused,true);assert.equal(ctx.ready,true);
  assert.equal($('world').inert,true);assert.equal($('loading').hidden,false);
  assert.equal(ctx.network,session);assert.equal(ctx.lastSnapshot,snapshot);assert.equal(ctx.state.gold,81);
- assert.equal(context.titleScreen.session.canChangeCharacter,false);assert.equal(context.titleScreen.session.characterLocked,true);
+ assert.equal(ctx.titleScreen.session.canChangeCharacter,false);assert.equal(ctx.titleScreen.session.characterLocked,true);
  for(const blocked of ['journeyLeaving','journeyConflict']){
-  context[blocked]=true;run('resumeFromMainMenu()');assert.equal(context.mainMenuOpen,true);assert.equal(ctx.paused,true);context[blocked]=false;
+  ctx[blocked]=true;run('resumeFromMainMenu()');assert.equal(ctx.mainMenuOpen,true);assert.equal(ctx.paused,true);ctx[blocked]=false;
  }
  run('resumeFromMainMenu()');
- assert.equal(context.mainMenuOpen,false);assert.equal(ctx.paused,false);assert.equal($('world').inert,false);
+ assert.equal(ctx.mainMenuOpen,false);assert.equal(ctx.paused,false);assert.equal($('world').inert,false);
  assert.equal($('loading').hidden,true);assert.equal(ctx.network,session);assert.equal(sessions.length,1);
- assert.equal(session.closed,undefined);assert.equal(ctx.state.gold,81);assert.equal(context.activeJourney,journey);
+ assert.equal(session.closed,undefined);assert.equal(ctx.state.gold,81);assert.equal(ctx.activeJourney,journey);
 });
 
 test('main menu reflects sanctuary restriction and roster closure returns to the menu',()=>{
- const {run,ctx,context,$}=setup();context.assetsReady=true;run("startSession('multiplayer')");ctx.lastSnapshot={};
- context.inSanctuary=false;run('openMainMenu()');assert.equal(context.titleScreen.session.canChangeCharacter,false);
+ const {run,ctx,context,$}=setup();ctx.assetsReady=true;run("startSession('multiplayer')");ctx.lastSnapshot={};
+ context.inSanctuary=false;run('openMainMenu()');assert.equal(ctx.titleScreen.session.canChangeCharacter,false);
  context.inSanctuary=true;run('closeRoster()');
- assert.equal(context.mainMenuOpen,true);assert.equal(ctx.paused,true);assert.equal($('loading').hidden,false);
- assert.equal(context.titleScreen.session.canChangeCharacter,true);assert.equal(context.sessionMode,'multiplayer');
+ assert.equal(ctx.mainMenuOpen,true);assert.equal(ctx.paused,true);assert.equal($('loading').hidden,false);
+ assert.equal(ctx.titleScreen.session.canChangeCharacter,true);assert.equal(ctx.sessionMode,'multiplayer');
 });
 
 test('main-menu navigation cannot revive a dead or disconnected player',()=>{
- const {run,ctx,context,$}=setup();context.assetsReady=true;run("startSession('single-player')");ctx.lastSnapshot={};
- ctx.state.ended=true;run('openMainMenu()');assert.equal(context.mainMenuOpen,false);
+ const {run,ctx,context,$}=setup();ctx.assetsReady=true;run("startSession('single-player')");ctx.lastSnapshot={};
+ ctx.state.ended=true;run('openMainMenu()');assert.equal(ctx.mainMenuOpen,false);
  ctx.state.ended=false;run('openMainMenu()');ctx.network.connected=false;run('resumeFromMainMenu()');
- assert.equal(context.mainMenuOpen,true);assert.equal(ctx.paused,true);
- run('dismissMainMenu()');assert.equal(context.mainMenuOpen,false);assert.equal($('loading').hidden,true);assert.equal($('world').inert,false);
+ assert.equal(ctx.mainMenuOpen,true);assert.equal(ctx.paused,true);
+ run('dismissMainMenu()');assert.equal(ctx.mainMenuOpen,false);assert.equal($('loading').hidden,true);assert.equal($('world').inert,false);
 });
 
 
 test('reconnect controls remain reachable while the main menu is open',()=>{
- const {run,ctx,context,$}=setup();context.assetsReady=true;run("startSession('multiplayer')");ctx.lastSnapshot={};
+ const {run,ctx,context,$}=setup();ctx.assetsReady=true;run("startSession('multiplayer')");ctx.lastSnapshot={};
  run('openMainMenu()');ctx.rosterPicker.resolve=()=>{};
  run(sliceBetween(main,'function connectionStatus(',"$('connection-retry').onclick",{file:'dist/main.js'}));
  run("connectionStatus('Reconnecting',false)");
@@ -126,5 +126,5 @@ test('reconnect controls remain reachable while the main menu is open',()=>{
  assert.equal($('connection-retry').hidden,false);assert.equal($('connection-retry').focusCalls,1);
  run("connectionStatus('Connected',true)");
  assert.equal($('loading').inert,false);assert.equal($('connection-overlay').hidden,true);
- assert.equal($('menu-resume').focusCalls,1);assert.equal(context.mainMenuOpen,true);assert.equal(ctx.paused,true);
+ assert.equal($('menu-resume').focusCalls,1);assert.equal(ctx.mainMenuOpen,true);assert.equal(ctx.paused,true);
 });
