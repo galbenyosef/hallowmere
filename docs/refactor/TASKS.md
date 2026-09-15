@@ -10,7 +10,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 | Gate | Wave | Tasks | Authorized | Merged commits |
 |---|---|---|---|---|
-| G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | in progress |
+| G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, tracker: see log |
 | G0B | 0B | T0-1, T0-3, T0-4, T0-7 | — | — |
 | G1.1 | 1.1 | M1, T1-1, T1-2 | — | — |
 | G1.2 | 1.2 | M2, T1-3, T1-4 | — | — |
@@ -33,9 +33,9 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T0-0 | 0A | orchestrator | Tracker + design doc | docs/refactor/{TASKS,PLAN}.md | — | running | codex/refactor-tracker-e2d76bc0-4044 | 5392 | — | tracker worktree `hm-tracker` |
 | T0-2 | 0A | opus | DOM-free core guard test | tests/core-purity.test.mjs | — | merged | codex/core-purity-f011b76a-9744 | 5508 | 7cf3722 → main 9a5ffde | 4 tests, closure=19 modules, bite-proof pasted; 273/273 |
 | T0-4 | 0A | opus | Perf + visual baseline (perf-smoke, screenshot/diff tooling, 13 shots) | scripts/{perf-smoke,screenshot,compare-shots,perf-browser}.mjs, docs/refactor/{PERF,VISUAL}.md, screenshots/refactor-baseline/ | — | ready-to-merge | codex/perf-baseline-5e8d08f7-c682 | 6163 | 774e333..3258719 | 11/13 scenarios; noise floor 0.09%, threshold 0.2%; perf-smoke + perf-browser (unlocked p50 6.3 ms idle / 6.7 ms walking) in PERF.md; merges at gate 0B |
-| T0-5 | 0A | sonnet | Move dev pages to docs/variations; npc-models.js → scripts/ | dist dev pages (PLAN §5.6), scripts/generate-assets.mjs, tests/npc-models.test.mjs, README.md, docs/*.md refs, design-qa.md | — | ready-to-merge | codex/dev-pages-move-c5b59f7e-17a8 | 5791 | bc42cd3, f051704 | 17 files out of dist/, path edits verified token-by-token; 269/269; build green |
-| T0-1 | 0B | sonnet | tests/helpers, slice guard, audio widening, automation snapshot test | tests/helpers/, 9 main.js-reading tests, ~6 helper-pasting tests, tests/automation-surface.test.mjs | T0-5 | todo | — | — | — | |
-| T0-3 | 0B | opus | Validator: recursive glob + per-page `$()` closure | scripts/validate.mjs | T0-5 | todo | — | — | — | |
+| T0-5 | 0A | sonnet | Move dev pages to docs/variations; npc-models.js → scripts/ | dist dev pages (PLAN §5.6), scripts/generate-assets.mjs, tests/npc-models.test.mjs, README.md, docs/*.md refs, design-qa.md | — | merged | codex/dev-pages-move-c5b59f7e-17a8 | 5791 | bc42cd3, f051704 → main 2750cda | 17 files out of dist/, path edits verified token-by-token; 269/269; build green |
+| T0-1 | 0B | sonnet | tests/helpers, slice guard, audio widening, automation snapshot test | tests/helpers/, 9 main.js-reading tests, ~6 helper-pasting tests, tests/automation-surface.test.mjs | T0-5 | running | codex/test-helpers-64601142-a7e3 | 5488 | — | base 2750cda |
+| T0-3 | 0B | opus | Validator: recursive glob + per-page `$()` closure | scripts/validate.mjs | T0-5 | running | codex/test-helpers-64601142-a7e3 | 5488 | — | base 2750cda |
 | T0-7 | 0B | opus | New shared modules with zero consumers + tests | dist/{random,dispose,util,dom,model-primitives}.js + tests | — | ready-to-merge | codex/shared-modules-95b6f5f0-1b59 | 6270 | c367e95..7f73544 | 295/295; reviewed: mapping tables in headers, parity tests vs verbatim kit copies; started early (no deps); opus because it fixes the API every dedup task adopts; util.js split into pure util.js + dom.js so core modules can import util without DOM contamination |
 
 ## Phase 1 — main.js M1–M5 + dedup
@@ -103,3 +103,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-14 — T0-7 started early in wave 0A slot (no dependencies). Gate 0A requested for T0-0, T0-2, T0-5; T0-4 joins gate 0B after its unlocked-frame-rate follow-up.
 - 2026-09-14 — Gate 0A authorized by the user for T0-0, T0-2, T0-5. T0-4 follow-up (3258719) and T0-7 (c367e95..7f73544, 295/295) reported; both in review, both merge at gate 0B.
 - 2026-09-14 — Gate 0A: T0-2 merged (9a5ffde). T0-5 integrating.
+- 2026-09-14 — Gate 0A: T0-5 merged (2750cda). Wave 0B started: T0-1 (test-helpers, 5488) and T0-3 (validator-closure, 6154) branched from 2750cda. Tracker branch integrating; after each gate the tracker needs `worktree.mjs start --task hm-tracker` again to get a fresh branch.
