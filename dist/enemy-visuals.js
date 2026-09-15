@@ -1,4 +1,5 @@
 import * as T from './vendor/three.core.js';
+import {disposeSubtree} from './dispose.js';
 
 const luminous={transparent:true,blending:T.AdditiveBlending,depthWrite:false,toneMapped:false,fog:false};
 function sprite(parent,texture,color,size,opacity){
@@ -22,7 +23,7 @@ function energyOrb(texture,color){
  const orbit=new T.Mesh(new T.TorusGeometry(.39,.017,5,40),new T.MeshBasicMaterial({...luminous,color,opacity:.75}));orbit.rotation.x=.8;root.add(orbit);
  return {root,update(time){uniforms.time.value=time;orbit.rotation.z=time*.8;hot.material.opacity=.75;halo.material.opacity=.58;}};
 }
-function releaseGeometry(root){const resources=new Set();root.traverse(n=>{if(n.geometry&&!n.isSprite)resources.add(n.geometry);if(n.material)resources.add(n.material);});resources.forEach(r=>r.dispose());root.removeFromParent();}
+function releaseGeometry(root){disposeSubtree(root,{removeFromParent:'after',order:'interleaved',skipSpriteGeometry:true,arrayMaterials:false});}
 
 // Reuse each creature's existing material/shadow shader, adding animated emissive
 // veins and a Fresnel edge. No duplicate body meshes or per-enemy point lights.

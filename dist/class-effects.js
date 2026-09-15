@@ -1,5 +1,6 @@
 import * as T from './vendor/three.core.js';
 import {effectMaterial} from './class-effect-materials.js';
+import {disposeSubtree} from './dispose.js';
 
 const PALETTES={
  ranger:{color:0x83d8ad,hot:0xe7ffce,style:0},
@@ -20,9 +21,8 @@ function animateMaterials(root,time,opacity=1){
  for(const m of materials)if(m.uniforms){m.uniforms.time.value=time;m.userData.baseOpacity??=m.uniforms.opacity.value;m.uniforms.opacity.value=m.userData.baseOpacity*opacity;}
 }
 export function disposeClassEffect(root){
- if(root.userData.effectDisposed)return;root.userData.effectDisposed=true;root.removeFromParent();
- const geometry=new Set(),materials=new Set();root.traverse(n=>{if(n.geometry&&!n.isSprite)geometry.add(n.geometry);if(n.material)for(const m of Array.isArray(n.material)?n.material:[n.material])materials.add(m);});
- geometry.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
+ if(root.userData.effectDisposed)return;root.userData.effectDisposed=true;
+ disposeSubtree(root,{removeFromParent:'before',skipSpriteGeometry:true});
 }
 function motes(root,p,count=24){
  const positions=new Float32Array(count*3),g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(positions,3));

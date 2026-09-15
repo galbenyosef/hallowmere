@@ -1,6 +1,7 @@
 import * as T from './vendor/three.core.js';
 import {updateRangerWeapons} from './ranger-character-model.js';
 import {updateOathkeeperPose} from './oathkeeper-character-model.js';
+import {disposeSubtree} from './dispose.js';
 
 // Combat-only additive layers stay bright without washing out the moonlit world.
 // Two persistent lights avoid recompiling scene materials for every cast / hit.
@@ -14,8 +15,7 @@ export function createCombatEffects(scene, glowTexture, {reducedMotion = false} 
   sprite.scale.set(size,size,1);parent.add(sprite);return sprite;
  }
  function dispose(root) {
-  root.removeFromParent();
-  root.traverse(node=>{if(!node.isSprite)node.geometry?.dispose();node.material?.dispose();});
+  disposeSubtree(root,{removeFromParent:'before',dedupe:false,skipSpriteGeometry:true,arrayMaterials:false});
  }
  function addBurst(root, life, animate, light=null) {
   scene.add(root);bursts.push({root,life,age:0,animate,light});animate(0,0);return root;
