@@ -1,26 +1,16 @@
 import * as T from './vendor/three.core.js';
+import * as P from './model-primitives.js';
 
 // Forged plate, worn leather, and ivory fur use the roster's native faceted
 // material language. Study-space pivots are adapted by createPlayableCharacter.
-const UP = new T.Vector3(0, 1, 0);
-function group(parent, name, x = 0, y = 0, z = 0) {
-  const node = new T.Group(); node.name = name; node.position.set(x, y, z); parent.add(node); return node;
-}
-function mesh(parent, geometry, material, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) {
-  const node = new T.Mesh(geometry, material); node.position.set(x, y, z); node.scale.set(sx, sy, sz);
-  node.castShadow = node.receiveShadow = true; parent.add(node); return node;
-}
-const ball = (p, m, x, y, z, sx, sy = sx, sz = sx) => mesh(p, new T.SphereGeometry(1, 10, 7), m, x, y, z, sx, sy, sz);
-const box = (p, m, x, y, z, sx, sy, sz) => mesh(p, new T.BoxGeometry(sx, sy, sz), m, x, y, z);
-function rod(p, m, a, b, radius, tip = radius, sides = 8) {
-  const start = new T.Vector3(...a), end = new T.Vector3(...b), delta = end.clone().sub(start);
-  const node = mesh(p, new T.CylinderGeometry(tip, radius, delta.length(), sides), m);
-  node.position.copy(start.add(end).multiplyScalar(.5)); node.quaternion.setFromUnitVectors(UP, delta.normalize()); return node;
-}
-function plate(p, m, points, depth = .025, x = 0, y = 0, z = 0, bevel = .012) {
-  const shape = new T.Shape(); points.forEach(([px, py], i) => i ? shape.lineTo(px, py) : shape.moveTo(px, py)); shape.closePath();
-  return mesh(p, new T.ExtrudeGeometry(shape, {depth, bevelEnabled: true, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 1, curveSegments: 1}), m, x, y, z);
-}
+// group/mesh/rod match model-primitives.js 1:1 and are aliased directly; ball/
+// box/plate need the fixed options every call site here relies on (a 10x7
+// sphere, a sized-not-scaled box, and a bevel that stays enabled even at 0),
+// so those three stay as one-line adapters over the shared builders.
+const {group, mesh, rod} = P;
+const ball = (p, m, x, y, z, sx, sy = sx, sz = sx) => P.ball(p, m, x, y, z, sx, sy, sz, {widthSegments: 10, heightSegments: 7});
+const box = (p, m, x, y, z, sx, sy, sz) => P.box(p, m, x, y, z, sx, sy, sz, {sized: true});
+const plate = (p, m, points, depth = .025, x = 0, y = 0, z = 0, bevel = .012) => P.plate(p, m, points, depth, {x, y, z, bevel, bevelEnabled: true});
 function edgedPlate(p, m, points, depth = .025, crown = 0) {
   plate(p, m.edge, points, depth);
   const center = points.reduce((v, [x, y]) => [v[0] + x / points.length, v[1] + y / points.length], [0, 0]);
@@ -107,7 +97,7 @@ function makeAxe(root, m) {
 
 export function createReaverCharacter() {
   const root = new T.Group(); root.name = 'C03 Reaver';
-  const mat = (color, metalness = 0, roughness = .88) => new T.MeshStandardMaterial({color, metalness, roughness, flatShading: true});
+  const mat = (color, metalness = 0, roughness = .88) => P.material(color, {metalness, roughness});
   const m = {
     steel: mat('#687970', .68, .49), edge: mat('#a6b0a0', .72, .42), iron: mat('#3e4b48', .58, .59),
     leather: mat('#583d30'), binding: mat('#8a7051'), dark: mat('#242724'), cloth: mat('#393732'),
