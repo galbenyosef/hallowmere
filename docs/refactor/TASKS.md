@@ -12,7 +12,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 |---|---|---|---|---|
 | G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, c62368e |
 | G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | bcc7b62, d744fb4, 7c82fe9, 0803197 (+tracker) |
-| G1.1 | 1.1 | M1, T1-1, T1-2 | — | — |
+| G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | requested 2026-09-15 | — |
 | G1.2 | 1.2 | M2, T1-3, T1-4 | — | — |
 | G1.3 | 1.3 | M3, T1-5, T1-6 | — | — |
 | G1.4 | 1.4 | M4, T1-7, T1-8 | — | — |
@@ -42,7 +42,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, 8 vm-slicing tests | 0B | review | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | 3c16270..6a3f690 | orchestrator review so far: 0 top-level let, no bare writes to former bindings, construction order preserved, assert/test counts identical in all 8 tests; awaiting compare-shots + perf-browser evidence |
+| M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, 8 vm-slicing tests | 0B | review | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | 3c16270..6a3f690 | orchestrator review so far: 0 top-level let, no bare writes to former bindings, construction order preserved, assert/test counts identical in all 8 tests; compare-shots run by orchestrator: 11/11 ok (9 pixel-identical, 04/10 at noise floor); perf sample pending |
 | T1-1 | 1.1 | sonnet | model-primitives → geralt, nightblade | dist/{geralt,nightblade}-character-model.js + golden tests | T0-7 | ready-to-merge | codex/primitives-geralt-nightblade-94b5ab29-38bb | 5985 | f2d8dea..477d9da | golden tests verified by orchestrator against main originals AND adopted files (2/2 both); geralt 17106→16470 B, nightblade 13986→13269 B; 303/303; `visible` fingerprinted (477d9da), re-verified vs originals |
 | T1-2 | 1.1 | sonnet | model-primitives → oathkeeper, ranger | dist/{oathkeeper,ranger}-character-model.js + golden tests | T0-7 | ready-to-merge | codex/primitives-oathkeeper-ranger-6dd19ea9-56aa | 5342 | 605c711..46d397d | goldens verified by orchestrator vs main originals (4/4) and adopted (4/4); oathkeeper 12471→11987 B, ranger 11879→11391 B; 305/305; found Shape.uuid leaking into ExtrudeGeometry.parameters (stripped); `visible` fingerprinted (46d397d), re-verified vs originals |
 | M2 | 1.2 | sonnet | model-kit.js, icon-atlas.js | dist/main.js, 2 new, 5 appearance tests | M1 | todo | — | — | — | |
@@ -119,3 +119,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — M1 reported 3 commits (3c16270..6a3f690); static review clean; visual/perf evidence still running in the agent.
 - 2026-09-15 — T1-4 ready-to-merge (016b5fe..84a2a06); GLB regeneration compared by the orchestrator: 9/9 equal. T1-7 starting in the freed slot.
 - 2026-09-15 — T1-7 ready-to-merge (d5c74cc). T1-5 starting in the freed slot.
+- 2026-09-15 — M1 visual evidence verified by orchestrator (11/11). Gate 1.1 requested for M1 + T1-1, T1-2, T1-3, T1-4, T1-7 (all disjoint). T1-5/T1-6 join gate 1.2.
