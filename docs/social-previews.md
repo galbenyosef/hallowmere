@@ -7,7 +7,7 @@ The game includes two share images in the deployed `dist/` directory:
 | [og.png](../dist/og.png) | 1731 × 909 | Primary Open Graph image and Twitter large-image card |
 | [gameplay.jpg](../dist/assets/social/gameplay.jpg) | 1280 × 720 | Alternate Open Graph image; unedited copy of `screenshots/gameplay.jpg` |
 
-The branded card was created with built-in ImageGen using the existing [app icon](../dist/assets/icons/app-icon.png), [Warden portrait](../dist/assets/inventory/warden.png), and [gameplay screenshot](../screenshots/gameplay.jpg) as references. It retains the icon's Warden, weathered steel, pale gothic lettering, and cold village atmosphere. It is promotional artwork; the alternate image shows the actual game.
+The branded card was created with built-in ImageGen using the existing [app icon](../assets/app-icon.png), [Warden portrait](../dist/assets/inventory/warden.png), and [gameplay screenshot](../screenshots/gameplay.jpg) as references. It retains the icon's Warden, weathered steel, pale gothic lettering, and cold village atmosphere. It is promotional artwork; the alternate image shows the actual game.
 
 The generated PNG is opaque and retains its original 1731 × 909 dimensions, close to the requested 1.91:1 landscape ratio. Its exact dimensions are declared in the metadata. No image-generation dependency is required to build or serve the game, and `npm run generate` does not overwrite these images.
 

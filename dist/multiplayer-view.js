@@ -5,7 +5,7 @@ import {disposeSubtree} from './dispose.js';
 
 // Cloned materials belong to each actor; prefab geometry stays shared.
 export function disposeActor(model){disposeSubtree(model,{removeFromParent:'before',geometry:false});}
-export function colorWarden(model,color){model.getObjectByName('cape')?.traverse(n=>{if(n.isMesh){n.material.color.set(color);n.material.emissive.set(color).multiplyScalar(.12);n.material.userData.baseEmissive=n.material.emissive.clone();}});}
+function colorWarden(model,color){model.getObjectByName('cape')?.traverse(n=>{if(n.isMesh){n.material.color.set(color);n.material.emissive.set(color).multiplyScalar(.12);n.material.userData.baseEmissive=n.material.emissive.clone();}});}
 export function createMultiplayerView({scene,camera,cloneModel,getRig,animateRig,animateHeroAttack,player}){
  const actors=new Map(),layer=document.getElementById('world-labels');let selfId=null,currentMap='overworld',renderTime=null,latestTime=null;
  function sync(players,you,time=performance.now()/1000,reset=false){

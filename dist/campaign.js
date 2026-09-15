@@ -8,7 +8,6 @@ export const WORLD_BOUNDS=OVERWORLD_BOUNDS;
 export const START={x:-66,z:5};
 // Match the furthest distance at which ground loot labels can be shown.
 export const LOOT_PICKUP_RANGE=17;
-export const VILLAGES=[{id:'ashwick',name:'Ashwick',x:-67,z:5,radius:12},{id:'hallowmere',name:'Hallowmere',x:0,z:0,radius:23}];
 export const NPCS=[
  {id:'rowan',name:'Elder Rowan',role:'Keeper of Ashwick',model:'elder',x:-66,z:1,color:0xe8c97d},
  {id:'edda',name:'Sister Edda',role:'Healer',model:'healer',x:-72,z:5,color:0xa9d9be},

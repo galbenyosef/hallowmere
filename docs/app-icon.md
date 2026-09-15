@@ -8,7 +8,7 @@ The square PNG exports below preserve the rounded silhouette and transparent out
 
 | Asset | Dimensions | Use |
 | --- | --- | --- |
-| [app-icon.png](../dist/assets/icons/app-icon.png) | 1024 × 1024 | Main app artwork and README |
+| [app-icon.png](app-icon.png) | 1024 × 1024 | Main app artwork and README |
 | [icon-192.png](../dist/assets/icons/icon-192.png) | 192 × 192 | High-resolution browser icon |
 | [apple-touch-icon.png](../dist/assets/icons/apple-touch-icon.png) | 180 × 180 | Apple home-screen icon |
 | [favicon-32.png](../dist/assets/icons/favicon-32.png) | 32 × 32 | Browser tab icon |

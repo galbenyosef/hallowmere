@@ -4,7 +4,7 @@ export const MUSIC_TRACKS = [
   {id: 'the-old-ones', title: 'The Old Ones', duration: 302.071},
   {id: 'incantation', title: 'Incantation', duration: 433.033},
 ];
-export const MUSIC_FADE_SECONDS = 5;
+const MUSIC_FADE_SECONDS = 5;
 
 // Two streamed media elements keep a twenty-minute score out of decoded PCM memory.
 // Fades follow media time, so mute/background suspension preserves the transition.

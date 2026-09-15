@@ -3,7 +3,7 @@ const ability=(name,kind,cooldown,cost,description,options={})=>({name,kind,cool
 const draught=ability('Draught','heal',1,0,'Restore up to 65 vitality. Consumes one healing draught.');
 const evade=(name,cooldown=1.9)=>ability(name,'dodge',cooldown,0,'Evade in your movement direction with brief invulnerability.');
 export const SORCERER_APPEARANCES={C01:{id:'C01',name:'Sorcerer',weapon:'Crystal-tipped staff',focus:'Spellbook',color:'#88cfdb'},W06:{id:'W06',name:'Mire Witch',weapon:'Gnarled root staff',focus:'Marsh lantern',color:'#bed184'},W07:{id:'W07',name:'Bone Oracle',weapon:'Skull-topped staff',focus:'Spirit skull',color:'#a6d9bd'},W10:{id:'W10',name:'Storm Hermit',weapon:'Lightning fork staff',focus:'Storm orb',color:'#adcaef'}};
-export const DEFAULT_SORCERER_APPEARANCE='W07';
+const DEFAULT_SORCERER_APPEARANCE='W07';
 export const CLASSES={
  sorcerer:{id:'sorcerer',concept:DEFAULT_SORCERER_APPEARANCE,name:'Sorcerer',role:'Ranged · elemental control',description:'Keep your distance, hurl blazing fireballs, and blanket the road with an elemental storm.',hp:110,mana:120,regen:9,speed:4.8,color:'#a6d9bd',weapon:'Skull-topped staff',weaponType:'staff',focus:'Spirit skull',abilities:{
   attack:ability('Arcane Bolt','projectile',.60,0,'Fire a ranged arcane projectile.',{damage:26,range:11,speed:17,projectile:'arcane',magic:true}),

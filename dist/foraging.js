@@ -1,7 +1,7 @@
 import {OUTLANDS} from './expansion-layout.js';
 // Shared food rules. Only the server mutates live player state.
 export const POUCH_CAPACITY=5;
-export const FOOD_COOLDOWN=2;
+const FOOD_COOLDOWN=2;
 export const FORAGE_REGROW_SECONDS=180;
 export const FOOD_LIST=Object.freeze([
  {id:'crimson-mushroom',name:'Crimson mushroom',effect:'+35 health',health:35,essence:0,regen:0,color:'#d77e70',icon:'M3 13a9 9 0 0 1 18 0H3Zm7 0-1 8h6l-1-8M8 8h.01M14 6h.01M17 10h.01'},
