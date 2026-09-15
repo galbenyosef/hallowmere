@@ -1,4 +1,5 @@
 import * as T from './vendor/three.core.js';
+import {group as pGroup, mesh as pMesh, ball as pBall, box, rod as pRod, path as pPath, material as pMaterial} from './model-primitives.js';
 import {createReaverCharacter} from './reaver-character-model.js';
 import {createRangerCharacter} from './ranger-character-model.js';
 import {createNightbladeCharacter} from './nightblade-character-model.js';
@@ -6,16 +7,14 @@ import {createOathkeeperCharacter} from './oathkeeper-character-model.js';
 
 // Native, low-poly mesh studies using the same primitives and material language
 // as scripts/generate-assets.mjs. Kept independent of the live Warden prefab.
-const up=new T.Vector3(0,1,0);
-const material=(color,metalness=0,emissive=false)=>new T.MeshStandardMaterial({color,metalness,roughness:metalness?.48:.91,flatShading:true,emissive:emissive?color:0,emissiveIntensity:emissive?1.15:0});
-const add=(parent,geometry,mat,x=0,y=0,z=0,sx=1,sy=1,sz=1)=>{const m=new T.Mesh(geometry,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;};
-const ball=(p,m,x,y,z,sx,sy=sx,sz=sx)=>add(p,new T.SphereGeometry(1,10,7),m,x,y,z,sx,sy,sz);
-const box=(p,m,x,y,z,sx,sy,sz)=>add(p,new T.BoxGeometry(1,1,1),m,x,y,z,sx,sy,sz);
+const material=(color,metalness=0,emissive=false)=>pMaterial(color,{metalness,roughness:metalness?.48:.91,emissive:emissive?color:0,emissiveIntensity:emissive?1.15:0});
+const add=pMesh;
+const ball=(p,m,x,y,z,sx,sy=sx,sz=sx)=>pBall(p,m,x,y,z,sx,sy,sz,{widthSegments:10,heightSegments:7});
 const cone=(p,m,x,y,z,r,h,n=8)=>add(p,new T.ConeGeometry(r,h,n),m,x,y,z);
 const cylinder=(p,m,x,y,z,rt,rb,h,n=12)=>add(p,new T.CylinderGeometry(rt,rb,h,n),m,x,y,z);
-function group(p,x=0,y=0,z=0){const g=new T.Group();g.position.set(x,y,z);p.add(g);return g;}
-function rod(p,m,a,b,r=.04,r2=r){const av=new T.Vector3(...a),bv=new T.Vector3(...b),d=bv.clone().sub(av);const mesh=add(p,new T.CylinderGeometry(r2,r,d.length(),8),m);mesh.position.copy(av.add(bv).multiplyScalar(.5));mesh.quaternion.setFromUnitVectors(up,d.normalize());return mesh;}
-function branch(p,m,points,r=.05){for(let i=0;i<points.length-1;i++)rod(p,m,points[i],points[i+1],r*(1-i/points.length),r*(1-(i+1)/points.length));}
+function group(p,x=0,y=0,z=0){return pGroup(p,'',x,y,z);}
+function rod(p,m,a,b,r=.04,r2=r){return pRod(p,m,a,b,r,r2,8);}
+function branch(p,m,points,r=.05){pPath(p,m,points,r,{taper:'falloff'});}
 function torus(p,m,x,y,z,r,tube=.015,arc=Math.PI*2){return add(p,new T.TorusGeometry(r,tube,5,24,arc),m,x,y,z);}
 function crystal(p,m,x,y,z,s=.15){const g=add(p,new T.OctahedronGeometry(1),m,x,y,z,s,s*1.9,s);g.rotation.z=.12;return g;}
 
