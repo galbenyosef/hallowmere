@@ -32,7 +32,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 |---|---|---|---|---|---|---|---|---|---|---|
 | T0-0 | 0A | orchestrator | Tracker + design doc | docs/refactor/{TASKS,PLAN}.md | — | running | codex/refactor-tracker-e2d76bc0-4044 | 5392 | — | tracker worktree `hm-tracker` |
 | T0-2 | 0A | opus | DOM-free core guard test | tests/core-purity.test.mjs | — | ready-to-merge | codex/core-purity-f011b76a-9744 | 5508 | 7cf3722 | 4 tests, closure=19 modules, bite-proof pasted; 273/273 |
-| T0-4 | 0A | opus | Perf + visual baseline (perf-smoke, screenshot/diff tooling, 13 shots) | scripts/{perf-smoke,screenshot,compare-shots,perf-browser}.mjs, docs/refactor/{PERF,VISUAL}.md, screenshots/refactor-baseline/ | — | running | codex/perf-baseline-5e8d08f7-c682 | 6163 | — | model raised from sonnet: task also builds the CDP screenshot + PNG diff tooling |
+| T0-4 | 0A | opus | Perf + visual baseline (perf-smoke, screenshot/diff tooling, 13 shots) | scripts/{perf-smoke,screenshot,compare-shots,perf-browser}.mjs, docs/refactor/{PERF,VISUAL}.md, screenshots/refactor-baseline/ | — | changes-requested | codex/perf-baseline-5e8d08f7-c682 | 6163 | 774e333..9721a4e | 11/13 scenarios; noise floor 0.09%, threshold 0.2%; perf tables in PERF.md; follow-up: unlocked frame-rate mode for perf-browser |
 | T0-5 | 0A | sonnet | Move dev pages to docs/variations; npc-models.js → scripts/ | dist dev pages (PLAN §5.6), scripts/generate-assets.mjs, tests/npc-models.test.mjs, README.md, docs/*.md refs, design-qa.md | — | ready-to-merge | codex/dev-pages-move-c5b59f7e-17a8 | 5791 | bc42cd3, f051704 | 17 files out of dist/, path edits verified token-by-token; 269/269; build green |
 | T0-1 | 0B | sonnet | tests/helpers, slice guard, audio widening, automation snapshot test | tests/helpers/, 9 main.js-reading tests, ~6 helper-pasting tests, tests/automation-surface.test.mjs | T0-5 | todo | — | — | — | |
 | T0-3 | 0B | opus | Validator: recursive glob + per-page `$()` closure | scripts/validate.mjs | T0-5 | todo | — | — | — | |
@@ -55,7 +55,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | todo | — | — | — | |
 | T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,character-portraits,inventory-portraits,npc-portraits}.js | T0-7 | todo | — | — | — | portrait hashes must match |
 | M5 | 1.5 | opus | input-bindings.js | dist/main.js, dist/input-bindings.js, tests loot-pickup/mouse-targeting/input-bindings | M4 | todo | — | — | — | |
-| T1-9 | 1.5 | haiku | Dead code | dist/campaign.js VILLAGES, 10 internal-only exports, app-icon.png + doc refs | — | todo | — | — | — | |
+| T1-9 | 1.5 | haiku | Dead code | dist/campaign.js VILLAGES, 10 internal-only exports, app-icon.png + doc refs | — | todo | — | — | — | also check `openMainMenu()` in main.js: T0-4 found it has no caller |
 | T1-10 | 1.5 | sonnet | Geometry batcher + palette helper | dist/{geometry-batch,palette}.js, dist/{environment,cave-entrance-scenery,treasure-chests,outland-scenery}.js | T1-6 | todo | — | — | — | |
 
 ## Phase 2 — import normalization, M6–M11, CSS
@@ -99,3 +99,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-14 — T0-2 ready-to-merge (7cf3722, 273/273).
 - 2026-09-14 — T0-5 ready-to-merge (bc42cd3, f051704). Finding: `scripts/generate-assets.mjs` is nondeterministic (writes THREE material.uuid as the glTF material name), pre-existing; T1-4 verification changed to a structural GLB compare. Fixing the generator itself is out of scope (would alter committed assets).
 - 2026-09-14 — T0-4 agent hit the 600 s no-output watchdog during the full `--all` capture (≈13 min for 11 scenarios). Capture completed on disk (11 scenarios; 06-main-menu unreachable: `openMainMenu()` has no caller; 12-death: no API to force `state.ended`). Agent resumed to finish noise floor, perf runs, docs, commits. Rule added to prompts: no single command over ~5 min; background long captures.
+- 2026-09-14 — T0-4 reported (5 commits 774e333..9721a4e): 11 scenarios, noise floor ≤0.0905%, threshold 0.2%, perf-smoke + perf-browser baselines documented. Findings: `openMainMenu()` has no caller (dead-code lead for T1-9/M9); headless frame times vsync-pinned → follow-up requested to add `--disable-frame-rate-limit --disable-gpu-vsync` unlocked mode; polling `window.hallowmere.getState()` stalls the page (it raycasts every enemy).
