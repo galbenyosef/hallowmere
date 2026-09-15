@@ -1,19 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import vm from 'node:vm';
+import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
-import {CLASS_LIST} from '../dist/classes.js';
 import {createPlayableCharacter,modelBounds} from '../dist/playable-characters.js';
 import {animateHeroAttack} from '../dist/combat-effects.js';
-import {sliceBetween,readDist} from './helpers/source.mjs';
-import {loadMergeGeometries} from './helpers/three-shim.mjs';
 
-const main=readDist('main.js');
-const mergeGeometries=await loadMergeGeometries();
+// dist/model-kit.js imports the bare 'three' specifier, which only the page's import map
+// resolves; match it in Node the way tests/npc-portraits.test.mjs does for GLTFLoader.js.
+const hook=registerHooks({resolve(specifier,context,nextResolve){
+ if(specifier==='three')return nextResolve(new URL('../dist/vendor/three.module.js',import.meta.url).href,context);
+ if(specifier==='three/addons/utils/BufferGeometryUtils.js')return nextResolve(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url).href,context);
+ return nextResolve(specifier,context);
+}});
+const {getRig,createModelCache}=await import('../dist/model-kit.js');
+hook.deregister();
 function gameplay(){
- const context=vm.createContext({T,CLASS_LIST,createPlayableCharacter,ctx:{prefabs:{}},mergeGeometries,Float32Array});
- vm.runInContext(sliceBetween(main,'function optimizeModel','function spawnEnemy',{file:'dist/main.js'}),context);
- return context;
+ const ctx={prefabs:{}};
+ return {...createModelCache(ctx),getRig};
 }
 
 test('Ranger reference details survive mesh batching and stay attached to the animated body',()=>{
