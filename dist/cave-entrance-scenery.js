@@ -2,6 +2,8 @@ import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {caveSceneryFor} from './cave-scenery-layout.js';
 import {bareTreeSegments} from './bare-tree.js';
+import {lcg,hashString} from './random.js';
+import {disposeSubtree} from './dispose.js';
 
 export function createCaveEntranceScenery(parent,portal){
  const layout=caveSceneryFor(portal);if(!layout)return null;
@@ -10,8 +12,7 @@ export function createCaveEntranceScenery(parent,portal){
  const materials=Object.fromEntries(Object.entries(colors).map(([key,color])=>[key,new T.MeshStandardMaterial({color,roughness:1,flatShading:true})]));
  const geometries={rock:new T.DodecahedronGeometry(1,0),beam:new T.CylinderGeometry(1,1,1,10)};
  const batches=new Map(),owned=[];
- let seed=[...portal.id].reduce((n,c)=>Math.imul(n,31)+c.charCodeAt(0),17)>>>0;
- const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const rand=lcg(hashString(portal.id,{seed:17,imul:true}));
  function add(geometry,material,x,y,z,sx=1,sy=1,sz=1,rotation=0){
   const transform=new T.Object3D();transform.position.set(x,y,z);transform.scale.set(sx,sy,sz);transform.rotation.y=rotation;transform.updateMatrix();
   const copy=geometry.index?geometry.toNonIndexed():geometry.clone();copy.applyMatrix4(transform.matrix);
@@ -88,5 +89,5 @@ export function createCaveEntranceScenery(parent,portal){
  grass.dispose();materials.grass.side=T.DoubleSide;
  for(const [mat,parts]of batches){const g=mergeGeometries(parts);owned.push(g);const mesh=new T.Mesh(g,materials[mat]);mesh.castShadow=mesh.receiveShadow=true;group.add(mesh);for(const part of parts)part.dispose();}
  for(const g of Object.values(geometries))g.dispose();
- return{group,dispose(){group.removeFromParent();for(const g of owned)g.dispose();for(const m of Object.values(materials))m.dispose();}};
+ return{group,dispose(){disposeSubtree(group,{removeFromParent:'before',traverse:false,extraGeometries:owned,extraMaterials:Object.values(materials)});}};
 }
