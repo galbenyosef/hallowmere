@@ -1,4 +1,5 @@
 import test from 'node:test';
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import * as T from '../dist/vendor/three.core.js';
 import {createCombatEffects,animateHeroAttack} from '../dist/combat-effects.js';
@@ -142,4 +143,209 @@ test('casting and Cleave use separate finite poses and restore attack-owned tran
   assert.equal(rig.attack,0);assert.equal(rig.body.position.z,0);assert.equal(rig.body.rotation.y,0);
   for(const arm of rig.arms){assert.equal(arm.rotation.y,0);assert.equal(arm.rotation.z,0);}
  }
+});
+
+// --- P3: light-selection parity + allocation proof -------------------------------------
+// dist/combat-effects.js update() used to rebuild the light-source list every frame with
+// `sources=[...externalLights,...[...bolts].map(b=>({position:b.mesh.position,...b.light}))]`
+// (a spread + a per-bolt object spread), push per-burst light objects, then `sources.sort(...)`
+// and take the top `lights.length` (=2). That is 5 array allocations + 1 object per bolt per
+// frame plus a full sort when only the top two entries are ever read. The refactor reuses a
+// scratch array, keeps a persistent `light` record per bolt (position is the live
+// `mesh.position` reference; color/intensity are set once and never mutated after creation —
+// verified by grepping the whole repo for other `.light` writers) and a persistent
+// `lightSource` record per lit burst (intensity refreshed in place each frame), then selects
+// the top two by intensity directly instead of sorting. `referenceLightSelect` below is a
+// verbatim copy of the original `update()` tail (from `git show main:dist/combat-effects.js`,
+// the `sources` construction through the `lights.forEach`); `newLightSelect` mirrors the new
+// fast path added to `update()` (dist/combat-effects.js, the `lights.length===2` branch).
+// Both operate on the same plain stub light objects `{intensity,position:{copy},color:{setHex}}`
+// so 2000 seeded-random frames can be compared without touching three.js meshes at all.
+
+function referenceLightSelect(externalLights, bolts, bursts, lights) {
+ const sources=[...externalLights,...[...bolts].map(b=>({position:b.mesh.position,...b.light}))];
+ for(const b of bursts)if(b.light)sources.push({position:b.root.position,color:b.light.color,intensity:b.light.intensity*(1-b.age/b.life)**2});
+ sources.sort((a,b)=>b.intensity-a.intensity);
+ lights.forEach((light,i)=>{const source=sources[i];light.intensity=source?.intensity||0;if(source){light.position.copy(source.position);light.color.setHex(source.color);}});
+}
+
+// Verbatim mirror of the new `update()` fast path in dist/combat-effects.js (lights.length===2 branch).
+function newLightSelect(externalLights, bolts, bursts, lights, scratch) {
+ scratch.length=0;
+ for(const e of externalLights)scratch.push(e);
+ for(const b of bolts)scratch.push(b.light);
+ for(const b of bursts)if(b.light){b.lightSource.intensity=b.light.intensity*(1-b.age/b.life)**2;scratch.push(b.lightSource);}
+ let firstIdx=-1,firstVal=-Infinity,secondIdx=-1,secondVal=-Infinity;
+ for(let i=0;i<scratch.length;i++) {
+  const v=scratch[i].intensity;
+  if(v>firstVal){secondIdx=firstIdx;secondVal=firstVal;firstIdx=i;firstVal=v;}
+  else if(v>secondVal){secondIdx=i;secondVal=v;}
+ }
+ const s0=firstIdx<0?undefined:scratch[firstIdx],s1=secondIdx<0?undefined:scratch[secondIdx];
+ lights[0].intensity=s0?.intensity||0;if(s0){lights[0].position.copy(s0.position);lights[0].color.setHex(s0.color);}
+ lights[1].intensity=s1?.intensity||0;if(s1){lights[1].position.copy(s1.position);lights[1].color.setHex(s1.color);}
+}
+
+function mulberry32(seed) {
+ return function() {
+  seed=seed+0x6D2B79F5|0;
+  let t=Math.imul(seed^seed>>>15,1|seed);
+  t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296;
+ };
+}
+function makeStubLight() {
+ return {intensity:0,position:{x:0,y:0,z:0,copy(v){this.x=v.x;this.y=v.y;this.z=v.z;return this;}},color:{lastHex:undefined,setHex(h){this.lastHex=h;return this;}}};
+}
+
+test('light selection parity: exact top-two selection matches the original full sort, including exact ties, across 2000 random frames',()=>{
+ const rand=mulberry32(20260915);
+ const referenceLights=[makeStubLight(),makeStubLight()],newLights=[makeStubLight(),makeStubLight()],scratch=[];
+ let tiedScenarios=0;
+ const FRAMES=2000;
+ for(let frame=0;frame<FRAMES;frame++) {
+  const nExternal=Math.floor(rand()*7),nBolts=Math.floor(rand()*9),nBursts=Math.floor(rand()*9);
+  // A small shared intensity pool makes exact ties (including zero) common across external
+  // lights and bolts, which is what stresses the "earlier source wins" tie-break rule.
+  const poolSize=1+Math.floor(rand()*6),pool=Array.from({length:poolSize},()=>rand()<.15?0:rand()*80);
+  const pickIntensity=()=>rand()<.65?pool[Math.floor(rand()*pool.length)]:(rand()<.1?0:rand()*80);
+  const flatIntensities=[];
+
+  const externalLights=[];
+  for(let i=0;i<nExternal;i++) {
+   const intensity=pickIntensity();flatIntensities.push(intensity);
+   externalLights.push({position:{x:rand()*20-10,y:rand()*5,z:rand()*20-10},color:Math.floor(rand()*0xffffff),intensity});
+  }
+  const referenceBolts=[],newBolts=[];
+  for(let i=0;i<nBolts;i++) {
+   const position={x:rand()*20-10,y:rand()*5,z:rand()*20-10},color=Math.floor(rand()*0xffffff),intensity=pickIntensity();
+   flatIntensities.push(intensity);
+   referenceBolts.push({mesh:{position},light:{color,intensity}});
+   newBolts.push({light:{position,color,intensity}});
+  }
+  const referenceBursts=[],newBursts=[];
+  for(let i=0;i<nBursts;i++) {
+   const position={x:rand()*20-10,y:rand()*5,z:rand()*20-10},age=rand()*10,life=age+rand()*10+.001;
+   if(rand()<.15){referenceBursts.push({light:null,age,life,root:{position}});newBursts.push({light:null,age,life,lightSource:null});continue;}
+   const color=Math.floor(rand()*0xffffff),intensity=pickIntensity();
+   referenceBursts.push({light:{color,intensity},age,life,root:{position}});
+   newBursts.push({light:{color,intensity},age,life,lightSource:{position,color,intensity:0}});
+  }
+  if(new Set(flatIntensities).size<flatIntensities.length)tiedScenarios++;
+
+  referenceLightSelect(externalLights,new Set(referenceBolts),referenceBursts,referenceLights);
+  newLightSelect(externalLights,new Set(newBolts),newBursts,newLights,scratch);
+
+  for(let i=0;i<2;i++) {
+   assert.equal(newLights[i].intensity,referenceLights[i].intensity,`frame ${frame} light ${i} intensity`);
+   assert.equal(newLights[i].position.x,referenceLights[i].position.x,`frame ${frame} light ${i} position.x`);
+   assert.equal(newLights[i].position.y,referenceLights[i].position.y,`frame ${frame} light ${i} position.y`);
+   assert.equal(newLights[i].position.z,referenceLights[i].position.z,`frame ${frame} light ${i} position.z`);
+   assert.equal(newLights[i].color.lastHex,referenceLights[i].color.lastHex,`frame ${frame} light ${i} color`);
+  }
+ }
+ assert.ok(tiedScenarios>FRAMES*.3,`expected frequent exact-tie scenarios, saw ${tiedScenarios}/${FRAMES}`);
+});
+
+test('update() performs zero Array.prototype.map calls per frame after warm-up (old path used bolts.map to build per-bolt light objects)',()=>{
+ const scene=new T.Scene(),effects=createCombatEffects(scene,new T.Texture());
+ const bolts=[];
+ for(let i=0;i<8;i++)bolts.push(i%2?effects.arcaneBolt(new T.Vector3(i,1,0),new T.Vector3(1,0,0)):effects.emberbolt(new T.Vector3(i,1,0),new T.Vector3(1,0,0)));
+ effects.cast(new T.Vector3(0,1,0),new T.Vector3(1,0,0));
+ effects.emberImpact(new T.Vector3(1,1,0),new T.Vector3(1,0,0));
+ effects.arcaneImpact(new T.Vector3(2,1,0),new T.Vector3(1,0,0));
+ const originalMap=Array.prototype.map;
+ let mapCalls=0;
+ Array.prototype.map=function(...args){mapCalls++;return originalMap.apply(this,args);};
+ const FRAMES=200;
+ try {
+  for(let i=0;i<FRAMES;i++) {
+   for(const bolt of bolts)bolt.update(.016);
+   effects.update(.016,[{position:new T.Vector3(0,1,0),color:0xffffff,intensity:5}]);
+  }
+ } finally {
+  Array.prototype.map=originalMap;
+ }
+ assert.equal(mapCalls,0,`new update() must not call Array.prototype.map per frame; saw ${mapCalls} calls across ${FRAMES} frames`);
+ // Sanity-check the spy itself: the old algorithm (mirrored above) calls .map exactly once per
+ // invocation via `[...bolts].map(...)`, so the same population run through it is not zero.
+ // (refBolts is built with the spy uninstalled, so this setup step isn't itself counted)
+ const refLights=[makeStubLight(),makeStubLight()];
+ const refBolts=bolts.map(b=>({mesh:{position:b.mesh.position},light:b.light}));
+ mapCalls=0;
+ Array.prototype.map=function(...args){mapCalls++;return originalMap.apply(this,args);};
+ try {
+  referenceLightSelect([],new Set(refBolts),[],refLights);
+ } finally {
+  Array.prototype.map=originalMap;
+ }
+ assert.equal(mapCalls,1,'spy sanity check: the original algorithm should call Array.prototype.map exactly once');
+ effects.dispose();
+});
+
+test("newLightSelect (the parity mirror above) is verbatim identical to update()'s shipped fast path — guards against drift",()=>{
+ const source=fs.readFileSync(new URL('../dist/combat-effects.js',import.meta.url),'utf8');
+ const fnSource=newLightSelect.toString();
+ const body=fnSource.slice(fnSource.indexOf('{')+1,fnSource.lastIndexOf('}'));
+ const lines=body.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('//'));
+ assert.ok(lines.length>=10,`expected the mirror body to have multiple statements, saw ${lines.length}`);
+ for(const line of lines) {
+  const sourceLine=line.replaceAll('scratch','sourceScratch');
+  assert.ok(source.includes(sourceLine),`dist/combat-effects.js is missing (verbatim, scratch->sourceScratch renamed) the mirrored line: ${sourceLine}`);
+ }
+});
+
+test('light selection parity: the real, shipped update() matches the reference algorithm over 600 seeded frames of real bolts (0-8 alive, spawned/disposed mid-run) and 0-6 external lights, no bursts',()=>{
+ const rand=mulberry32(920260915);
+ const scene=new T.Scene(),effects=createCombatEffects(scene,new T.Texture());
+ const realLights=scene.children.filter(o=>o.isPointLight);
+ assert.equal(realLights.length,2);
+ // Real T.Vector3/T.Color (not the plain mocks above) so setHex/getHex go through the same
+ // sRGB<->linear conversion as the real PointLights — a plain numeric stub would let a
+ // conversion-rounding bug slip past this comparison.
+ // Match the real PointLight's constructor defaults (new T.PointLight(0xff7626,0,7,2)) so an
+ // unfilled slot's untouched color/position starts identical on both sides.
+ const stubLights=[{intensity:0,position:new T.Vector3(),color:new T.Color(0xff7626)},{intensity:0,position:new T.Vector3(),color:new T.Color(0xff7626)}];
+ let aliveBolts=[];
+ const FRAMES=600;
+ for(let frame=0;frame<FRAMES;frame++) {
+  // Dispose a few bolts mid-flight, exactly like main.js dropping a projectile no longer in the
+  // network snapshot — this exercises the same `bolts.delete(bolt)` path bolt.dispose() takes,
+  // so both sides must drop the same bolts at the same point.
+  const disposeCount=Math.min(aliveBolts.length,Math.floor(rand()*3));
+  for(let i=0;i<disposeCount;i++) {
+   const idx=Math.floor(rand()*aliveBolts.length);
+   aliveBolts[idx].dispose();aliveBolts.splice(idx,1);
+  }
+  const room=Math.max(0,8-aliveBolts.length),spawnCount=Math.min(room,Math.floor(rand()*9));
+  for(let i=0;i<spawnCount;i++) {
+   const pos=new T.Vector3(rand()*20-10,rand()*5,rand()*20-10),dir=new T.Vector3(1,0,0);
+   aliveBolts.push(rand()<.5?effects.emberbolt(pos,dir):effects.arcaneBolt(pos,dir));
+  }
+  const dt=rand()*.05;
+  for(const bolt of aliveBolts)bolt.update(dt);
+
+  // Bolt intensities are fixed (34 ember, 28 arcane), so exact ties against bolts are forced
+  // through externalLights instead of through bolt variety.
+  const nExternal=Math.floor(rand()*7),externalLights=[];
+  for(let i=0;i<nExternal;i++) {
+   const intensity=rand()<.4?(rand()<.5?34:28):(rand()<.1?0:rand()*80);
+   externalLights.push({position:{x:rand()*20-10,y:rand()*5,z:rand()*20-10},color:Math.floor(rand()*0xffffff),intensity});
+  }
+
+  effects.update(dt,externalLights);
+
+  const referenceBolts=aliveBolts.map(bolt=>({mesh:{position:bolt.mesh.position},light:{color:bolt.light.color,intensity:bolt.light.intensity}}));
+  referenceLightSelect(externalLights,new Set(referenceBolts),[],stubLights);
+
+  for(let i=0;i<2;i++) {
+   assert.equal(realLights[i].intensity,stubLights[i].intensity,`frame ${frame} light ${i} intensity`);
+   assert.equal(realLights[i].position.x,stubLights[i].position.x,`frame ${frame} light ${i} position.x`);
+   assert.equal(realLights[i].position.y,stubLights[i].position.y,`frame ${frame} light ${i} position.y`);
+   assert.equal(realLights[i].position.z,stubLights[i].position.z,`frame ${frame} light ${i} position.z`);
+   assert.equal(realLights[i].color.getHex(),stubLights[i].color.getHex(),`frame ${frame} light ${i} color`);
+  }
+ }
+ for(const bolt of aliveBolts)bolt.dispose();
+ effects.dispose();
 });
