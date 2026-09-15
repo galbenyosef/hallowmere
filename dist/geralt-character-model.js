@@ -1,48 +1,32 @@
 import * as T from './vendor/three.core.js';
+import * as P from './model-primitives.js';
 
 // Shared model for the character study and playable Geralt adapter.
 export const GERALT_POSES = Object.freeze(['sheathed', 'steel', 'silver', 'dagger']);
-const UP = new T.Vector3(0, 1, 0);
 
+// This kit's mesh/group take [x, y, z] arrays where model-primitives.js takes
+// flat x, y, z (and sx, sy, sz for mesh): thin adapters spread the arrays so
+// every one of this file's dozens of call sites stays unchanged.
 function mesh(parent, geometry, material, position = [0, 0, 0], scale = [1, 1, 1]) {
-  const object = new T.Mesh(geometry, material);
-  object.position.set(...position);
-  object.scale.set(...scale);
-  object.castShadow = true;
-  object.receiveShadow = true;
-  parent.add(object);
-  return object;
+  return P.mesh(parent, geometry, material, ...position, ...scale);
 }
 function group(parent, name, position = [0, 0, 0]) {
-  const object = new T.Group();
-  object.name = name;
-  object.position.set(...position);
-  parent.add(object);
-  return object;
+  return P.group(parent, name, ...position);
 }
 function ellipsoid(p, m, x, y, z, sx, sy, sz, segments = 12) {
-  return mesh(p, new T.SphereGeometry(1, segments, 8), m, [x, y, z], [sx, sy, sz]);
+  return P.ball(p, m, x, y, z, sx, sy, sz, {widthSegments: segments});
 }
 function box(p, m, x, y, z, sx, sy, sz) {
-  return mesh(p, new T.BoxGeometry(sx, sy, sz), m, [x, y, z]);
+  return P.box(p, m, x, y, z, sx, sy, sz, {sized: true});
 }
-function rod(p, m, a, b, radius, endRadius = radius, sides = 8) {
-  const start = new T.Vector3(...a), end = new T.Vector3(...b), delta = end.clone().sub(start);
-  const object = mesh(p, new T.CylinderGeometry(endRadius, radius, delta.length(), sides), m);
-  object.position.copy(start.add(end).multiplyScalar(.5));
-  object.quaternion.setFromUnitVectors(UP, delta.normalize());
-  return object;
-}
+// rod(p, m, a, b, radius, endRadius, sides) already matches P.rod's shape and
+// defaults exactly (endRadius plays the role of P.rod's "tip" radiusTop param).
+const rod = P.rod;
 function path(p, m, points, radius, tip = radius) {
-  for (let i = 1; i < points.length; i++) {
-    rod(p, m, points[i - 1], points[i], T.MathUtils.lerp(radius, tip, (i - 1) / (points.length - 1)), T.MathUtils.lerp(radius, tip, i / (points.length - 1)));
-  }
+  return P.path(p, m, points, radius, {tip});
 }
 function plate(p, m, points, depth, position = [0, 0, 0], bevel = .008) {
-  const shape = new T.Shape();
-  points.forEach(([x, y], i) => i ? shape.lineTo(x, y) : shape.moveTo(x, y));
-  shape.closePath();
-  return mesh(p, new T.ExtrudeGeometry(shape, {depth, bevelEnabled: bevel > 0, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 1, curveSegments: 1}), m, position);
+  return P.plate(p, m, points, depth, {x: position[0], y: position[1], z: position[2], bevel});
 }
 function mailTexture() {
   if (typeof document === 'undefined') return null;
@@ -106,7 +90,7 @@ function scabbard(parent, m, type) {
 
 export function createGeraltCharacter() {
   const root = new T.Group(); root.name = 'Geralt character study';
-  const material = (color, metalness = 0, roughness = .85) => new T.MeshStandardMaterial({color, metalness, roughness, flatShading: true});
+  const material = (color, metalness = 0, roughness = .85) => P.material(color, {metalness, roughness});
   const m = {
     leather: material('#303938'), brown: material('#5d4537'), black: material('#222b2d'),
     seam: material('#716554'), stitch: material('#a3916d'), fittings: material('#a08e70', .6, .48),
