@@ -71,3 +71,5 @@ console.log('| --- | ---: | ---: | ---: | ---: | ---: |');
 console.log(`| idle at spawn | ${IDLE_FRAMES} | ${ms(report.medians.idle.p50)} | ${ms(report.medians.idle.p95)} | ${ms(report.medians.idle.p99)} | ${Math.round(report.medians.idle.drawCalls)} |`);
 console.log(`| walking 3 waypoints | ${report.walkFrames} | ${ms(report.medians.walking.p50)} | ${ms(report.medians.walking.p95)} | ${ms(report.medians.walking.p99)} | ${Math.round(report.medians.walking.drawCalls)} |`);
 console.log(`\nJS heap delta over the run: ${report.medians.heapDeltaMb.toFixed(2)} MB (ending at ${report.medians.heapAfterMb.toFixed(1)} MB)`);
+// Exit explicitly once stdout has drained (see screenshot.mjs): a stray Chrome handle must not keep the report alive.
+process.stdout.write('',()=>process.exit(0));

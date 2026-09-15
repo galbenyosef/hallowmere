@@ -50,6 +50,9 @@ export async function launchChrome({width=1440,height=900,swiftshader=false,extr
   child.once('error',error=>{clearTimeout(timer);rej(error);});
   child.once('exit',code=>{clearTimeout(timer);rej(Error(`Chrome exited with code ${code}: ${stderr.slice(-400)}`));});
  });
+ // Chrome's helper processes inherit the stderr pipe; if one outlives SIGKILL it would hold the pipe open
+ // and keep this node process alive after main() returns, so drop our end once the endpoint is known.
+ child.stderr.destroy();child.unref();
  return {endpoint,flags,swiftshader,async close(){child.kill('SIGKILL');await rm(profile,{recursive:true,force:true}).catch(()=>{});}};
 }
 
@@ -393,5 +396,6 @@ async function main(){
 }
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- main().catch(error=>{console.error(error.message||error);process.exit(1);});
+ // Exit explicitly once stdout has drained: a stray handle must never keep a finished capture alive.
+ main().then(()=>process.stdout.write('',()=>process.exit(0)),error=>{console.error(error.message||error);process.exit(1);});
 }
