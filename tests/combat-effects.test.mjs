@@ -1,4 +1,5 @@
 import test from 'node:test';
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import * as T from '../dist/vendor/three.core.js';
 import {createCombatEffects,animateHeroAttack} from '../dist/combat-effects.js';
@@ -279,5 +280,72 @@ test('update() performs zero Array.prototype.map calls per frame after warm-up (
   Array.prototype.map=originalMap;
  }
  assert.equal(mapCalls,1,'spy sanity check: the original algorithm should call Array.prototype.map exactly once');
+ effects.dispose();
+});
+
+test("newLightSelect (the parity mirror above) is verbatim identical to update()'s shipped fast path — guards against drift",()=>{
+ const source=fs.readFileSync(new URL('../dist/combat-effects.js',import.meta.url),'utf8');
+ const fnSource=newLightSelect.toString();
+ const body=fnSource.slice(fnSource.indexOf('{')+1,fnSource.lastIndexOf('}'));
+ const lines=body.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('//'));
+ assert.ok(lines.length>=10,`expected the mirror body to have multiple statements, saw ${lines.length}`);
+ for(const line of lines) {
+  const sourceLine=line.replaceAll('scratch','sourceScratch');
+  assert.ok(source.includes(sourceLine),`dist/combat-effects.js is missing (verbatim, scratch->sourceScratch renamed) the mirrored line: ${sourceLine}`);
+ }
+});
+
+test('light selection parity: the real, shipped update() matches the reference algorithm over 600 seeded frames of real bolts (0-8 alive, spawned/disposed mid-run) and 0-6 external lights, no bursts',()=>{
+ const rand=mulberry32(920260915);
+ const scene=new T.Scene(),effects=createCombatEffects(scene,new T.Texture());
+ const realLights=scene.children.filter(o=>o.isPointLight);
+ assert.equal(realLights.length,2);
+ // Real T.Vector3/T.Color (not the plain mocks above) so setHex/getHex go through the same
+ // sRGB<->linear conversion as the real PointLights — a plain numeric stub would let a
+ // conversion-rounding bug slip past this comparison.
+ // Match the real PointLight's constructor defaults (new T.PointLight(0xff7626,0,7,2)) so an
+ // unfilled slot's untouched color/position starts identical on both sides.
+ const stubLights=[{intensity:0,position:new T.Vector3(),color:new T.Color(0xff7626)},{intensity:0,position:new T.Vector3(),color:new T.Color(0xff7626)}];
+ let aliveBolts=[];
+ const FRAMES=600;
+ for(let frame=0;frame<FRAMES;frame++) {
+  // Dispose a few bolts mid-flight, exactly like main.js dropping a projectile no longer in the
+  // network snapshot — this exercises the same `bolts.delete(bolt)` path bolt.dispose() takes,
+  // so both sides must drop the same bolts at the same point.
+  const disposeCount=Math.min(aliveBolts.length,Math.floor(rand()*3));
+  for(let i=0;i<disposeCount;i++) {
+   const idx=Math.floor(rand()*aliveBolts.length);
+   aliveBolts[idx].dispose();aliveBolts.splice(idx,1);
+  }
+  const room=Math.max(0,8-aliveBolts.length),spawnCount=Math.min(room,Math.floor(rand()*9));
+  for(let i=0;i<spawnCount;i++) {
+   const pos=new T.Vector3(rand()*20-10,rand()*5,rand()*20-10),dir=new T.Vector3(1,0,0);
+   aliveBolts.push(rand()<.5?effects.emberbolt(pos,dir):effects.arcaneBolt(pos,dir));
+  }
+  const dt=rand()*.05;
+  for(const bolt of aliveBolts)bolt.update(dt);
+
+  // Bolt intensities are fixed (34 ember, 28 arcane), so exact ties against bolts are forced
+  // through externalLights instead of through bolt variety.
+  const nExternal=Math.floor(rand()*7),externalLights=[];
+  for(let i=0;i<nExternal;i++) {
+   const intensity=rand()<.4?(rand()<.5?34:28):(rand()<.1?0:rand()*80);
+   externalLights.push({position:{x:rand()*20-10,y:rand()*5,z:rand()*20-10},color:Math.floor(rand()*0xffffff),intensity});
+  }
+
+  effects.update(dt,externalLights);
+
+  const referenceBolts=aliveBolts.map(bolt=>({mesh:{position:bolt.mesh.position},light:{color:bolt.light.color,intensity:bolt.light.intensity}}));
+  referenceLightSelect(externalLights,new Set(referenceBolts),[],stubLights);
+
+  for(let i=0;i<2;i++) {
+   assert.equal(realLights[i].intensity,stubLights[i].intensity,`frame ${frame} light ${i} intensity`);
+   assert.equal(realLights[i].position.x,stubLights[i].position.x,`frame ${frame} light ${i} position.x`);
+   assert.equal(realLights[i].position.y,stubLights[i].position.y,`frame ${frame} light ${i} position.y`);
+   assert.equal(realLights[i].position.z,stubLights[i].position.z,`frame ${frame} light ${i} position.z`);
+   assert.equal(realLights[i].color.getHex(),stubLights[i].color.getHex(),`frame ${frame} light ${i} color`);
+  }
+ }
+ for(const bolt of aliveBolts)bolt.dispose();
  effects.dispose();
 });
