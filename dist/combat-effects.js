@@ -6,7 +6,7 @@ import {disposeSubtree} from './dispose.js';
 // Combat-only additive layers stay bright without washing out the moonlit world.
 // Two persistent lights avoid recompiling scene materials for every cast / hit.
 export function createCombatEffects(scene, glowTexture, {reducedMotion = false} = {}) {
- const bursts = [], bolts = new Set(), lights = [];
+ const bursts = [], bolts = new Set(), lights = [], sourceScratch = [];
  const luminous = {transparent:true, blending:T.AdditiveBlending, depthWrite:false, toneMapped:false, fog:false};
  for (let i=0;i<2;i++) {const light=new T.PointLight(0xff7626,0,7,2);scene.add(light);lights.push(light);}
 
@@ -18,7 +18,7 @@ export function createCombatEffects(scene, glowTexture, {reducedMotion = false} 
   disposeSubtree(root,{removeFromParent:'before',dedupe:false,skipSpriteGeometry:true,arrayMaterials:false});
  }
  function addBurst(root, life, animate, light=null) {
-  scene.add(root);bursts.push({root,life,age:0,animate,light});animate(0,0);return root;
+  scene.add(root);const burst={root,life,age:0,animate,light};if(light)burst.lightSource={position:root.position,color:light.color,intensity:0};bursts.push(burst);animate(0,0);return root;
  }
  function flash(pos, color, size, life, coreColor=0xfff3ce) {
   const root=new T.Group();root.position.copy(pos);
@@ -89,7 +89,7 @@ export function createCombatEffects(scene, glowTexture, {reducedMotion = false} 
   const ground=new T.Mesh(new T.PlaneGeometry(3.7,3.7),new T.MeshBasicMaterial({...luminous,map:glowTexture,color:0xff661b,opacity:.35}));
   ground.rotation.x=-Math.PI/2;ground.position.y=.14-pos.y;mesh.add(ground);
   scene.add(mesh);
-  const bolt={mesh,age:0,light:{color:0xff7424,intensity:34},update(dt){
+  const bolt={mesh,age:0,light:{position:mesh.position,color:0xff7424,intensity:34},update(dt){
    bolt.age+=dt;
    const pulse=reducedMotion?1:1+Math.sin(bolt.age*24)*.045;
    core.scale.set(.23*pulse,.23*pulse,.4);halo.scale.setScalar(3.5*pulse);hot.material.opacity=.9;
@@ -160,7 +160,7 @@ export function createCombatEffects(scene, glowTexture, {reducedMotion = false} 
   motes.frustumCulled=false;mesh.add(motes);
   const ground=new T.Mesh(new T.PlaneGeometry(3,3),new T.MeshBasicMaterial({...luminous,map:glowTexture,color:0x6a8cff,opacity:.28}));
   ground.rotation.x=-Math.PI/2;ground.position.y=.14-pos.y;mesh.add(ground);scene.add(mesh);
-  const bolt={mesh,age:0,light:{color:0x779dff,intensity:28},update(dt){
+  const bolt={mesh,age:0,light:{position:mesh.position,color:0x779dff,intensity:28},update(dt){
    bolt.age+=dt;
    const time=reducedMotion?0:bolt.age,pulse=reducedMotion?1:1+Math.sin(time*18)*.035;
    core.scale.set(.2*pulse,.2*pulse,.38);halo.scale.setScalar(2.9*pulse);
@@ -235,10 +235,27 @@ export function createCombatEffects(scene, glowTexture, {reducedMotion = false} 
    const burst=bursts[i];burst.age+=dt;
    if(burst.age>=burst.life){dispose(burst.root);bursts.splice(i,1);}else burst.animate(burst.age/burst.life,burst.age);
   }
-  const sources=[...externalLights,...[...bolts].map(b=>({position:b.mesh.position,...b.light}))];
-  for(const b of bursts)if(b.light)sources.push({position:b.root.position,color:b.light.color,intensity:b.light.intensity*(1-b.age/b.life)**2});
-  sources.sort((a,b)=>b.intensity-a.intensity);
-  lights.forEach((light,i)=>{const source=sources[i];light.intensity=source?.intensity||0;if(source){light.position.copy(source.position);light.color.setHex(source.color);}});
+  if(lights.length!==2) {
+   const sources=[...externalLights,...[...bolts].map(b=>({position:b.mesh.position,...b.light}))];
+   for(const b of bursts)if(b.light)sources.push({position:b.root.position,color:b.light.color,intensity:b.light.intensity*(1-b.age/b.life)**2});
+   sources.sort((a,b)=>b.intensity-a.intensity);
+   lights.forEach((light,i)=>{const source=sources[i];light.intensity=source?.intensity||0;if(source){light.position.copy(source.position);light.color.setHex(source.color);}});
+   return;
+  }
+  sourceScratch.length=0;
+  for(const e of externalLights)sourceScratch.push(e);
+  for(const b of bolts)sourceScratch.push(b.light);
+  for(const b of bursts)if(b.light){b.lightSource.intensity=b.light.intensity*(1-b.age/b.life)**2;sourceScratch.push(b.lightSource);}
+  // Exact top-two by intensity, ties broken by earlier scratch index (external lights, then bolts, then bursts) — reproduces stable sort without sorting.
+  let firstIdx=-1,firstVal=-Infinity,secondIdx=-1,secondVal=-Infinity;
+  for(let i=0;i<sourceScratch.length;i++) {
+   const v=sourceScratch[i].intensity;
+   if(v>firstVal){secondIdx=firstIdx;secondVal=firstVal;firstIdx=i;firstVal=v;}
+   else if(v>secondVal){secondIdx=i;secondVal=v;}
+  }
+  const s0=firstIdx<0?undefined:sourceScratch[firstIdx],s1=secondIdx<0?undefined:sourceScratch[secondIdx];
+  lights[0].intensity=s0?.intensity||0;if(s0){lights[0].position.copy(s0.position);lights[0].color.setHex(s0.color);}
+  lights[1].intensity=s1?.intensity||0;if(s1){lights[1].position.copy(s1.position);lights[1].color.setHex(s1.color);}
  }
  return {emberbolt,arcaneBolt,cast,arcaneCast,emberImpact,arcaneImpact,steelImpact,cleave,update,dispose(){for(const b of [...bolts])b.dispose();for(const b of bursts)dispose(b.root);bursts.length=0;for(const light of lights){light.removeFromParent();light.dispose();}}};
 }
