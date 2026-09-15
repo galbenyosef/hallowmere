@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {lcg} from './random.js';
 
 // Instanced scenery keeps the larger footprint from multiplying draw calls.
 export function createOutlandScenery(scene,map){
@@ -9,7 +10,7 @@ export function createOutlandScenery(scene,map){
  if(map.id==='blackvein-quarry')Object.assign(colors,{earth:0x48423a,leaf:0x5b5b46,path:0x655f52});
  if(map.id==='crownfall-keep')Object.assign(colors,{earth:0x454048,leaf:0x504950,path:0x635e60});
  const materials=Object.fromEntries(Object.entries(colors).map(([id,color])=>[id,new T.MeshStandardMaterial({color,roughness:id==='water'?.3:.96})]));
- const batches=new Map(),dummy=new T.Object3D();let seed=1847;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const batches=new Map(),dummy=new T.Object3D();const rand=lcg(1847);
  const put=(shape,mat,x,y,z,w,h,d,rotation=0)=>{const key=`${shape}:${mat}`;if(!batches.has(key))batches.set(key,[]);batches.get(key).push({x,y,z,w,h,d,rotation});};
  for(const route of map.routes||[])for(let i=1;i<route.points.length;i++){
   const a=route.points[i-1],b=route.points[i],length=Math.hypot(b.x-a.x,b.z-a.z),angle=Math.atan2(b.x-a.x,b.z-a.z),style=route.style||'cobble',width=route.width;
