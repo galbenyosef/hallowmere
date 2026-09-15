@@ -1,30 +1,20 @@
 import * as T from '../dist/vendor/three.core.js';
+import {group, mesh, ball, rod as primRod, path as primPath, plate as primPlate, material} from '../dist/model-primitives.js';
 
 // The workshop and game portraits share these source models. Dimensions use the
 // same waist / arm / leg pivots as the other Hallowmere actors.
 export const NPC_MODEL_IDS = ['elder', 'healer', 'smith', 'watchman'];
-const UP = new T.Vector3(0, 1, 0);
-const mat = (color, metalness = 0, roughness = .82) => new T.MeshStandardMaterial({color, metalness, roughness});
-function group(parent, name, x = 0, y = 0, z = 0) {
-  const node = new T.Group(); node.name = name; node.position.set(x, y, z); parent.add(node); return node;
-}
-function mesh(parent, geometry, material, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) {
-  const node = new T.Mesh(geometry, material); node.position.set(x, y, z); node.scale.set(sx, sy, sz);
-  node.castShadow = node.receiveShadow = true; parent.add(node); return node;
-}
-const orb = (p,m,x,y,z,sx,sy,sz) => mesh(p,new T.SphereGeometry(1,16,10),m,x,y,z,sx,sy,sz);
+const mat = (color, metalness = 0, roughness = .82) => material(color, {metalness, roughness, flatShading: false});
+const orb = (p,m,x,y,z,sx,sy,sz) => ball(p,m,x,y,z,sx,sy,sz,{widthSegments:16,heightSegments:10});
 function plate(p,m,points,depth=.018,x=0,y=0,z=0) {
-  const shape = new T.Shape(); points.forEach(([a,b],i)=>i?shape.lineTo(a,b):shape.moveTo(a,b)); shape.closePath();
-  return mesh(p,new T.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelSize:.004,bevelThickness:.004,bevelSegments:1,curveSegments:1}),m,x,y,z);
+  return primPlate(p,m,points,depth,{x,y,z,bevel:.004});
 }
 const box = (p,m,x,y,z,w,h,d) => plate(p,m,[[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]],d,x,y,z-d/2);
 function rod(p,m,a,b,r,end=r,sides=10) {
-  const start=new T.Vector3(...a),finish=new T.Vector3(...b),delta=finish.clone().sub(start);
-  const node=mesh(p,new T.CylinderGeometry(end,r,delta.length(),sides),m);
-  node.position.copy(start.add(finish).multiplyScalar(.5)); node.quaternion.setFromUnitVectors(UP,delta.normalize()); return node;
+  return primRod(p,m,a,b,r,end,sides);
 }
 function path(p,m,points,r,end=r) {
-  points.slice(1).forEach((point,i)=>rod(p,m,points[i],point,T.MathUtils.lerp(r,end,i/(points.length-1)),T.MathUtils.lerp(r,end,(i+1)/(points.length-1)),8));
+  return primPath(p,m,points,r,{tip:end});
 }
 function ring(p,m,x,y,z,r,t=.01) { return mesh(p,new T.TorusGeometry(r,t,6,24),m,x,y,z); }
 function shell(p,m,rings,segments=16) {
