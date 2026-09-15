@@ -43,7 +43,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, vm-slicing tests | 0B | running | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | — | base 0803197 |
-| T1-1 | 1.1 | sonnet | model-primitives → geralt, nightblade | dist/{geralt,nightblade}-character-model.js + golden tests | T0-7 | running | codex/primitives-geralt-nightblade-94b5ab29-38bb | 5985 | — | base 0803197 |
+| T1-1 | 1.1 | sonnet | model-primitives → geralt, nightblade | dist/{geralt,nightblade}-character-model.js + golden tests | T0-7 | ready-to-merge | codex/primitives-geralt-nightblade-94b5ab29-38bb | 5985 | f2d8dea..5d18b26 | golden tests verified by orchestrator against main originals AND adopted files (2/2 both); geralt 17106→16470 B, nightblade 13986→13269 B; 303/303 |
 | T1-2 | 1.1 | sonnet | model-primitives → oathkeeper, ranger | dist/{oathkeeper,ranger}-character-model.js + golden tests | T0-7 | running | codex/primitives-oathkeeper-ranger-6dd19ea9-56aa | 5342 | — | base 0803197 |
 | M2 | 1.2 | sonnet | model-kit.js, icon-atlas.js | dist/main.js, 2 new, 5 appearance tests | M1 | todo | — | — | — | |
 | T1-3 | 1.2 | sonnet | model-primitives → reaver, predator-model | dist/{reaver-character-model,predator-model}.js + golden tests | T0-7 | todo | — | — | — | |
@@ -110,3 +110,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 0B authorized by the user. Integrating T0-1, T0-3, T0-4, T0-7, then the tracker.
 - 2026-09-15 — Gate 0B: T0-1 merged (bcc7b62), T0-3 merged (d744fb4). T0-4, T0-7 integrating.
 - 2026-09-15 — Gate 0B: T0-4 merged (7c82fe9), T0-7 merged (0803197). Main test count now 301. Wave 1.1 launched from 0803197: M1 (opus), T1-1, T1-2 (sonnet).
+- 2026-09-15 — T1-1 ready-to-merge (f2d8dea..5d18b26). Orchestrator re-ran the golden tests against main's original model files: pass. T1-3 started early in the freed slot.
