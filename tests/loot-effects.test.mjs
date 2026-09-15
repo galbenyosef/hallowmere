@@ -5,6 +5,7 @@ import {createLootVisual} from '../dist/loot-effects.js';
 import {VillageLife} from '../dist/world-actors.js';
 import {createState} from '../dist/combat.js';
 import {createCampaign} from '../dist/campaign.js';
+import {installGlobals} from './helpers/dom.mjs';
 
 const records=[
  {id:'crowns',kind:'gold',name:'Crowns',rarity:'common',amount:8,x:0,z:0},
@@ -53,12 +54,10 @@ test('reduced motion freezes every decorative animation while keeping highlighti
 
 test('snapshot collection and local pickup remove every shader layer and label without recreating existing drops',t=>{
  const labels=new Set();
- const previous=globalThis.document;
- globalThis.document={getElementById:()=>({append:label=>labels.add(label)}),createElement:()=>({
+ installGlobals(t,{document:{getElementById:()=>({append:label=>labels.add(label)}),createElement:()=>({
   dataset:{},style:{setProperty(){}},name:{textContent:''},
   querySelector(){return this.name;},remove(){labels.delete(this);},
- })};
- t.after(()=>{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;});
+ })}});
  const scene=new T.Scene(),player=new T.Group(),state=Object.assign(createState(),createCampaign(123));
  const life=new VillageLife({scene,camera:new T.OrthographicCamera(),player,state,obstacles:[],cloneModel:()=>new T.Group(),onCollect(){}});
  const initialNodes=scene.children.length,initialLabels=labels.size;
