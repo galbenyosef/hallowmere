@@ -52,7 +52,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | T1-5 | 1.3 | haiku | dispose.js adoption, effects tier | dist/{combat-effects,class-effects,multiplayer-view,enemy-visuals}.js | T0-7 | todo | — | — | — | |
 | T1-6 | 1.3 | sonnet | random.js + dispose.js adoption, scenery tier | dist/{environment,cave-entrance-scenery,cave-scenery,expansion-layout,outland-scenery,region-environment}.js + golden tests | T0-7 | running | codex/random-dispose-scenery-a62cb65b-ec3b | 6178 | — | started early from 0a50a93; scene fingerprints + draw-call check |
 | M4 | 1.4 | sonnet | interaction.js, region-travel.js, pointer-targeting.js | dist/main.js, 3 new, tests/loot-pickup.test.mjs, perf-smoke row | M3 | todo | — | — | — | |
-| T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | running | codex/util-adoption-ce4f8d26-6a2a | 6294 | — | started early from 0a50a93 |
+| T1-7 | 1.4 | haiku | util.js adoption | dist/{dialogue,journeys-menu,inventory,resource-orbs}.js | T0-7 | ready-to-merge | codex/util-adoption-ce4f8d26-6a2a | 6294 | d5c74cc | 4 helper swaps, imports verified per file; 301/301 |
 | T1-8 | 1.4 | sonnet | Portrait camera-fit helper | dist/{portrait-fit,character-portraits,inventory-portraits,npc-portraits}.js | T0-7 | todo | — | — | — | portrait hashes must match |
 | M5 | 1.5 | opus | input-bindings.js | dist/main.js, dist/input-bindings.js, tests loot-pickup/mouse-targeting/input-bindings | M4 | todo | — | — | — | |
 | T1-9 | 1.5 | haiku | Dead code | dist/campaign.js VILLAGES, 10 internal-only exports, app-icon.png + doc refs | — | todo | — | — | — | also check `openMainMenu()` in main.js: T0-4 found it has no caller |
@@ -118,3 +118,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — T1-4 and T1-6 started early in freed slots (3 agents running: M1, T1-4, T1-6).
 - 2026-09-15 — M1 reported 3 commits (3c16270..6a3f690); static review clean; visual/perf evidence still running in the agent.
 - 2026-09-15 — T1-4 ready-to-merge (016b5fe..84a2a06); GLB regeneration compared by the orchestrator: 9/9 equal. T1-7 starting in the freed slot.
+- 2026-09-15 — T1-7 ready-to-merge (d5c74cc). T1-5 starting in the freed slot.
