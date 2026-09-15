@@ -14,7 +14,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | bcc7b62, d744fb4, 7c82fe9, 0803197 (+tracker) |
 | G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | 5d35fbf, 2c2059a, 0414a23, c1533d7, 3f75255, 7453fc3 |
 | G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | 4a44dfe, 104262a, 44e09ac (+tracker eb359f9) |
-| G1.3 | 1.3 | M2, T1-9, T1-10, T2-4 | 2026-09-15 | 2584e0b, 7bd89fb, 0dd0d90, 6695720 (tracker follows) |
+| G1.3 | 1.3 | M2, T1-9, T1-10, T2-4 | 2026-09-15 (user) | 2584e0b, 7bd89fb, 0dd0d90, 6695720 (+tracker 192c828) |
 | G1.4 | 1.4 | M4, T1-7, T1-8 | — | — |
 | G1.5 | 1.5 | M5, T1-9, T1-10 | — | — |
 | G2.0 | 2.0 | T2-1 | — | — |
@@ -139,3 +139,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.3 authorized (M2, T1-9, T1-10, T2-4). T1-9 merged (2584e0b), T1-10 merged (7bd89fb). M2 + T2-4 integrating.
 - 2026-09-15 — Gate 1.3: M2 merged (0dd0d90), T2-4 merged (6695720). main = 6695720. hm-M3 registered from it; tracker integrates next.
 - 2026-09-15 — M3 started (sonnet) from 6695720. Tracker integrating; fresh tracker branch follows.
+- 2026-09-15 — Gate 1.3 complete (tracker merged 192c828). main = 192c828. Fresh tracker branch codex/refactor-tracker-e2d76bc0-6085. Running: M3 (sonnet), T2-5 (sonnet). T2-6 prompt staged.
