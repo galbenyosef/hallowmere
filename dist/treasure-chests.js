@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {createGeometryBatcher} from './geometry-batch.js';
 
 const vertex=`varying vec2 vUv,vWorld;
 void main(){vUv=uv;vWorld=(modelMatrix*vec4(position,1.)).xz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
@@ -71,14 +71,13 @@ export function createTreasureChest(parent,cache,map){
  for(const x of [-.5,.5])cube(body,iron,x,.76,-.51,.19,.1,.15);
  // Merge static detail by material; the lid remains a separate moving piece.
  for(const root of [body,lid]){
-  const batches=new Map();
+  const batcher=createGeometryBatcher();
   for(const mesh of [...root.children]){
-   mesh.updateMatrix();const g=mesh.geometry.clone().applyMatrix4(mesh.matrix);
-   const flat=g.index?g.toNonIndexed():g;if(flat!==g)g.dispose();
-   if(!batches.has(mesh.material))batches.set(mesh.material,[]);
-   batches.get(mesh.material).push(flat);root.remove(mesh);
+   mesh.updateMatrix();
+   batcher.add(mesh.geometry,mesh.material,mesh.matrix,{toNonIndexed:true,disposeIntermediate:true});
+   root.remove(mesh);
   }
-  for(const [m,parts] of batches){part(root,geometry(mergeGeometries(parts)),m,0,0,0);parts.forEach(g=>g.dispose());}
+  for(const mesh of batcher.build(root,{}))geometry(mesh.geometry);
  }
  const transform=new T.Object3D();
  const pile=new T.InstancedMesh(coin,gold,64);pile.name='chest-gold';pile.castShadow=true;group.add(pile);
