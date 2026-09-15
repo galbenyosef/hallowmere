@@ -28,7 +28,7 @@ function fingerprint(root){
    p.x.toFixed(6),p.y.toFixed(6),p.z.toFixed(6),
    q.x.toFixed(6),q.y.toFixed(6),q.z.toFixed(6),q.w.toFixed(6),
    s.x.toFixed(6),s.y.toFixed(6),s.z.toFixed(6),
-   String(node.castShadow),String(node.receiveShadow)].join('|'));
+   String(node.castShadow),String(node.receiveShadow),String(node.visible)].join('|'));
   if(node.isMesh){
    const g=node.geometry,m=node.material;
    lines.push('geom|'+g.type+'|'+JSON.stringify(stripUuid(g.parameters===undefined?null:g.parameters)));
@@ -51,7 +51,7 @@ function getRig(root){
 
 // createRangerCharacter() is called with no arguments everywhere in the game
 // (dist/character-study-models.js:145), so there is exactly one argument combination.
-const CREATE_HASH='2575c0bf3d7380cfe0156baa82722119d2aeeedb7700936269f40f974e097e59';
+const CREATE_HASH='b460d377c92dfa2d41da0e1679be577ca5f1ee4448eb12d20849cb0a00468ce6';
 
 test('createRangerCharacter builds the identical raw tree',()=>{
  const root=createRangerCharacter();
@@ -61,10 +61,10 @@ test('createRangerCharacter builds the identical raw tree',()=>{
 // States mirror combat-effects.js's animateHeroAttack: idle, a 'paired' melee cut that
 // swaps the bow for both knives, a 'bolt' ranged draw that keeps the bow, and idle again.
 const WEAPON_HASHES=[
- '2575c0bf3d7380cfe0156baa82722119d2aeeedb7700936269f40f974e097e59',
- '2575c0bf3d7380cfe0156baa82722119d2aeeedb7700936269f40f974e097e59',
- '2575c0bf3d7380cfe0156baa82722119d2aeeedb7700936269f40f974e097e59',
- '2575c0bf3d7380cfe0156baa82722119d2aeeedb7700936269f40f974e097e59',
+ 'b460d377c92dfa2d41da0e1679be577ca5f1ee4448eb12d20849cb0a00468ce6',
+ 'd99b55f33d0a474c23777296cff91a8c685060427253191df9019e95e5a2f7d9',
+ 'b460d377c92dfa2d41da0e1679be577ca5f1ee4448eb12d20849cb0a00468ce6',
+ 'b460d377c92dfa2d41da0e1679be577ca5f1ee4448eb12d20849cb0a00468ce6',
 ];
 
 test('updateRangerWeapons reproduces the identical tree at every state the game reaches',()=>{

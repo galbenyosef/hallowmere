@@ -28,7 +28,7 @@ function fingerprint(root){
    p.x.toFixed(6),p.y.toFixed(6),p.z.toFixed(6),
    q.x.toFixed(6),q.y.toFixed(6),q.z.toFixed(6),q.w.toFixed(6),
    s.x.toFixed(6),s.y.toFixed(6),s.z.toFixed(6),
-   String(node.castShadow),String(node.receiveShadow)].join('|'));
+   String(node.castShadow),String(node.receiveShadow),String(node.visible)].join('|'));
   if(node.isMesh){
    const g=node.geometry,m=node.material;
    lines.push('geom|'+g.type+'|'+JSON.stringify(stripUuid(g.parameters===undefined?null:g.parameters)));
@@ -51,7 +51,7 @@ function getRig(root){
 
 // createOathkeeperCharacter() is called with no arguments everywhere in the game
 // (dist/character-study-models.js:148), so there is exactly one argument combination.
-const CREATE_HASH='545a91396c1e656f0ff712c5de3f46f376974e3a8bc94327b858e43a237eacaa';
+const CREATE_HASH='b1f61e715b50c444ec082acb40409750deaff765f8775e18d41ab5eefe1d2253';
 
 test('createOathkeeperCharacter builds the identical raw tree',()=>{
  const root=createOathkeeperCharacter();
@@ -61,11 +61,11 @@ test('createOathkeeperCharacter builds the identical raw tree',()=>{
 // States mirror combat-effects.js's animateHeroAttack: flight on/off, a 'bolt' cast that
 // swaps blaster for holster, an idle reset, and a reduced-motion frame (gear.time frozen).
 const POSE_HASHES=[
- '2e110be2656215f633d9f2a9f1ddf292990d6a505bf88f00d7e10fecb711a729',
- '66a5916aa40edcd03da8495ff3903b8366638f9085fc724966aea3585dbef9c3',
- '11b1cae2a0b68f50338621276c5ace48317a8bed99e8f3b3833bad045d91fb6a',
- 'cdd64115d8e3c35987b53512007fc7297efc1981ee784b17be2c7dd087a46f74',
- 'fb4387af40ada1b4319111c4bb4d589fa13c6cd5da088401efe4be4457ca5678',
+ '953c9ad92a97da9bfa9f0e7639f8f3b4f87cad5d11fbd2a2b708034d77c8b6b4',
+ 'ecec9b673a614abb90368dcca8781aa56888bcfd55aee3a1507172331fb0e241',
+ '2bd5b790a66785f9cd16d46c55f5c9a47eed8cc1fa25785f0a4585c61a2457f6',
+ 'ae5499c8ac22643b8a05d2b60df4acfb673c4f34ae28a2979c9862b8c392959a',
+ '1de249ab02e501c59eabccbbabf06405b9a0b56192e087395d6f1fc0d3f39059',
 ];
 
 test('updateOathkeeperPose reproduces the identical tree at every state the game reaches',()=>{
