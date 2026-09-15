@@ -12,6 +12,12 @@ import {setBuildingAccess} from './buildings.js';
 import {createWorldLayout} from './world-layout.js';
 import {PLAYER_COLORS,PLAYER_SPEED,SHARED_KEYS,finitePoint,direction} from './multiplayer-protocol.js';
 
+// LocalSession hands snapshot() straight to the renderer, so every value it returns has to be a
+// private copy. Only the open-shaped payloads go through this walk (player state, event data and
+// dropped loot); the rest of snapshot() already builds fresh literals out of scalars.
+const detach=v=>{if(!v||typeof v!=='object')return v;if(Array.isArray(v)){const out=new Array(v.length);for(let i=0;i<v.length;i++)out[i]=detach(v[i]);return out;}
+ const out={};for(const k in v)out[k]=detach(v[k]);return out;};
+
 export class World {
  constructor({seed=randomSeed(),now=()=>Date.now()}={}){
   this.now=now;this.players=new Map();this.time=0;this.tick=0;this.events=[];this.eventId=0;this.emptySince=now();this.reset(seed);
@@ -158,8 +164,8 @@ export class World {
   }else e.path=[];
   const a=Math.atan2(goal.x-e.x,goal.z-e.z);e.angle=a;this.move(e,Math.sin(a)*ENEMY_TYPES[e.type].speed*(1-(e.slow||0))*dt,Math.cos(a)*ENEMY_TYPES[e.type].speed*(1-(e.slow||0))*dt,ENEMY_TYPES[e.type].modelType==='boss'||e.type==='boss'?.85:.37);
  }
- snapshot(id,afterEvent=0){const p=this.players.get(id);return {type:'snapshot',worldId:this.id,tick:this.tick,time:this.time,ack:p.lastSeq,mapId:p.mapId,interactions:regionInteractions(this,p),brokenCover:this.obstaclesFor(p).filter(o=>o.destructible&&o.disabled).map(o=>o.id),hazards:this.hazards.filter(h=>sameMap(h,p)).map(({hitIds,damage,...h})=>h),state:this.viewState(p),you:id,
+ snapshot(id,afterEvent=0){const p=this.players.get(id);return {type:'snapshot',worldId:this.id,tick:this.tick,time:this.time,ack:p.lastSeq,mapId:p.mapId,interactions:regionInteractions(this,p),brokenCover:this.obstaclesFor(p).filter(o=>o.destructible&&o.disabled).map(o=>o.id),hazards:this.hazards.filter(h=>sameMap(h,p)).map(({hitIds,damage,...h})=>h),state:detach(this.viewState(p)),you:id,
   players:this.connected().map(q=>({id:q.id,mapId:q.mapId,slot:q.slot,color:q.color,x:q.x,z:q.z,angle:q.angle,moving:q.moving,hp:q.state.hp,maxHp:q.state.maxHp,ended:q.state.ended,dodge:q.dodge,classId:q.state.classId,appearanceId:q.state.appearanceId,rooted:q.rootUntil>this.time,speed:q.rootUntil>this.time?0:speedFor(q.state),valkyrieTime:q.state.valkyrieTime||0,damageBoost:q.state.damageBoost||0,boostTime:q.state.boostTime||0,shield:q.state.shield||0,shieldTime:q.state.shieldTime||0,guard:q.state.guard||0,guardTime:q.state.guardTime||0,concealed:q.state.concealed||0,zone:zoneAt(q)})),
-  enemies:this.enemies.filter(e=>sameMap(e,p)).map(({path,navAt,home,dots,...e})=>e),projectiles:this.projectiles.filter(b=>sameMap(b,p)).map(({damage,ownerId,skill,hitIds,remainingHits,...b})=>b),zones:this.zones.filter(z=>sameMap(z,p)).map(({skill,next,ownerId,...z})=>z),loot:p.loot.filter(d=>!d.claimed&&sameMap(d,p)),forage:FORAGE_PATCHES.filter(patch=>sameMap(patch,p)&&this.time>=(p.forageReadyAt[patch.id]||0)),
-  votes:[...this.votes],voteDeadline:this.voteDeadline,events:this.events.filter(e=>e.id>afterEvent&&(!e.mapId||sameMap(e,p)||e.playerId===id)&&(!e.playerId||e.type==='ability'||e.type==='hurt'||e.type==='respawn'||e.playerId===id))};}
+  enemies:this.enemies.filter(e=>sameMap(e,p)).map(({path,navAt,home,dots,...e})=>(e.aim&&(e.aim={x:e.aim.x,z:e.aim.z}),e)),projectiles:this.projectiles.filter(b=>sameMap(b,p)).map(({damage,ownerId,skill,hitIds,remainingHits,...b})=>b),zones:this.zones.filter(z=>sameMap(z,p)).map(({skill,next,ownerId,...z})=>z),loot:p.loot.filter(d=>!d.claimed&&sameMap(d,p)).map(detach),forage:FORAGE_PATCHES.filter(patch=>sameMap(patch,p)&&this.time>=(p.forageReadyAt[patch.id]||0)).map(patch=>({...patch})),
+  votes:[...this.votes],voteDeadline:this.voteDeadline,events:this.events.filter(e=>e.id>afterEvent&&(!e.mapId||sameMap(e,p)||e.playerId===id)&&(!e.playerId||e.type==='ability'||e.type==='hurt'||e.type==='respawn'||e.playerId===id)).map(detach)};}
 }
