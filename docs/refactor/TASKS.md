@@ -142,3 +142,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.3 complete (tracker merged 192c828). main = 192c828. Fresh tracker branch codex/refactor-tracker-e2d76bc0-6085. Running: M3 (sonnet), T2-5 (sonnet). T2-6 prompt staged.
 - 2026-09-15 — T2-5 static review clean (edit uncommitted, agent waiting on its screenshot suite); 0/707,340 computed-style diffs.
 - 2026-09-15 — M3 static review clean (uncommitted; agent waiting on its captures).
+- 2026-09-15 — Incident: an orphaned headless Chrome from the M1 perf-browser run (started 01:10, unlocked frame rate, ~2.6 cores for 8 h) plus M3 and T2-5 capturing concurrently drove load to 71 on 10 cores; every HUD-dependent scenario timed out. Orphan killed; captures now serialized (M3 first, then T2-5). Rule recorded: one screenshot/perf-browser run at a time across all worktrees.
