@@ -13,10 +13,14 @@ const hashBytes=array=>createHash('sha256').update(Buffer.from(array.buffer,arra
 const hashString=value=>createHash('sha256').update(value,'utf8').digest('hex');
 const flatten=root=>{const nodes=[];root.traverse(node=>nodes.push(node));return nodes;};
 // ExtrudeGeometry.parameters.shapes serializes each T.Shape/Curve with a random
-// uuid (Shape.toJSON()); strip it so the fingerprint reflects only real geometry.
-const strip=value=>{
- if(Array.isArray(value))return value.map(strip);
- if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>key!=='uuid').map(([key,inner])=>[key,strip(inner)]));
+// uuid (Shape.toJSON()); drop it. Key order in geometry.parameters.options also
+// reflects each plate() implementation's own object-literal order (e.g. bevelSize
+// before bevelThickness here, the reverse in model-primitives.js) which JSON.stringify
+// would otherwise treat as a difference though it is not one -- sort keys so the
+// fingerprint reflects only real geometry, the same as assert.deepEqual would.
+const canonicalize=value=>{
+ if(Array.isArray(value))return value.map(canonicalize);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>key!=='uuid').sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,inner])=>[key,canonicalize(inner)]));
  return value;
 };
 
@@ -30,7 +34,7 @@ function describe(node){
  ];
  if(node.isMesh){
   const g=node.geometry;
-  parts.push(g.type,JSON.stringify(strip(g.parameters)));
+  parts.push(g.type,JSON.stringify(canonicalize(g.parameters)));
   for(const key of Object.keys(g.attributes).sort())parts.push(key,hashBytes(g.attributes[key].array));
   parts.push(g.index?hashBytes(g.index.array):'no-index');
   const materials=Array.isArray(node.material)?node.material:[node.material];
@@ -60,9 +64,9 @@ test('createGeraltCharacter builds an identical tree in every pose',()=>{
   hashes[pose]=fingerprint(character.root);
  }
  assert.deepEqual(hashes,{
-  sheathed:'1e5889b067a80d6b0d7c5db9ad97effc301ab94f6b12ec750f3f2c6a8533524b',
-  steel:'f483c78e3ec60cb1eb33bb118395f7f6e5dfa861525c0bf57ff6359868ef1bef',
-  silver:'acd6094e75832a24bcc5e204a7d0b71024a8f9eb09077fbbaad7f44a1217e446',
-  dagger:'a7bcd2e131f78a80934e032e85a8914428833c95a8d6ffa8501eac945b13f66b',
+  sheathed:'446b4f8063c84b8f98572780a2ac9e9c20757d0b6359c878e4ce2a199a4f5a4f',
+  steel:'6005ddb2bb24d8368ada15ed8e383f2aa72a0163cbac32ec5b6ea65585462e52',
+  silver:'254ca0f3f52a08ea461961ad7d53e13e5cbcb0fc99c7729e5c7e447f9368314c',
+  dagger:'de0c2859bd16ff5cadf24bd47df516dfceb9faf018dead94370eca24318d6f3c',
  });
 });

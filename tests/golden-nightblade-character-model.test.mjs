@@ -13,10 +13,14 @@ const hashBytes=array=>createHash('sha256').update(Buffer.from(array.buffer,arra
 const hashString=value=>createHash('sha256').update(value,'utf8').digest('hex');
 const flatten=root=>{const nodes=[];root.traverse(node=>nodes.push(node));return nodes;};
 // ExtrudeGeometry.parameters.shapes serializes each T.Shape/Curve with a random
-// uuid (Shape.toJSON()); strip it so the fingerprint reflects only real geometry.
-const strip=value=>{
- if(Array.isArray(value))return value.map(strip);
- if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>key!=='uuid').map(([key,inner])=>[key,strip(inner)]));
+// uuid (Shape.toJSON()); drop it. Key order in geometry.parameters.options also
+// reflects each plate() implementation's own object-literal order (e.g. bevelSize
+// before bevelThickness here, the reverse in model-primitives.js) which JSON.stringify
+// would otherwise treat as a difference though it is not one -- sort keys so the
+// fingerprint reflects only real geometry, the same as assert.deepEqual would.
+const canonicalize=value=>{
+ if(Array.isArray(value))return value.map(canonicalize);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>key!=='uuid').sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,inner])=>[key,canonicalize(inner)]));
  return value;
 };
 
@@ -30,7 +34,7 @@ function describe(node){
  ];
  if(node.isMesh){
   const g=node.geometry;
-  parts.push(g.type,JSON.stringify(strip(g.parameters)));
+  parts.push(g.type,JSON.stringify(canonicalize(g.parameters)));
   for(const key of Object.keys(g.attributes).sort())parts.push(key,hashBytes(g.attributes[key].array));
   parts.push(g.index?hashBytes(g.index.array):'no-index');
   const materials=Array.isArray(node.material)?node.material:[node.material];
@@ -51,5 +55,5 @@ function fingerprint(root){return hashString(flatten(root).map(describe).join('\
 // single build is the only distinct argument combination the game uses.
 test('createNightbladeCharacter builds an identical tree',()=>{
  const root=createNightbladeCharacter();
- assert.equal(fingerprint(root),'e27e86d8a2845e89ef80405e6280d649a4fbf1a4fc6cacf6e0dea0a7333dda6a');
+ assert.equal(fingerprint(root),'755e2f8d61e1156be36c7cc0de1fa46f3544e7edcf076e7a1e1ac8b6278878f0');
 });
