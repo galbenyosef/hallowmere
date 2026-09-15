@@ -11,7 +11,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | Gate | Wave | Tasks | Authorized | Merged commits |
 |---|---|---|---|---|
 | G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, c62368e |
-| G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | in progress |
+| G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | bcc7b62, d744fb4, 7c82fe9, 0803197 (+tracker) |
 | G1.1 | 1.1 | M1, T1-1, T1-2 | — | — |
 | G1.2 | 1.2 | M2, T1-3, T1-4 | — | — |
 | G1.3 | 1.3 | M3, T1-5, T1-6 | — | — |
@@ -32,19 +32,19 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 |---|---|---|---|---|---|---|---|---|---|---|
 | T0-0 | 0A | orchestrator | Tracker + design doc | docs/refactor/{TASKS,PLAN}.md | — | merged | codex/refactor-tracker-e2d76bc0-* (rotates per gate) | 5392 | → main c62368e | tracker worktree `hm-tracker`; re-run `start --task hm-tracker` after every gate |
 | T0-2 | 0A | opus | DOM-free core guard test | tests/core-purity.test.mjs | — | merged | codex/core-purity-f011b76a-9744 | 5508 | 7cf3722 → main 9a5ffde | 4 tests, closure=19 modules, bite-proof pasted; 273/273 |
-| T0-4 | 0A | opus | Perf + visual baseline (perf-smoke, screenshot/diff tooling, 13 shots) | scripts/{perf-smoke,screenshot,compare-shots,perf-browser}.mjs, docs/refactor/{PERF,VISUAL}.md, screenshots/refactor-baseline/ | — | ready-to-merge | codex/perf-baseline-5e8d08f7-c682 | 6163 | 774e333..3258719 | 11/13 scenarios; noise floor 0.09%, threshold 0.2%; perf-smoke + perf-browser (unlocked p50 6.3 ms idle / 6.7 ms walking) in PERF.md; merges at gate 0B |
+| T0-4 | 0A | opus | Perf + visual baseline (perf-smoke, screenshot/diff tooling, 13 shots) | scripts/{perf-smoke,screenshot,compare-shots,perf-browser}.mjs, docs/refactor/{PERF,VISUAL}.md, screenshots/refactor-baseline/ | — | merged | codex/perf-baseline-5e8d08f7-c682 | 6163 | 774e333..3258719 → main 7c82fe9 | 11/13 scenarios; noise floor 0.09%, threshold 0.2%; perf-smoke + perf-browser (unlocked p50 6.3 ms idle / 6.7 ms walking) in PERF.md; merges at gate 0B |
 | T0-5 | 0A | sonnet | Move dev pages to docs/variations; npc-models.js → scripts/ | dist dev pages (PLAN §5.6), scripts/generate-assets.mjs, tests/npc-models.test.mjs, README.md, docs/*.md refs, design-qa.md | — | merged | codex/dev-pages-move-c5b59f7e-17a8 | 5791 | bc42cd3, f051704 → main 2750cda | 17 files out of dist/, path edits verified token-by-token; 269/269; build green |
 | T0-1 | 0B | sonnet | tests/helpers, slice guard, audio widening, automation snapshot test | tests/helpers/{source,dom,sim,three-shim}.mjs, 18 tests, tests/automation-surface.test.mjs | T0-5 | merged | codex/test-helpers-64601142-a7e3 | 5488 | 872ede2..7c315b8 → main bcc7b62 | 8 slicing tests → sliceBetween (throws on missing marker, proven); assert counts identical in all 18 files; 15 audio cues unchanged; snapshot: hallowmere keys [getState,pause,resume,showControls], tools [get_vigil_state,control_warden]; exploration.test.mjs left as-is; 275/275 |
 | T0-3 | 0B | opus | Validator: recursive glob + per-page `$()` closure | scripts/validate.mjs | T0-5 | merged | codex/validator-closure-33088706-19ae | 6154 | e8a02d6 → main d744fb4 | closures: index 78, character-studies 9, menu-directions 20, route-atlas 8, sound-audition 0; 4 bite-proofs; build +0.5 s; 273/273 |
-| T0-7 | 0B | opus | New shared modules with zero consumers + tests | dist/{random,dispose,util,dom,model-primitives}.js + tests | — | ready-to-merge | codex/shared-modules-95b6f5f0-1b59 | 6270 | c367e95..7f73544 | 295/295; reviewed: mapping tables in headers, parity tests vs verbatim kit copies; started early (no deps); opus because it fixes the API every dedup task adopts; util.js split into pure util.js + dom.js so core modules can import util without DOM contamination |
+| T0-7 | 0B | opus | New shared modules with zero consumers + tests | dist/{random,dispose,util,dom,model-primitives}.js + tests | — | merged | codex/shared-modules-95b6f5f0-1b59 | 6270 | c367e95..7f73544 → main 0803197 | 295/295; reviewed: mapping tables in headers, parity tests vs verbatim kit copies; started early (no deps); opus because it fixes the API every dedup task adopts; util.js split into pure util.js + dom.js so core modules can import util without DOM contamination |
 
 ## Phase 1 — main.js M1–M5 + dedup
 
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| M1 | 1.1 | opus | ctx rename pass (game-context.js, util.js adoption) | dist/main.js, dist/game-context.js, 4 vm tests | 0B | todo | — | — | — | |
-| T1-1 | 1.1 | sonnet | model-primitives → geralt, nightblade | dist/{geralt,nightblade}-character-model.js + golden tests | T0-7 | todo | — | — | — | |
-| T1-2 | 1.1 | sonnet | model-primitives → oathkeeper, ranger | dist/{oathkeeper,ranger}-character-model.js + golden tests | T0-7 | todo | — | — | — | |
+| M1 | 1.1 | opus | ctx rename pass (game-context.js, dom.js `$` adoption) | dist/main.js, dist/game-context.js, vm-slicing tests | 0B | running | codex/ctx-rename-8e5ffbb9-efb6 | 5891 | — | base 0803197 |
+| T1-1 | 1.1 | sonnet | model-primitives → geralt, nightblade | dist/{geralt,nightblade}-character-model.js + golden tests | T0-7 | running | codex/primitives-geralt-nightblade-94b5ab29-38bb | 5985 | — | base 0803197 |
+| T1-2 | 1.1 | sonnet | model-primitives → oathkeeper, ranger | dist/{oathkeeper,ranger}-character-model.js + golden tests | T0-7 | running | codex/primitives-oathkeeper-ranger-6dd19ea9-56aa | 5342 | — | base 0803197 |
 | M2 | 1.2 | sonnet | model-kit.js, icon-atlas.js | dist/main.js, 2 new, 5 appearance tests | M1 | todo | — | — | — | |
 | T1-3 | 1.2 | sonnet | model-primitives → reaver, predator-model | dist/{reaver-character-model,predator-model}.js + golden tests | T0-7 | todo | — | — | — | |
 | T1-4 | 1.2 | sonnet | model-primitives → character-study-models, generator | dist/character-study-models.js, scripts/generate-assets.mjs, scripts/npc-models.mjs | T0-7, T0-5 | todo | — | — | — | verify by structural GLB compare (accessors byte-equal, ignore material names): generator embeds random material.uuid so raw bytes never match |
@@ -109,3 +109,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-14 — T0-1 ready-to-merge (872ede2..7c315b8, 275/275). Gate 0B requested for T0-1, T0-3, T0-4, T0-7 (+ tracker).
 - 2026-09-15 — Gate 0B authorized by the user. Integrating T0-1, T0-3, T0-4, T0-7, then the tracker.
 - 2026-09-15 — Gate 0B: T0-1 merged (bcc7b62), T0-3 merged (d744fb4). T0-4, T0-7 integrating.
+- 2026-09-15 — Gate 0B: T0-4 merged (7c82fe9), T0-7 merged (0803197). Main test count now 301. Wave 1.1 launched from 0803197: M1 (opus), T1-1, T1-2 (sonnet).
