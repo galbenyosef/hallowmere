@@ -11,7 +11,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | Gate | Wave | Tasks | Authorized | Merged commits |
 |---|---|---|---|---|
 | G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, c62368e |
-| G0B | 0B | T0-1, T0-3, T0-4, T0-7 | requested 2026-09-14 | — |
+| G0B | 0B | T0-1, T0-3, T0-4, T0-7 | 2026-09-15 (user) | in progress |
 | G1.1 | 1.1 | M1, T1-1, T1-2 | — | — |
 | G1.2 | 1.2 | M2, T1-3, T1-4 | — | — |
 | G1.3 | 1.3 | M3, T1-5, T1-6 | — | — |
@@ -107,3 +107,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-14 — Gate 0A complete: tracker merged (c62368e). Fresh tracker branch codex/refactor-tracker-e2d76bc0-1b90 at the same path.
 - 2026-09-14 — T0-3 ready-to-merge (e8a02d6). Notes: (a) validate.mjs skips dist/vendor as before; (b) tests/core-purity.test.mjs's stripper rescans its whole output per `/` (quadratic) — fine for the 19-module core, but cap the lookback like validate.mjs does if the closure grows (low-priority follow-up, fold into T1-9 or a later test touch); (c) subagent commits may carry the subagent's own model trailer (Opus) — accurate attribution, accepted.
 - 2026-09-14 — T0-1 ready-to-merge (872ede2..7c315b8, 275/275). Gate 0B requested for T0-1, T0-3, T0-4, T0-7 (+ tracker).
+- 2026-09-15 — Gate 0B authorized by the user. Integrating T0-1, T0-3, T0-4, T0-7, then the tracker.
