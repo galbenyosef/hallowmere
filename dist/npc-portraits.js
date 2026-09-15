@@ -1,4 +1,5 @@
 import * as T from './vendor/three.module.js';
+import {fitOrthographicCamera} from './portrait-fit.js';
 
 const portraits = new WeakMap();
 const WIDTH = 720, HEIGHT = 960;
@@ -20,20 +21,7 @@ export function createNpcPortraitStudy(prefab) {
   camera.position.copy(center).add(new T.Vector3(-2.7, 1.1, 7));
   camera.lookAt(center);
   camera.updateMatrixWorld(true);
-  const frame = new T.Box3(), vertex = new T.Vector3();
-  root.traverseVisible(node => {
-    const positions = node.geometry?.getAttribute('position');
-    if (!positions) return;
-    for (let i = 0; i < positions.count; i++) {
-      vertex.fromBufferAttribute(positions, i).applyMatrix4(node.matrixWorld).applyMatrix4(camera.matrixWorldInverse);
-      frame.expandByPoint(vertex);
-    }
-  });
-  const aspect = WIDTH / HEIGHT;
-  const halfHeight = Math.max((frame.max.y - frame.min.y) / 2, (frame.max.x - frame.min.x) / 2 / aspect) * 1.065;
-  const cx = (frame.min.x + frame.max.x) / 2, cy = (frame.min.y + frame.max.y) / 2;
-  Object.assign(camera, {left:cx - halfHeight * aspect, right:cx + halfHeight * aspect, top:cy + halfHeight, bottom:cy - halfHeight});
-  camera.updateProjectionMatrix();
+  fitOrthographicCamera(camera, root, WIDTH / HEIGHT, {pad: 1.065, visibleOnly: true});
   return {scene, root, camera};
 }
 
