@@ -1,4 +1,5 @@
 import {road,SURFACE_ROADS} from './road-layout.js';
+import {lcg} from './random.js';
 // Six times the original area, with quest locations left in place.
 export const OVERWORLD_BOUNDS={minX:-134.5,maxX:79.5,minZ:-81,maxZ:81};
 export const OUTLANDS=[
@@ -65,7 +66,7 @@ export function populateOutlands(map,sites,routes,types){
  });
 }
 export function plantOutlands(map){
- const b=map.bounds;let seed=722;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const b=map.bounds;const rand=lcg(722);
  for(let x=b.minX+6;x<b.maxX-4;x+=9)for(let z=b.minZ+6;z<b.maxZ-4;z+=9){
   const p={x:x+(rand()-.5)*5,z:z+(rand()-.5)*5};
   if(map.id==='overworld'?p.x>-83&&p.x<28&&Math.abs(p.z)<28:Math.abs(p.x)<32&&Math.abs(p.z)<32)continue;
