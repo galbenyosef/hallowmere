@@ -46,7 +46,8 @@ a DOM / three.js surface today.
 ## `scripts/perf-browser.mjs` — in-browser frame times
 
 ```sh
-bash scripts/node22.sh node scripts/perf-browser.mjs
+bash scripts/node22.sh node scripts/perf-browser.mjs            # unlocked frames (default)
+bash scripts/node22.sh node scripts/perf-browser.mjs --vsync     # paced at the display refresh
 bash scripts/node22.sh node scripts/perf-browser.mjs --json --runs 3
 bash scripts/node22.sh node scripts/perf-browser.mjs --url http://127.0.0.1:5182
 ```
@@ -57,7 +58,22 @@ the `control_warden` assistive tool. Per-frame deltas come from `requestAnimatio
 `window.hallowmere.getState().drawCalls`, and the heap delta from `performance.memory.usedJSHeapSize`
 before and after. Three runs, medians reported. Takes about 6 minutes.
 
-### Baseline (medians across 3 runs, platform GPU)
+By default Chrome is launched with `--disable-frame-rate-limit --disable-gpu-vsync`, so
+`requestAnimationFrame` is not paced by the display and each delta measures what the frame actually
+costs. `--vsync` restores the paced mode. Both baselines below were taken on the platform GPU
+(ANGLE Metal), which is what `openBrowser` picks when SwiftShader is not requested; `screenshot.mjs` is
+unaffected by either flag.
+
+### Baseline — unlocked (default), medians across 3 runs, platform GPU
+
+| Phase | frames/run | p50 ms | p95 ms | p99 ms | median draw calls |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| idle at spawn | 300 | 6.30 | 8.20 | 9.30 | 540 |
+| walking 3 waypoints | 600 | 6.70 | 10.00 | 11.40 | 564 |
+
+JS heap delta over the run: **8.79 MB** (ending at 73.5 MB).
+
+### Baseline — paced (vsync), medians across 3 runs, platform GPU
 
 | Phase | frames/run | p50 ms | p95 ms | p99 ms | median draw calls |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -68,12 +84,16 @@ JS heap delta over the run: **3.95 MB** (ending at 76.0 MB).
 
 ### Read these numbers carefully
 
-**Headless frame times are not GPU frame times.** They are useful only as a relative before/after
-comparison on the same machine in the same conditions, and must never be quoted as the game's real
-performance.
+**Headless frame times are not GPU frame times.** Neither table says anything about how the game runs on
+a real machine. They are useful only as a relative before/after comparison on the same machine in the
+same conditions, and must never be quoted as the game's real performance.
 
-On top of that, the frame deltas here are pinned to the ~16.7 ms display cadence: `requestAnimationFrame`
-is vsync-paced, so as long as a frame's work fits inside the budget every percentile reads ~16.7 ms. The
-p50/p95/p99 columns therefore only say "still comfortably inside 60 fps"; they move once a change pushes
-a frame past the budget. **Median draw calls and the heap delta are the sensitive columns** — they
-respond to a change immediately and are the ones a refactor is most likely to disturb.
+Compare unlocked against unlocked. In the unlocked table the percentiles are live: p50 ~6.3-6.7 ms with
+p95/p99 trailing up to ~11 ms, so **frame times, median draw calls and the heap delta are all sensitive
+columns** and a regression in per-frame work shows up directly.
+
+The paced table is kept for reference and as a budget check. There every percentile reads ~16.7 ms
+because `requestAnimationFrame` is pinned to the display cadence, so it only answers "does a frame still
+fit inside 60 fps" — useful once, useless for spotting a 20% slowdown. Do not read the two tables against
+each other; the heap deltas differ between them for the same reason (many more frames run in the same
+wall-clock sampling window when frames are unlocked).

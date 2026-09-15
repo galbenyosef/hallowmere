@@ -35,10 +35,13 @@ export async function startServer(){
 /* ---------- Chrome + CDP ---------- */
 export const CHROME_FLAGS=['--headless=new','--remote-debugging-port=0','--hide-scrollbars','--no-first-run','--no-default-browser-check','--mute-audio','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows','--force-device-scale-factor=1','--force-color-profile=srgb'];
 export const SWIFTSHADER_FLAGS=['--use-angle=swiftshader','--enable-unsafe-swiftshader'];
+// requestAnimationFrame is vsync-paced by default, which pins every frame delta to the refresh interval.
+export const UNLOCKED_FRAME_FLAGS=['--disable-frame-rate-limit','--disable-gpu-vsync'];
 
-export async function launchChrome({width=1440,height=900,swiftshader=false}={}){
+export async function launchChrome({width=1440,height=900,swiftshader=false,extraFlags=[]}={}){
  const profile=await mkdtemp(join(tmpdir(),'hallowmere-shot-'));
- const flags=[...CHROME_FLAGS,`--window-size=${width},${height}`,`--user-data-dir=${profile}`,...(swiftshader?SWIFTSHADER_FLAGS:[]),'about:blank'];
+ // extraFlags lets perf-browser unpin requestAnimationFrame from the display refresh; captures never use it.
+ const flags=[...CHROME_FLAGS,`--window-size=${width},${height}`,`--user-data-dir=${profile}`,...(swiftshader?SWIFTSHADER_FLAGS:[]),...extraFlags,'about:blank'];
  const child=spawn(CHROME,flags,{stdio:['ignore','pipe','pipe']});
  let stderr='';
  const endpoint=await new Promise((res,rej)=>{
@@ -310,7 +313,7 @@ export async function playTo(ctx,stageName,onStage){
 
 // Opens one Chrome + page against `url`. Callers close it; a wedged renderer is cured by reopening.
 export async function openBrowser(options,url){
- let chrome=await launchChrome({...options,swiftshader:!!options.swiftshader});
+ let chrome=await launchChrome({...options,swiftshader:!!options.swiftshader,extraFlags:options.extraFlags||[]});
  const build=async()=>{
   const cdp=await connect(chrome.endpoint);
   const sessionId=await openPage(cdp,options);
@@ -320,7 +323,7 @@ export async function openBrowser(options,url){
  const webgl=`!!document.createElement('canvas').getContext('webgl2')`;
  if(!await evaluate(ctx,webgl)){
   ctx.cdp.close();await chrome.close();
-  chrome=await launchChrome({...options,swiftshader:true});
+  chrome=await launchChrome({...options,swiftshader:true,extraFlags:options.extraFlags||[]});
   ctx=await build();
   if(!await evaluate(ctx,webgl))throw Error('Chrome has no WebGL2 context even with SwiftShader');
  }
