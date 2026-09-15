@@ -49,15 +49,12 @@ function icon(name){return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d=
 document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));
 const resourceOrbs=createResourceOrbs();
 const exploration=new ExplorationAtlas();
-const previewMode=['caves','exploration','predator','enemies'].includes(new URLSearchParams(location.search).get('preview'));
 bindExplorationSaving(exploration);
 const gameSettings=readGameSettings(),audio=new AudioEngine();audio.musicEnabled=gameSettings.music;
-const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches,coarse=matchMedia('(pointer: coarse)').matches;
-const journeyStore=new JourneyStore();
-const ctx=createGameContext({audio,gameSettings,exploration,resourceOrbs,journeyStore,previewMode,reducedMotion,coarse});
+const ctx=createGameContext({audio,gameSettings,exploration,resourceOrbs,journeyStore:new JourneyStore(),previewMode:['caves','exploration','predator','enemies'].includes(new URLSearchParams(location.search).get('preview')),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches,coarse:matchMedia('(pointer: coarse)').matches});
 ctx.state=Object.assign(createState(),createCampaign(crypto.getRandomValues(new Uint32Array(1))[0]));
 ctx.titleScreen=createTitleScreen($('loading'),{onBegin:chooseMode,onResume:resumeFromMainMenu,onChangeCharacter:openRoster});
-ctx.journeysMenu=createJourneysMenu({store:journeyStore,onNew:chooseJourneyCharacter,onContinue:continueJourney,onBack:showModeChoice});
+ctx.journeysMenu=createJourneysMenu({store:ctx.journeyStore,onNew:chooseJourneyCharacter,onContinue:continueJourney,onBack:showModeChoice});
 const loadingFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
 async function init(){let loadingFailed=false;try{
  await loadingFrame();
