@@ -76,8 +76,7 @@ const cases=[
  // M4 extracted regionInteractions() into dist/interaction.js as createInteraction(ctx), so it is
  // now importable outside the browser bundle: a stub ctx with a warm World snapshot as
  // ctx.lastSnapshot is enough, no DOM/three.js surface required.
- {name:'createInteraction(ctx).regionInteractions()',setup(){const {world,id}=warmWorld();const ctx={lastSnapshot:world.snapshot(id,0),state:{discoveries:[]}};const {regionInteractions}=createInteraction(ctx);return n=>{for(let i=0;i<n;i++)regionInteractions();};}}
- // the browser bundle (it still needs a DOM/three.js surface today).
+ {name:'createInteraction(ctx).regionInteractions()',setup(){const {world,id}=warmWorld();const ctx={lastSnapshot:world.snapshot(id,0),state:{discoveries:[]}};const {regionInteractions}=createInteraction(ctx);return n=>{for(let i=0;i<n;i++)regionInteractions();};}},
  // inCombat/showAll flip only occasionally, not every call: steady per-frame inputs are the
  // common case this task's caching targets, and flipping every single call mostly measures
  // V8 branch-prediction/deopt noise rather than the render cost itself.
