@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
 import {VillageLife} from '../dist/world-actors.js';
 import {World} from '../dist/world.js';
@@ -9,6 +10,17 @@ import {createState} from '../dist/combat.js';
 import {createCampaign,LOOT_PICKUP_RANGE} from '../dist/campaign.js';
 import {sliceBetween,readDist} from './helpers/source.mjs';
 import {installGlobals} from './helpers/dom.mjs';
+
+// dist/pointer-targeting.js and dist/interaction.js import the bare 'three' specifier, which
+// only the page's import map resolves; match it in Node the way tests/effects-factory.test.mjs
+// and tests/enemy-spawner.test.mjs do.
+const hook=registerHooks({resolve(specifier,context,nextResolve){
+ if(specifier==='three')return nextResolve(new URL('../dist/vendor/three.module.js',import.meta.url).href,context);
+ return nextResolve(specifier,context);
+}});
+const {createPointerTargeting}=await import('../dist/pointer-targeting.js');
+const {createInteraction}=await import('../dist/interaction.js');
+hook.deregister();
 
 const item={id:'charm',kind:'item',template:'oak-charm',name:'Warding oak charm',rarity:'uncommon',x:10,z:0,mapId:'overworld'};
 function fixture(t){
@@ -79,16 +91,25 @@ test('solo collection reaches the inventory in the next snapshot without a simul
 
 test('ground clicks collect before movement or combat and stop previous movement',()=>{
  const main=readDist('main.js'),handlers={},calls=[];
- const ctx={ready:true,paused:false,backgrounded:false,state:{ended:false},network:{connected:true,send:type=>calls.push([type])},pointer:{},camera:{},
-  angle:0,moveTarget:{x:8,z:0},movePath:[{x:8,z:0}],pendingRegionInteraction:'old-region',networkDirection:{x:1,z:0},raycaster:{setFromCamera(){}},
+ // pointerAction and collectClickedLoot left main.js in M4 (dist/pointer-targeting.js and
+ // dist/interaction.js); drive the real factories on the same ctx instead of vm-slicing their
+ // source. getPointerWorld/updatePointer/updateMouseTarget stay test doubles on ctx (as they did
+ // as vm globals before M4) since this test never exercises real pointer/camera math. The
+ // pointerdown->pointerup listener slice stays a vm slice (M5's module) and now reaches these via
+ // ctx.<name>(...), matching main.js's own call sites.
+ const ctx={ready:true,paused:false,backgrounded:false,state:{ended:false},network:{connected:true,send:type=>calls.push([type])},pointer:{},camera:{updateMatrixWorld(){}},
+  angle:0,moveTarget:{x:8,z:0},movePath:[{x:8,z:0}],pendingRegionInteraction:'old-region',networkDirection:{x:1,z:0},raycaster:{setFromCamera(){},ray:{intersectPlane(){}}},plane:{},targetWorld:{},
   life:{pending:'old-target',pickLoot:()=>item,interact:id=>{calls.push(['collect',id]);return{ok:true};}},
   pointerShift:false,mouseAction:null};
- const context={ctx,getPointerWorld(){},
-  $:()=>({addEventListener:(name,fn)=>{handlers[name]=fn;},focus(){}}),awaken(){},updatePointer(){ctx.mouseAction=context.pointerAction();},
-  releaseInput:()=>calls.push(['stop']),toast:()=>assert.fail('Unexpected failure'),perform:action=>calls.push(['ability',action])};
+ Object.assign(ctx,createPointerTargeting(ctx),createInteraction(ctx));
+ ctx.updatePointer=()=>{ctx.mouseAction=ctx.pointerAction();};
+ ctx.updateMouseTarget=()=>{};
+ ctx.awaken=()=>{};
+ ctx.releaseInput=()=>calls.push(['stop']);
+ ctx.toast=()=>assert.fail('Unexpected failure');
+ const context={ctx,
+  $:()=>({addEventListener:(name,fn)=>{handlers[name]=fn;},focus(){}}),awaken(){},perform:action=>calls.push(['ability',action])};
  vm.createContext(context);
- vm.runInContext(sliceBetween(main,'function pointerAction(','function updateMouseTarget(',{file:'dist/main.js'}),context);
- vm.runInContext(sliceBetween(main,'function collectClickedLoot(','function regionInteractions(',{file:'dist/main.js'}),context);
  vm.runInContext(sliceBetween(main,"$('world').addEventListener('pointerdown'","window.addEventListener('pointerup'",{file:'dist/main.js'}),context);
  handlers.pointerdown({button:0,preventDefault(){}});
  assert.deepEqual(calls,[['stop'],['collect',item.id]]);assert.equal(ctx.life.pending,null);
