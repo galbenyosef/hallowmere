@@ -1,13 +1,11 @@
 import * as T from './vendor/three.core.js';
+import * as P from './model-primitives.js';
 
 // The same elven duelist is used by the studies, portraits, and playable rig.
-const up=new T.Vector3(0,1,0);
-function group(parent,name,x=0,y=0,z=0){const g=new T.Group();g.name=name;g.position.set(x,y,z);parent.add(g);return g;}
-function mesh(parent,geometry,material,x=0,y=0,z=0,sx=1,sy=1,sz=1){const o=new T.Mesh(geometry,material);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=o.receiveShadow=true;parent.add(o);return o;}
-const ball=(p,m,x,y,z,sx,sy=sx,sz=sx)=>mesh(p,new T.SphereGeometry(1,10,7),m,x,y,z,sx,sy,sz);
-function rod(p,m,a,b,r=.01,r2=r){const av=new T.Vector3(...a),bv=new T.Vector3(...b),d=bv.clone().sub(av),o=mesh(p,new T.CylinderGeometry(r2,r,d.length(),6),m);o.position.copy(av.add(bv).multiplyScalar(.5));o.quaternion.setFromUnitVectors(up,d.normalize());return o;}
-function path(p,m,points,r=.008){for(let i=0;i<points.length-1;i++)rod(p,m,points[i],points[i+1],r);}
-function plate(p,m,points,depth=.012){const shape=new T.Shape();points.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();return mesh(p,new T.ExtrudeGeometry(shape,{depth,bevelEnabled:false}),m);}
+const {group,mesh,plate}=P;
+const ball=(p,m,x,y,z,sx,sy=sx,sz=sx)=>P.ball(p,m,x,y,z,sx,sy,sz,{widthSegments:10,heightSegments:7});
+function rod(p,m,a,b,r=.01,r2=r){return P.rod(p,m,a,b,r,r2,6);}
+function path(p,m,points,r=.008){return P.path(p,m,points,r,{taper:'constant',sides:6});}
 function edgedPlate(p,m,points,depth=.016){const face=plate(p,m.armor,points,depth);path(p,m.gold,[...points,points[0]].map(([x,y])=>[x,y,depth+.003]),.009);return face;}
 function jewel(p,m,x,y,z,size=.026){ball(p,m.gold,x,y,z,size*1.5,size*1.7,size*.65);return mesh(p,new T.OctahedronGeometry(1),m.gem,x,y,z+size*.5,size,size*1.25,size*.6);}
 function ribbon(p,m,points,widths){const positions=[],indices=[];points.forEach(([x,y,z],i)=>{const w=widths[i];positions.push(x-w,y,z,x,y,z+.012,x+w,y,z);if(i)for(let col=0;col<2;col++){const a=(i-1)*3+col;indices.push(a,a+1,a+3,a+1,a+4,a+3);}});const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();return mesh(p,g,m);}
