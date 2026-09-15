@@ -6,6 +6,9 @@
 import {World} from '../dist/world.js';
 import {LocalSession} from '../dist/local-session.js';
 import {TICK_SECONDS} from '../dist/multiplayer-protocol.js';
+import {VillageLife} from '../dist/world-actors.js';
+import * as T from '../dist/vendor/three.core.js';
+import {FOOD_LIST} from '../dist/foraging.js';
 
 const SEED=20240915,args=process.argv.slice(2);
 const flag=(name,fallback)=>{const i=args.indexOf(name);return i<0?fallback:Number(args[i+1]);};
@@ -19,14 +22,51 @@ function fixture(){const world=new World({seed:SEED,now:()=>0});const id=world.j
 function warmWorld(steps=100){const {world,id}=fixture();for(let i=0;i<steps;i++)world.step(TICK_SECONDS);return {world,id};}
 function session(){const s=new LocalSession({seed:SEED,onSnapshot:noop,onWelcome:noop,onStatus:noop,onProgress:noop});s.start();return s;}
 
+// Minimal stub label element: renderLabels only needs hidden, classList.toggle/contains,
+// style.left/top, and offsetWidth/offsetHeight (varied-but-deterministic so the labelSize
+// cache is exercised the way it would be against real, differently-sized labels).
+function villageLabelDocument(){
+ let n=0;const layer={append(){}};
+ function createLabel(){
+  n++;const seed=n;
+  return {dataset:{},className:'',innerHTML:'',hidden:false,
+   style:{left:'',top:'',transform:'',setProperty(){}},
+   classList:{_set:new Set(),toggle(token,force){const has=this._set.has(token);const want=force===undefined?!has:!!force;if(want)this._set.add(token);else this._set.delete(token);return want;},contains(token){return this._set.has(token);}},
+   offsetWidth:130+(seed*17)%60,offsetHeight:48+(seed*11)%30,
+   setAttribute(){},remove(){},querySelector(){return {};},focus(){},
+   onclick:null,onpointerdown:null,onpointerenter:null,onpointerleave:null,onfocus:null,onblur:null};
+ }
+ return {getElementById:()=>layer,createElement:createLabel};
+}
+// ~30 items (4 NPCs + 16 drops + 10 forage patches), seeded so the fixture is identical run to run.
+function villageLife(){
+ globalThis.document=villageLabelDocument();globalThis.innerWidth=1280;globalThis.innerHeight=800;
+ let v=0x9e3779b9;const rand=()=>{v=(Math.imul(v,1664525)+1013904223)>>>0;return v/4294967296;};
+ const scene=new T.Scene(),player=new T.Group(),camera=new T.OrthographicCamera(-20,20,15,-15,.1,150);
+ const state={mapId:'overworld',potions:0,ended:false};
+ const life=new VillageLife({scene,camera,player,state,cloneModel:()=>new T.Group(),obstacles:[],onTalk(){},onCollect(){},onLootClick(){},onApproach(){return true;}});
+ for(let i=0;i<16;i++){
+  const kind=['item','potion','gold'][i%3];
+  life.addLoot([{id:`d${i}`,kind,rarity:['common','uncommon','rare','legendary'][i%4],name:`D${i}`,x:(rand()-.5)*100,z:(rand()-.5)*40,amount:kind==='gold'?40:undefined,template:kind==='item'?'oak-charm':undefined}],{x:0,z:0});
+ }
+ const forageRecords=[];
+ for(let i=0;i<10;i++){forageRecords.push({id:`f${i}`,itemId:FOOD_LIST[i%FOOD_LIST.length].id,x:(rand()-.5)*100,z:(rand()-.5)*40});life.syncForage(forageRecords.map(r=>({...r})));}
+ player.position.set(3,0,2);camera.position.set(20,25,28);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+ return life;
+}
+
 // Each case returns a run(n) closure over freshly built state, so setup stays outside the timed region.
 const cases=[
  {name:'World#step(TICK_SECONDS)',setup(){const {world}=fixture();return n=>{for(let i=0;i<n;i++)world.step(TICK_SECONDS);};}},
  {name:'World#snapshot(playerId, lastEvent)',setup(){const {world,id}=warmWorld();return n=>{for(let i=0;i<n;i++)world.snapshot(id,0);};}},
  {name:'structuredClone(snapshot)',setup(){const {world,id}=warmWorld();const snapshot=world.snapshot(id,0);return n=>{for(let i=0;i<n;i++)structuredClone(snapshot);};}},
- {name:'LocalSession#advance(1/60)',setup(){const s=session();return n=>{for(let i=0;i<n;i++)s.advance(1/60);};}}
- // hooks for later phases: add rows for regionInteractions(world, player) and VillageLife.renderLabels
- // once those are importable outside the browser bundle (both need a DOM/three.js surface today).
+ {name:'LocalSession#advance(1/60)',setup(){const s=session();return n=>{for(let i=0;i<n;i++)s.advance(1/60);};}},
+ // inCombat/showAll flip only occasionally, not every call: steady per-frame inputs are the
+ // common case this task's caching targets, and flipping every single call mostly measures
+ // V8 branch-prediction/deopt noise rather than the render cost itself.
+ {name:'VillageLife#renderLabels',setup(){const life=villageLife();let i=0;return n=>{for(let k=0;k<n;k++){i++;life.renderLabels(Math.floor(i/97)%2===0,Math.floor(i/61)%2===0);}};}}
+ // hook for a later phase: add a row for regionInteractions(world, player) once it is
+ // importable outside the browser bundle (it still needs a DOM/three.js surface today).
 ];
 
 function measure({name,setup}){
