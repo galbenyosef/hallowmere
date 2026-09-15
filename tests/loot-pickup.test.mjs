@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import vm from 'node:vm';
 import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
 import {VillageLife} from '../dist/world-actors.js';
@@ -8,7 +7,6 @@ import {World} from '../dist/world.js';
 import {LocalSession} from '../dist/local-session.js';
 import {createState} from '../dist/combat.js';
 import {createCampaign,LOOT_PICKUP_RANGE} from '../dist/campaign.js';
-import {sliceBetween,readDist} from './helpers/source.mjs';
 import {installGlobals} from './helpers/dom.mjs';
 
 // dist/pointer-targeting.js and dist/interaction.js import the bare 'three' specifier, which
@@ -20,6 +18,7 @@ const hook=registerHooks({resolve(specifier,context,nextResolve){
 }});
 const {createPointerTargeting}=await import('../dist/pointer-targeting.js');
 const {createInteraction}=await import('../dist/interaction.js');
+const {bindInput}=await import('../dist/input-bindings.js');
 hook.deregister();
 
 const item={id:'charm',kind:'item',template:'oak-charm',name:'Warding oak charm',rarity:'uncommon',x:10,z:0,mapId:'overworld'};
@@ -89,32 +88,52 @@ test('solo collection reaches the inventory in the next snapshot without a simul
  assert.ok(snapshot.state.inventory.some(i=>i.id===item.id));assert.equal(snapshot.loot.length,0);assert.deepEqual({x:p.x,z:p.z},before);
 });
 
-test('ground clicks collect before movement or combat and stop previous movement',()=>{
- const main=readDist('main.js'),handlers={},calls=[];
+// One stub element per id plus recording window/document targets, so bindInput can register the
+// whole region while this test drives only the $('world') pointerdown dispatcher.
+function inputHarness(t){
+ const nodes=new Map(),handlers={};
+ const node=id=>{if(!nodes.has(id))nodes.set(id,{id,dataset:{},style:{},innerHTML:'',
+  classList:{add(){},remove(){},toggle(){}},setAttribute(){},removeAttribute(){},focus(){},
+  querySelectorAll:()=>[],getBoundingClientRect:()=>({left:0,top:0,width:68,height:68}),
+  hasPointerCapture:()=>false,setPointerCapture(){},releasePointerCapture(){},
+  addEventListener(type,fn){(handlers[id+':'+type]??=[]).push(fn);}});return nodes.get(id);};
+ installGlobals(t,{document:{getElementById:node},
+  HTMLInputElement:class{},HTMLTextAreaElement:class{},HTMLSelectElement:class{},HTMLButtonElement:class{}});
+ return {handlers,
+  windowTarget:{addEventListener(){}},
+  documentTarget:{hidden:false,activeElement:null,addEventListener(){},querySelectorAll:()=>[],querySelector:()=>node('map-panel')}};
+}
+
+test('ground clicks collect before movement or combat and stop previous movement',t=>{
+ const calls=[];
  // pointerAction and collectClickedLoot left main.js in M4 (dist/pointer-targeting.js and
- // dist/interaction.js); drive the real factories on the same ctx instead of vm-slicing their
- // source. getPointerWorld/updatePointer/updateMouseTarget stay test doubles on ctx (as they did
- // as vm globals before M4) since this test never exercises real pointer/camera math. The
- // pointerdown->pointerup listener slice stays a vm slice (M5's module) and now reaches these via
- // ctx.<name>(...), matching main.js's own call sites.
+ // dist/interaction.js) and the $('world') pointerdown dispatcher left in M5
+ // (dist/input-bindings.js); drive the real factories and the real bindInput on the same ctx
+ // instead of vm-slicing their source. getPointerWorld/updatePointer/updateMouseTarget stay test
+ // doubles on ctx (as they did as vm globals before M4) since this test never exercises real
+ // pointer/camera math.
  const ctx={ready:true,paused:false,backgrounded:false,state:{ended:false},network:{connected:true,send:type=>calls.push([type])},pointer:{},camera:{updateMatrixWorld(){}},
   angle:0,moveTarget:{x:8,z:0},movePath:[{x:8,z:0}],pendingRegionInteraction:'old-region',networkDirection:{x:1,z:0},raycaster:{setFromCamera(){},ray:{intersectPlane(){}}},plane:{},targetWorld:{},
   life:{pending:'old-target',pickLoot:()=>item,interact:id=>{calls.push(['collect',id]);return{ok:true};}},
-  pointerShift:false,mouseAction:null};
+  pointerShift:false,mouseAction:null,joystickPointer:null,joystickValue:{x:0,y:0},keys:new Set(),
+  mapExpanded:false,rosterPicker:{open:false},syncAudioState(){},audio:{play(){}},exploration:{save(){}}};
  Object.assign(ctx,createPointerTargeting(ctx),createInteraction(ctx));
  ctx.updatePointer=()=>{ctx.mouseAction=ctx.pointerAction();};
  ctx.updateMouseTarget=()=>{};
  ctx.awaken=()=>{};
- ctx.releaseInput=()=>calls.push(['stop']);
+ ctx.perform=action=>calls.push(['ability',action]);
  ctx.toast=()=>assert.fail('Unexpected failure');
- const context={ctx,
-  $:()=>({addEventListener:(name,fn)=>{handlers[name]=fn;},focus(){}}),awaken(){},perform:action=>calls.push(['ability',action])};
- vm.createContext(context);
- vm.runInContext(sliceBetween(main,"$('world').addEventListener('pointerdown'","window.addEventListener('pointerup'",{file:'dist/main.js'}),context);
- handlers.pointerdown({button:0,preventDefault(){}});
+ const {handlers,windowTarget,documentTarget}=inputHarness(t);
+ Object.assign(ctx,bindInput(ctx,{windowTarget,documentTarget}));
+ // bindInput puts the real releaseInput on ctx; this test only needs to see that
+ // collectClickedLoot reached it first, exactly as the vm-sliced version did.
+ ctx.releaseInput=()=>calls.push(['stop']);
+ const pointerdown=event=>{for(const fn of handlers['world:pointerdown'])fn(event);};
+ assert.equal(handlers['world:pointerdown'].length,1);
+ pointerdown({button:0,preventDefault(){}});
  assert.deepEqual(calls,[['stop'],['collect',item.id]]);assert.equal(ctx.life.pending,null);
- calls.length=0;ctx.paused=true;handlers.pointerdown({button:0});assert.deepEqual(calls,[]);
- ctx.paused=false;handlers.pointerdown({button:2,preventDefault(){}});assert.deepEqual(calls,[['input'],['ability','bolt']]);
+ calls.length=0;ctx.paused=true;pointerdown({button:0});assert.deepEqual(calls,[]);
+ ctx.paused=false;pointerdown({button:2,preventDefault(){}});assert.deepEqual(calls,[['input'],['ability','bolt']]);
  assert.equal(ctx.moveTarget,null);assert.equal(ctx.movePath.length,0);assert.equal(ctx.pendingRegionInteraction,null);
  assert.equal(ctx.network.input.x,0);assert.equal(ctx.network.input.z,0);
 });
