@@ -2,7 +2,7 @@ import * as T from './vendor/three.core.js';
 
 // Measure forgiveness in CSS pixels so aiming feels the same at every zoom.
 const SNAP_PADDING=20,RELEASE_PADDING=8,SWITCH_BIAS=6;
-export function createMouseTargeting({scene,camera,canvas,enemies}){
+export function createMouseTargeting({scene,camera,canvas,enemies,windowTarget=globalThis.window}){
  const projected=new T.Vector3(),raycaster=new T.Raycaster(),tint=new T.Color('#ff7952');
  const marker=new T.Group();marker.visible=false;scene.add(marker);
  const ring=new T.Mesh(new T.RingGeometry(.92,1,64),new T.MeshBasicMaterial({color:'#ffae79',transparent:true,opacity:.95,depthWrite:false,toneMapped:false}));
@@ -12,6 +12,16 @@ export function createMouseTargeting({scene,camera,canvas,enemies}){
   bracket.rotation.x=-Math.PI/2;marker.add(bracket);
  }
  let selected=null,materials=[];
+ let cachedRect=null;
+ function invalidateRect(){cachedRect=null;}
+ function getRect(){return windowTarget?cachedRect||(cachedRect=canvas.getBoundingClientRect()):canvas.getBoundingClientRect();}
+ if(windowTarget){
+  windowTarget.addEventListener('resize',invalidateRect);
+  windowTarget.addEventListener('scroll',invalidateRect,true);
+  windowTarget.visualViewport?.addEventListener('resize',invalidateRect);
+  windowTarget.visualViewport?.addEventListener('scroll',invalidateRect);
+  windowTarget.addEventListener('orientationchange',invalidateRect);
+ }
  function show(enemy){
   if(enemy?.dead||!enemy?.model.parent)enemy=null;
   if(enemy!==selected){
@@ -31,7 +41,7 @@ export function createMouseTargeting({scene,camera,canvas,enemies}){
   }
  }
  function pick(pointer,{assist=true}={}){
-  const rect=canvas.getBoundingClientRect(),px=(pointer.x+1)*rect.width/2,py=(1-pointer.y)*rect.height/2,candidates=[];
+  const rect=getRect(),px=(pointer.x+1)*rect.width/2,py=(1-pointer.y)*rect.height/2,candidates=[];
   camera.updateMatrixWorld();
   for(const enemy of enemies){
    if(enemy.dead||!enemy.model.visible||!enemy.model.parent)continue;
@@ -56,5 +66,5 @@ export function createMouseTargeting({scene,camera,canvas,enemies}){
   if(hits.length){let object=hits[0].object;while(object&&object.parent!==scene)object=object.parent;return candidates.find(c=>c.enemy.model===object)?.enemy||null;}
   return assist?candidates.sort((a,b)=>a.score-b.score)[0]?.enemy||null:null;
  }
- return {pick,show,get selected(){return selected;}};
+ return {pick,show,invalidateRect,get selected(){return selected;}};
 }
