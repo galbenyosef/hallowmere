@@ -15,8 +15,8 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G1.1 | 1.1 | M1, T1-1, T1-2, T1-3, T1-4, T1-7 | 2026-09-15 (user) | 5d35fbf, 2c2059a, 0414a23, c1533d7, 3f75255, 7453fc3 |
 | G1.2 | 1.2 | T1-5, T1-6, T1-8 | 2026-09-15 (user) | 4a44dfe, 104262a, 44e09ac (+tracker eb359f9) |
 | G1.3 | 1.3 | M2, T1-9, T1-10, T2-4 | 2026-09-15 (user) | 2584e0b, 7bd89fb, 0dd0d90, 6695720 (+tracker 192c828) |
-| G1.4 | 1.4 | M3, T2-5, P1, P2, P3, P5, T0-8 | — | — |
-| G1.5 | 1.5 | M5, T1-9, T1-10 | — | — |
+| G1.4 | 1.4 | M3, T2-5, P1, P2, P3, P5, T0-8 | 2026-09-15 (user) | integrating |
+| G1.5 | 1.5 | M4, T2-6 (+ any ready P task) | — | — |
 | G2.0 | 2.0 | T2-1 | — | — |
 | G2.1 | 2.1 | M6 | — | — |
 | G2.2 | 2.2 | M7, T2-5 | — | — |
@@ -155,3 +155,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — P5 ready-to-merge (22cdcdf..953582a).
 - 2026-09-15 — P2 ready-to-merge (9090375..d3b1f78).
 - 2026-09-15 — T2-5 ready-to-merge (4119482). Gate 1.4 requested: M3, T2-5, P1, P2, P3, P5, T0-8.
+- 2026-09-15 — Gate 1.4 authorized (M3, T2-5, P1, P2, P3, P5, T0-8). Integrating in order M3, T2-5, T0-8, P1, P2, P3, P5, tracker.
