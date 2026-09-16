@@ -50,6 +50,7 @@ import {createRegionTravel} from './region-travel.js';
 import {bindInput} from './input-bindings.js';
 import {createPlayerMotion} from './player-motion.js';
 import {createHud} from './hud.js';
+import {createGameAudio} from './game-audio.js';
 paintIcons(document);
 const resourceOrbs=createResourceOrbs();
 const exploration=new ExplorationAtlas();
@@ -80,13 +81,13 @@ async function init(){let loadingFailed=false;try{
  ctx.life.requestCollect=id=>!ctx.paused&&!ctx.backgrounded&&!ctx.state.ended&&ctx.network.send('collect',{id});ctx.life.requestForage=id=>!ctx.paused&&!ctx.backgrounded&&!ctx.state.ended&&ctx.network.send('forage',{id});
  ctx.clock=new T.Clock();ctx.assetsReady=true;ctx.updateUI();ctx.drawMap();ctx.titleScreen.setProgress(100);showModeChoice();ctx.renderer.setAnimationLoop(frame);
  }catch(error){loadingFailed=true;console.error(error);ctx.titleScreen.showError();}}
-ctx.syncAudioState=syncAudioState;
+Object.assign(ctx,createHud(ctx),createGameAudio(ctx));
+const {awaken,audioAt}=ctx;
 function setModeChoiceInert(inert){for(const child of $('game').children)if(child.id!=='loading')child.inert=inert;}
-function syncAudioState(connected=!!ctx.network?.connected){const silent=!ctx.ready||!connected||ctx.paused||ctx.backgrounded||!!ctx.rosterPicker?.open;if(ctx.audio.paused!==silent||ctx.audio.backgrounded!==ctx.backgrounded)ctx.audio.pause(silent,ctx.backgrounded);}
 setModeChoiceInert(true);
 function showModeChoice(){
  setModeChoiceInert(true);
- ctx.ready=false;ctx.sessionMode=null;ctx.mainMenuOpen=false;syncAudioState();
+ ctx.ready=false;ctx.sessionMode=null;ctx.mainMenuOpen=false;ctx.syncAudioState();
  ctx.titleScreen.showModes();$('connection-overlay').hidden=true;
 }
 function chooseMode(mode){if(mode==='single-player'&&!ctx.previewMode)openJourneys();else startSession(mode);}
@@ -167,14 +168,14 @@ function resumeFromMainMenu(){
  if(ctx.journeyLeaving||ctx.journeyConflict)return;
  if(!ctx.mainMenuOpen||!ctx.network?.connected||ctx.state.ended)return;
  ctx.mainMenuOpen=false;$('loading').inert=false;ctx.titleScreen.hide();setModeChoiceInert(false);
- ctx.paused=false;releaseInput();ctx.clock.getDelta();syncAudioState();$('world').focus({preventScroll:true});
+ ctx.paused=false;releaseInput();ctx.clock.getDelta();ctx.syncAudioState();$('world').focus({preventScroll:true});
 }
 ctx.resumeFromMainMenu=resumeFromMainMenu;
 function closeRoster(){
  releaseInput();
  if(ctx.creatingJourney){ctx.creatingJourney=false;openJourneys();return;}
  if(ctx.mainMenuOpen){ctx.paused=true;ctx.audio.pause(true,ctx.backgrounded);ctx.titleScreen.showMainMenu(mainMenuSession());return;}
- ctx.paused=false;syncAudioState();$('world').focus({preventScroll:true});
+ ctx.paused=false;ctx.syncAudioState();$('world').focus({preventScroll:true});
 }
 function dismissMainMenu(){
  if(!ctx.mainMenuOpen)return;
@@ -186,8 +187,6 @@ window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();
 
 function resize(){if(!ctx.renderer)return;const w=innerWidth,h=innerHeight;ctx.renderer.setSize(w,h,false);const height=ctx.worldPreview||new URLSearchParams(location.search).get('preview')==='enemies'?19:w<650?28:29;ctx.camera.left=-height*(w/h)/2;ctx.camera.right=-ctx.camera.left;ctx.camera.top=height/2;ctx.camera.bottom=-height/2;ctx.camera.updateProjectionMatrix();}
 window.addEventListener('resize',resize);
-function awaken(){if(ctx.ready)ctx.started=true;syncAudioState();ctx.audio.unlock().then(()=>{if(!ctx.audio.ready)return;syncAudioState();$('audio-prompt').style.opacity='0';$('sound-button').setAttribute('aria-label',ctx.audio.muted?'Enable sound':'Mute sound');});}
-ctx.awaken=awaken;
 // openRoster is hoisted; bindInput reads ctx.openRoster while it wires $('character-button').onclick.
 ctx.openRoster=openRoster;
 Object.assign(ctx,bindInput(ctx));
@@ -209,7 +208,6 @@ function perform(action){
 }
 ctx.perform=perform;
 Object.assign(ctx,createPlayerMotion(ctx));
-Object.assign(ctx,createHud(ctx));
 function syncPlayerCharacter(){
  if(ctx.state.classId&&!ctx.portraitsRequested){ctx.portraitsRequested=true;prepareCharacterPortraits().then(()=>{if(ctx.modalKind==='inventory')renderInventory();}).catch(error=>console.error('Character portraits unavailable',error));}
  const key=conceptFor(ctx.state.classId,ctx.state.appearanceId);if(ctx.player.userData.characterKey===key)return;
@@ -222,13 +220,7 @@ function openRoster(){
  if(ctx.mainMenuOpen)ctx.titleScreen.hide();
  if(ctx.mapExpanded)toggleMap();inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.currentNpc=null;ctx.paused=true;releaseInput();ctx.audio.pause(true,ctx.backgrounded);ctx.rosterPicker.show();
 }
-
-// Sound locations use the player's ears and the isometric camera's horizontal axis.
-function audioAt(cue,position,volume=1,rate=1){ctx.audio.listener={x:ctx.player.position.x,z:ctx.player.position.z};return ctx.audio.play(cue,volume,rate,{position,occluded:!hasLineOfSight(ctx.player.position,position,ctx.environment.obstacles,.1)});}
-function footstepCue(){const room=ctx.environment.currentBuilding(ctx.player.position);if(room)return room.chapel?'step':'step-wood';return zoneAt(ctx.player.position)==='road'&&Math.abs(ctx.player.position.z-5)>1.8?'step-dirt':'step';}
-ctx.footstepCue=footstepCue;
-function updateAudioWorld(dt){const room=ctx.environment.currentBuilding(ctx.player.position),interior=room?.id??null;if(interior!==ctx.audioInterior){if(ctx.started)ctx.audio.play('door',.44);ctx.audioInterior=interior;}let threat=0;if(!ctx.state.ended&&!ctx.safeHere())for(const e of ctx.enemies)if(!e.dead){const proximity=Math.max(0,1-distance(ctx.player.position,e.model.position)/13);threat+=proximity*(ctx.bossType(e.type)?1:.42);}ctx.audio.update(dt,{zone:ctx.state.zone,position:ctx.player.position,interior:!!room,threat:Math.min(1,threat),health:ctx.state.hp/ctx.state.maxHp,ended:ctx.state.ended,victory:ctx.renderedMap==='overworld'?ctx.state.victory:ctx.state.campaignComplete});}
-function frame(){if(!ctx.ready)return;const raw=ctx.clock.getDelta(),dt=Math.min(raw,.035),frozen=ctx.paused||ctx.rosterPicker?.open||ctx.backgrounded||!ctx.network?.connected;ctx.network?.advance?.(raw,frozen);if(ctx.network?.connected&&!ctx.backgrounded&&(ctx.sessionMode==='multiplayer'||!frozen))ctx.movementCorrection.update(ctx.player.position,dt,ctx.environment.obstacles,ctx.worldBounds());if(!frozen){ctx.accumulated+=dt;for(const k in ctx.state.cooldowns)ctx.state.cooldowns[k]=Math.max(0,ctx.state.cooldowns[k]-dt);ctx.updatePlayer(dt,ctx.accumulated);if(!ctx.state.ended){ctx.life.update(ctx.accumulated);if(ctx.pendingRegionInteraction){const interaction=ctx.regionInteractions().find(r=>r.id===ctx.pendingRegionInteraction);if(!interaction)ctx.pendingRegionInteraction=null;else if(ctx.canReachRegion(interaction,2.7))ctx.interactRegion(interaction);}}const zone=ctx.renderedMap==='overworld'?zoneAt(ctx.player.position):ctx.renderedMap;if(zone!==ctx.state.zone){ctx.state.zone=zone;if(!ctx.state.visited.includes(zone))ctx.state.visited.push(zone);ctx.toast(zoneName(zone)+(zone==='ashwick'?' · Sanctuary':''));}ctx.audioTimer+=dt;if(ctx.audioTimer>=.1){updateAudioWorld(ctx.audioTimer);ctx.audioTimer=0;}}
+function frame(){if(!ctx.ready)return;const raw=ctx.clock.getDelta(),dt=Math.min(raw,.035),frozen=ctx.paused||ctx.rosterPicker?.open||ctx.backgrounded||!ctx.network?.connected;ctx.network?.advance?.(raw,frozen);if(ctx.network?.connected&&!ctx.backgrounded&&(ctx.sessionMode==='multiplayer'||!frozen))ctx.movementCorrection.update(ctx.player.position,dt,ctx.environment.obstacles,ctx.worldBounds());if(!frozen){ctx.accumulated+=dt;for(const k in ctx.state.cooldowns)ctx.state.cooldowns[k]=Math.max(0,ctx.state.cooldowns[k]-dt);ctx.updatePlayer(dt,ctx.accumulated);if(!ctx.state.ended){ctx.life.update(ctx.accumulated);if(ctx.pendingRegionInteraction){const interaction=ctx.regionInteractions().find(r=>r.id===ctx.pendingRegionInteraction);if(!interaction)ctx.pendingRegionInteraction=null;else if(ctx.canReachRegion(interaction,2.7))ctx.interactRegion(interaction);}}const zone=ctx.renderedMap==='overworld'?zoneAt(ctx.player.position):ctx.renderedMap;if(zone!==ctx.state.zone){ctx.state.zone=zone;if(!ctx.state.visited.includes(zone))ctx.state.visited.push(zone);ctx.toast(zoneName(zone)+(zone==='ashwick'?' · Sanctuary':''));}ctx.audioTimer+=dt;if(ctx.audioTimer>=.1){ctx.updateAudioWorld(ctx.audioTimer);ctx.audioTimer=0;}}
  if(frozen&&ctx.network)ctx.network.input={x:0,z:0,angle:ctx.angle};
  if(!ctx.backgrounded){if(frozen)ctx.accumulated+=dt;renderSharedWorld(dt,ctx.accumulated);ctx.renderRegionLabels();ctx.updateEffects(dt);ctx.environment.update(ctx.accumulated,dt,ctx.state.victory,ctx.camera,ctx.player.position);if(ctx.renderedMap==='overworld')ctx.landmarks?.update?.(ctx.accumulated);}
  const desired=ctx.player.position.clone().add(new T.Vector3(0,0,-3.4));ctx.cameraTarget.lerp(desired,1-Math.exp(-dt*4));ctx.camera.position.copy(ctx.cameraTarget).add(ctx.cameraOffset);ctx.shake=Math.max(0,ctx.shake-dt*.35);if(ctx.shake>0&&!frozen&&ctx.gameSettings.cameraShake){ctx.camera.position.x+=(Math.random()-.5)*ctx.shake;ctx.camera.position.z+=(Math.random()-.5)*ctx.shake;}ctx.camera.lookAt(ctx.cameraTarget);ctx.worldPreview?.update(ctx.camera);ctx.moonLight.position.set(ctx.player.position.x-16,29,ctx.player.position.z+9);ctx.moonLight.target.position.set(ctx.player.position.x,0,ctx.player.position.z);ctx.moonLight.target.updateMatrixWorld();ctx.updateMouseTarget();ctx.life.renderLabels(ctx.enemies.some(e=>!e.dead&&distance(e.model.position,ctx.player.position)<8&&!ctx.safeHere()),ctx.keys.has('alt'));ctx.updateFloaters(ctx.backgrounded?0:dt);ctx.uiTimer+=dt;if(ctx.uiTimer>.09){ctx.uiTimer=0;ctx.updateUI();ctx.drawMap();}ctx.multiplayerView?.update(dt,ctx.accumulated);ctx.renderer.render(ctx.scene,ctx.camera);ctx.resourceOrbs.update(frozen?0:dt,ctx.state.hp/ctx.state.maxHp,ctx.state.mana/ctx.state.maxMana);}
@@ -286,7 +278,7 @@ function showModal(kind){if(ctx.mainMenuOpen&&kind!=='death')return;if(!ctx.read
  if(kind==='death'){title.textContent='Return to the lanterns';content.innerHTML=`<p>${ctx.sessionMode==='multiplayer'?'Your allies continue the fight.<br>':''}Return to ${CHECKPOINTS.find(c=>c.id===ctx.state.checkpointId)?.name||'Ashwick'} with your equipment intact.</p><div class="victory-stats"><div><strong>${ctx.state.kills}</strong><span>SLAIN</span></div><div><strong>${ctx.state.souls}</strong><span>SOULS</span></div></div>`;primary.textContent='Respawn at checkpoint';if(ctx.activeJourney)content.insertAdjacentHTML('beforeend','<button type="button" class="text-button" data-save-exit>Save &amp; exit</button><span class="journey-save-status" data-save-status role="status"></span>');}
  if(kind==='victory'){title.textContent='At last, silence';content.innerHTML=`<p>The Bellkeeper falls. For the first time in thirteen years, Hallowmere hears the wind.</p><div class="legendary-reward"><span>LEGENDARY WEAPON RECOVERED</span><strong>Bellkeeper’s Requiem</strong><p>+18 primary damage · Equip it in your inventory.</p></div><p>Return to Elder Rowan in Ashwick to claim the villages’ thanks.</p>`;primary.textContent='Continue playing';}if(kind==='npc')content.querySelector('.dialogue-response:not(:disabled), [data-dialogue-close]')?.focus({preventScroll:true});else if(kind==='pause')content.querySelector('[data-resume-game]').focus({preventScroll:true});else primary.focus({preventScroll:true});}
 ctx.showModal=showModal;
-function closeModal(){if(ctx.journeyLeaving||ctx.journeyConflict)return;if(ctx.state.ended||ctx.rosterPicker?.open)return;if(ctx.mainMenuOpen){resumeFromMainMenu();return;}inventoryPreviews.hide();ctx.audio.play('ui-close',.5);$('modal-shade').hidden=true;ctx.paused=false;syncAudioState();ctx.modalKind='';ctx.currentNpc=null;ctx.previousFocus?.focus?.({preventScroll:true});$('world').focus({preventScroll:true});}
+function closeModal(){if(ctx.journeyLeaving||ctx.journeyConflict)return;if(ctx.state.ended||ctx.rosterPicker?.open)return;if(ctx.mainMenuOpen){resumeFromMainMenu();return;}inventoryPreviews.hide();ctx.audio.play('ui-close',.5);$('modal-shade').hidden=true;ctx.paused=false;ctx.syncAudioState();ctx.modalKind='';ctx.currentNpc=null;ctx.previousFocus?.focus?.({preventScroll:true});$('world').focus({preventScroll:true});}
 ctx.closeModal=closeModal;
 bindPauseMenu($('modal-content'),{
  onResume:()=>{closeModal();awaken();},
@@ -301,7 +293,7 @@ $('modal-content').addEventListener('click',event=>{if(event.target.closest('[da
 $('modal-primary').onclick=()=>{if(ctx.modalKind==='death')restart();else{closeModal();awaken();}};$('modal-secondary').onclick=restart;$('modal-shade').addEventListener('keydown',e=>{if(ctx.modalKind==='npc'&&handleDialogueKey(e,$('modal-content')))return;if(e.key!=='Tab')return;const focusable=[...$('modal-shade').querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], summary')].filter(el=>el.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});
 function restart(){if(!ctx.network?.connected)return;if(ctx.state.ended){ctx.network.send('respawn');}else{ctx.network.send(ctx.sessionMode==='single-player'?'restart':'vote',{agree:true});closeModal();}}
 function connectionStatus(message,connected,{retryable=false,failed=false}={}){
- syncAudioState(connected);
+ ctx.syncAudioState(connected);
  // A reconnect overlay must remain reachable while the main menu traps focus.
  if(ctx.mainMenuOpen){const wasInert=$('loading').inert;$('loading').inert=!connected;if(connected&&wasInert&&!ctx.rosterPicker?.open)$('menu-resume').focus();}
  const el=$('multiplayer-status');if(el.textContent!==message)el.textContent=message;el.hidden=!connected||ctx.sessionMode==='single-player';$('connection-back').hidden=!!ctx.lastSnapshot;$('connection-overlay').hidden=connected;if(!connected){inventoryPreviews.hide();$('connection-title').textContent=failed?'Unable to connect':ctx.lastSnapshot?'Reconnecting to game':'Loading game';$('connection-message').textContent=message;$('connection-spinner').hidden=failed;$('connection-retry').hidden=!retryable;if(ctx.modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),ctx.state,false);releaseInput();ctx.rosterPicker?.resolve({ok:false,reason:'Connection lost. Try again once connected.'});if(ctx.mainMenuOpen){const focusTarget=$(retryable?'connection-retry':'connection-title');focusTarget.tabIndex=retryable?0:-1;focusTarget.focus();}}}
@@ -339,7 +331,7 @@ function applySnapshot(snapshot,changed){
  $('restart-yes').disabled=snapshot.votes.includes(snapshot.you);
  for(const event of snapshot.events)if(event.id>ctx.lastNetworkEvent){networkEvent(event);ctx.lastNetworkEvent=event.id;}
  if(ctx.state.level>oldLevel&&!changed){ctx.toast(`Oath strengthened · Level ${ctx.state.level}`);ctx.audio.play('levelup',.65);}if(ctx.state.ended&&!wasDead){dismissMainMenu();ctx.audio.play('death-player',.8);releaseInput();if(ctx.mapExpanded)toggleMapForDeath();showModal('death');}
- if(wasDead&&!ctx.state.ended||changed){dismissMainMenu();inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.paused=false;toggleMapForDeath();syncAudioState();ctx.player.rotation.z=0;ctx.player.position.y=0;}
+ if(wasDead&&!ctx.state.ended||changed){dismissMainMenu();inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.paused=false;toggleMapForDeath();ctx.syncAudioState();ctx.player.rotation.z=0;ctx.player.position.y=0;}
  if(ctx.mainMenuOpen&&!ctx.rosterPicker?.open)ctx.titleScreen.updateSession(mainMenuSession());
  if(!ctx.state.classId&&!ctx.rosterPicker?.open)openRoster();
  if(ctx.modalKind==='npc'&&beforeServices!==JSON.stringify([ctx.state.gold,ctx.state.potions,ctx.state.forgeLevel,ctx.state.questAccepted,ctx.state.questRewarded,ctx.state.victory,ctx.state.bossLootClaimed,ctx.state.rookSupplies]))renderNpc();if(ctx.modalKind==='inventory'&&beforeInventory!==JSON.stringify([ctx.state.inventory,ctx.state.equipped]))renderInventory();if(ctx.modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),ctx.state,ctx.network.connected);ctx.updateUI();
