@@ -19,7 +19,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G1.5 | 1.5 | M4 | 2026-09-15 (user) | 2e9d56c (+tracker e20872f) |
 | G1.6 | 1.6 | M5 | 2026-09-15 (user) | ee26424 (+tracker 0c24cd6) |
 | G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (+tracker b33135e) |
-| G2.0 | 2.0 | T2-1 | — | — |
+| G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (tracker follows) |
 | G2.1 | 2.1 | M6 | — | — |
 | G2.2 | 2.2 | M7, T2-5 | — | — |
 | G2.3 | 2.3 | M8, T2-6 | — | — |
@@ -65,7 +65,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| T2-1 | 2.0 | haiku | Three import normalization | all dist/*.js | G1.5 | ready-to-merge | codex/three-imports-fa51a6c2-112e | 5458 | 8b70404..292f460 | orchestrator static review clean: dist diff = 22 import-specifier lines only (19 three→core, 2 module.js→three forced by WebGLRenderer, 1 module.js→core); 9 test files shim-only edits with identical assertion counts; new tests/three-imports.test.mjs (spellings, single-instance identity, per-module symbol guard); 432/432; 13-shot capture on the branch: 11/11 within threshold (04-hud-spawn 0.0249%), 0 retries |
+| T2-1 | 2.0 | haiku | Three import normalization | all dist/*.js | G1.5 | merged | codex/three-imports-fa51a6c2-112e | 5458 | 8b70404..292f460 → e264a4a | orchestrator static review clean: dist diff = 22 import-specifier lines only (19 three→core, 2 module.js→three forced by WebGLRenderer, 1 module.js→core); 9 test files shim-only edits with identical assertion counts; new tests/three-imports.test.mjs (spellings, single-instance identity, per-module symbol guard); 432/432; 13-shot capture on the branch: 11/11 within threshold (04-hud-spawn 0.0249%), 0 retries |
 | M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | running | codex/player-motion-c39fa48e-ec75 | 5943 | — | sonnet; stacked on T2-1 (worktree fast-forwarded to 292f460); player-motion.js = moveEntity/animateRig/updatePlayer/updateEffects/updateFloaters; migrates the last mouse-targeting vm slice; deps-with-default allowed only for stubbed imported helpers |
 | T2-2 | 2.1 | — | tokens.css | — | — | dropped | — | — | — | after T0-5 only two :root blocks remain (style.css for the game, character-studies.css for a dev page) and they deliberately differ (--muted, --line, --bright); only --gold/--serif/--sans are shared. Not worth an agent under the no-visible-change rule |
 | T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
@@ -175,3 +175,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — T2-1 reported (8b70404..292f460); static review clean; capture running. M6 registering stacked on T2-1.
 - 2026-09-15 — M6 started (sonnet) stacked on T2-1.
 - 2026-09-15 — T2-1 ready-to-merge (8b70404..292f460). Gate 2.0 requested.
+- 2026-09-15 — Gate 2.0: T2-1 merged (e264a4a). Tracker integrating.
