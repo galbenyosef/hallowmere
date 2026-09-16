@@ -234,3 +234,23 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
   measure the actual cost of the per-enemy LOS check in `drawExplorationMap` before deciding whether
   a safe, zero-observable-change win exists; a measured "no win" conclusion is an accepted outcome.
   Running.
+
+## Manual playtest (2026-09-16)
+
+Served the post-refactor tree (`main` @ `63443f9`) with `scripts/serve.mjs` and played it interactively
+in a real browser tab (not the CDP screenshot harness): title → choose mode → single player → new
+journey → Sorcerer character select (3D portrait wheel) → spawn at Ashwick → WASD movement → talked
+to Elder Rowan (dialogue modal, accepted the quest) → inventory (I) → journal (J) → pause menu (Esc,
+all settings toggles) → resumed. The HUD's location label correctly switched "Sanctuary" → "World I ·
+The Last Toll" on leaving the safe zone; the minimap redrew and tracked the player marker; autosave
+fired ("All progress saved"). Zero console errors and zero dev-server errors for the whole session.
+
+One finding, not a regression: the CDP-driven preview tab starts with `document.hidden=true`, which
+`bindPageActivity` (page-activity.js) correctly reads once at boot and freezes the simulation via
+`setBackgrounded(true)` — this is the same quirk `scripts/screenshot.mjs` already works around with
+`Page.setWebLifecycleState({state:'active'})` after every capture, and it also explains why the
+two-client multiplayer check's scripted movement nudge showed "NO MOVEMENT OBSERVED" earlier today.
+Overriding `document.hidden`/`visibilityState` and dispatching `visibilitychange`+`focus` from the
+page unfroze it immediately, after which WASD produced real, correct movement. No code changes —
+this confirms the page-visibility wiring (moved through M5/M9/M11) is working exactly as designed,
+not broken by the refactor.
