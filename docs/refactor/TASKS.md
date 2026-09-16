@@ -207,3 +207,30 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — P6a merged (d241ee7). All planned Phase 3 tasks except the deferred P4 and dropped P7 are on main. Closing verification in progress: two-client multiplayer check, perf A/B vs ff9a17f, then the wrap-up commit (PERF.md/VISUAL.md, dead import, font-readiness guard in the capture harness).
 - 2026-09-15 — Tracker 1d8ecc6; main = 1d8ecc6; 44 tasks merged (T2-2/T2-3/P7 dropped, P4 deferred). Two-client multiplayer check on main: both headless clients join one world, see 2/8 adventurers, overlay hidden, no exceptions (the scripted movement nudge did not match the automation tool schema, so only join/sync was asserted). Perf A/B vs ff9a17f starting; wrap-up worktree hm-T3-0 opened.
 - 2026-09-15 — DONE. Wrap-up merged (448a645). Final state: main.js 593 lines / 97 KB → 84 lines / 6 KB composition root over 30 tested modules; 269 → 544 tests; no test reads main.js as text; assertWired at boot; automation API contract test green; 13-shot set matches the refactor baseline on every merged step; two-client multiplayer session verified; browser p95/p99 down 13–25% vs ff9a17f in a paired A/B with p50 unchanged. Not done: P4 (deferred: fog-blur cache cannot be made pixel-identical while moving), P7/T2-2/T2-3 (dropped as unnecessary). Task worktrees under .worktrees/ were left in place for inspection.
+
+## Post-refactor housekeeping (2026-09-16)
+
+- **Worktree/branch cleanup**: removed 46 merged task worktrees + branches and 20 further orphaned
+  `codex/refactor-tracker-*` rotation branches (one per gate cycle, never deleted after each
+  `finish`+`start`), freeing 4.3 GB. Every branch was confirmed an ancestor of `main` before
+  deletion (`git merge-base --is-ancestor`) — no unmerged work existed.
+- **Incident**: the cleanup script used `for k in $KEEP` with an unquoted multi-word variable to
+  skip the live tracker and P4 worktrees. This environment's Bash tool runs under zsh, which (unlike
+  bash) does not word-split an unquoted parameter in a `for` list by default, so `k` bound to the
+  whole two-name string on every iteration and the skip check never matched — both excluded
+  worktrees were removed anyway. Verified no data loss (both were clean with zero unique commits at
+  removal time: the tracker was a fresh restart of `main` with no pending edits, and the P4/minimap
+  worktree was registered but never touched). Re-registering surfaced a second issue: `scripts/worktree.mjs`'s
+  `tasks.json` registry had gone stale relative to the raw `git worktree remove` calls, so `start` for
+  both tasks returned a *stale* record (old branch/base, no actual worktree created) instead of
+  detecting the missing directory and recreating it. Fixed by clearing `.git/codex-workflow/tasks.json`
+  (backed up to `/tmp/tasks.json.bak`; every entry pointed at a deleted directory, so nothing live was
+  lost) and re-running `start` for both tasks, which then created real worktrees at current `main`.
+  Lesson for future cleanup: never mix raw `git worktree remove` with `scripts/worktree.mjs`'s own
+  state file without also updating (or clearing) that state file; prefer arrays over unquoted
+  multi-word variables in `for` loops under this environment's shell.
+- **P4 revisited**: registered fresh from current `main` (`.worktrees/minimap-cache-c45ef24b-685f`,
+  branch `codex/minimap-cache-c45ef24b-685f`) and launched as an investigation-first task (sonnet):
+  measure the actual cost of the per-enemy LOS check in `drawExplorationMap` before deciding whether
+  a safe, zero-observable-change win exists; a measured "no win" conclusion is an accepted outcome.
+  Running.
