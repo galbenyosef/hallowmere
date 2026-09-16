@@ -23,8 +23,8 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (+tracker b33135e) |
 | G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (+tracker d08b553) |
 | G2.1 | 2.1 | M6, T2-6 | blanket 2026-09-15 | 44fdf01, 15bfa5e (+tracker ad3a6e5) |
-| G2.2 | 2.2 | M7, P8 | blanket 2026-09-15 | 552d796 (P8), caf3b42 (M7) (+tracker 5d40ecc; tracker follows) |
-| G2.3 | 2.3 | M8, T2-6 | — | — |
+| G2.2 | 2.2 | M7, P8 | blanket 2026-09-15 | 552d796 (P8), caf3b42 (M7) (+tracker b30cd65) |
+| G2.3 | 2.3 | M8, P6c | blanket 2026-09-15 | 2db9556 (P6c); M8 pending |
 | G2.4 | 2.4 | M9 | — | — |
 | G2.5 | 2.5 | M10 | — | — |
 | G2.6 | 2.6 | M11 | — | — |
@@ -92,7 +92,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | P7 | 3.2 | haiku | orb disposal | dist/resource-orbs.js, tests/resource-orbs.test.mjs | G2.6 | dropped | — | — | — | createResourceOrbs() runs once at boot (main.js:51) and the HUD orbs live for the whole page; nothing ever tears them down, so a dispose() would be uncalled dead code (no leak). Revisit only if M9 introduces a teardown path. |
 | P6a | 3.3 | opus | render loop | dist/render-loop.js | G2.6 | todo | — | — | — | proves split cost nothing |
 | P6b | 3.3 | sonnet | region labels + hazards | dist/region-travel.js | G2.6 | merged | codex/region-render-cache-fe44b0f6-8b3c | 6142 | 8463ffe → b07cdcb | orchestrator review: module-scope Sets/scratch Vector3/WeakMap for .loot-name, writes guarded by read-back (textContent/hidden/in-reach/left/top, hazard fill opacity+color); 520-frame parity vs verbatim reference; 0 Vector3/Set allocations per warm frame vs 700/200; 419/419; re-run 9/9 |
-| P6c | 3.3 | sonnet | HUD writes | dist/hud.js | G2.6 | running | codex/hud-writes-94fae493-d76b | 6094 | — | sonnet; stacked on M7 (merge d76e6c5 over main 5d40ecc); cached ability buttons/.rank, read-back-guarded writes, questSummary memo; parity vs verbatim updateUI over ≥500 frames + write/query counts; M7 merges first |
+| P6c | 3.3 | sonnet | HUD writes | dist/hud.js | G2.6 | merged | codex/hud-writes-94fae493-d76b | 6094 | 8bcb5ac..6f5e638 → 2db9556 | orchestrator review: Map-cached ability buttons/spans + .rank, setText/setStyle/setHidden/setClass read-back guards, questSummary memo keyed on the fields it reads (override branch clones); 600-frame parity vs verbatim updateUI (shown to fail when the memo key is weakened); 0 writes / 0 querySelector per unchanged frame; 461/461; note: numeric textContent values (potion count, cooldown) are still written each frame in a real DOM because the guard compares number to string — harmless, identical to the original write |
 | P6d | 3.4 | sonnet | enemy sync + bars | dist/shared-world-render.js, dist/enemy-spawner.js | G2.6 | todo | — | — | — | |
 | P6e | 3.4 | sonnet | interaction memo | dist/interaction.js, dist/pointer-targeting.js | G2.6 | merged | codex/interaction-memo-90ff650c-90f2 | 6134 | ab85658..c17f64e → 8856a7b | orchestrator review: memo keyed on lastSnapshot/interactions/state/discoveries identity + length; callers verified read-only; one pre-existing test mutated a snapshot in place and was changed to swap the snapshot (matches the real contract); 600-scenario parity + frozen-consumer test; perf-smoke row 0.0031→0.0000 ms, 5,364→44 B; 422/422; re-run 17/17. Note: window.hallowmere.getState().interactions now returns the memoized array instance (read-only by contract) |
 | P8 | 3.4 | sonnet | effect pooling | dist/effects-factory.js, tests/effects-factory.test.mjs | G2.6 | merged | codex/effect-pooling-4425180c-60fc | 6149 | 25771d9..45a83e2 → 552d796 | orchestrator review: 12-line diff — per-key pools (ring, slash by radius, particles by count, 3 material pools, cap 32), full reset on acquire, tagged release in removeObject with the verbatim dispose path for everything else; parity vs verbatim reference over 300 events/2100 steps; allocations 222/222/78/78 → 14/9/8/4; 448/448; bounding volumes nulled on reuse (45a83e2); browser heap-delta to be recorded in the final PERF.md pass |
@@ -189,3 +189,4 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — M7 review clean after the stub fix (6388422); capture running. M8 started (sonnet) stacked on M7.
 - 2026-09-15 — P6c started (sonnet) stacked on M7.
 - 2026-09-15 — M7 merged (caf3b42). Gate 2.2 complete (M7, P8). Tracker integrating.
+- 2026-09-15 — P6c merged (2db9556). Tracker integrating. M8 running.
