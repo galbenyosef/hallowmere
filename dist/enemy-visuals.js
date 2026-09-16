@@ -27,7 +27,9 @@ function releaseGeometry(root){disposeSubtree(root,{removeFromParent:'after',ord
 
 // Reuse each creature's existing material/shadow shader, adding animated emissive
 // veins and a Fresnel edge. No duplicate body meshes or per-enemy point lights.
-function enchantBody(model,color){
+// Exported so effects-warmup.js can pre-stage the (fixed, shared) program it patches
+// MeshStandardMaterial into -- see that file's top comment.
+export function enchantBody(model,color){
  const uniforms={enemyTime:{value:0},enemyCharge:{value:0},enemyAlive:{value:1},enemyColor:{value:new T.Color(color)}},seen=new Set();
  model.traverse(n=>{for(const m of n.material?(Array.isArray(n.material)?n.material:[n.material]):[]){
   if(!m.isMeshStandardMaterial||seen.has(m))continue;seen.add(m);
