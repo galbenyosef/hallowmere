@@ -2,9 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {installGlobals} from './helpers/dom.mjs';
 import {createHud} from '../dist/hud.js';
-import {classFor,conceptFor,classColor} from '../dist/classes.js';
-import {icon} from '../dist/icon-atlas.js';
+import {$} from '../dist/dom.js';
+import {classFor,conceptFor,classColor,classAppearance,abilitiesFor} from '../dist/classes.js';
+import {icon,classIconNames} from '../dist/icon-atlas.js';
 import {mapFor} from '../dist/regions.js';
+import {questSummary,zoneName} from '../dist/campaign.js';
+import {regionActionName} from '../dist/region-client-ui.js';
 
 // M7 moved toast/updateClassHud/updateUI/drawMap out of main.js. A minimal document stub
 // covers every literal $('id') / document.querySelector() this quartet touches; each element
@@ -13,9 +16,15 @@ import {mapFor} from '../dist/regions.js';
 function makeElement(){
  const el={style:{},dataset:{},attrs:{},textContent:'',innerHTML:'',title:'',disabled:false,hidden:false};
  const children=new Map();
- el.classList={added:[],removed:[],toggled:[],
-  add(...c){this.added.push(...c);},remove(...c){this.removed.push(...c);},
-  toggle(c,force){this.toggled.push([c,force]);}};
+ el.classList={added:[],removed:[],toggled:[],_has:new Map(),
+  // _has starts each token as unset (contains() returns undefined) so the very first
+  // toggle/add/remove of a class still records a call for the pre-existing assertions
+  // below that inspect .toggled; once a token has been touched, contains() reflects its
+  // real membership so dist/hud.js's own read-back write guards can skip redundant calls.
+  add(...c){for(const x of c)this._has.set(x,true);this.added.push(...c);},
+  remove(...c){for(const x of c)this._has.set(x,false);this.removed.push(...c);},
+  toggle(c,force){const next=force===undefined?!this._has.get(c):!!force;this._has.set(c,next);this.toggled.push([c,force]);return next;},
+  contains(c){return this._has.has(c)?this._has.get(c):undefined;}};
  el.setAttribute=(k,v)=>{el.attrs[k]=v;};
  el.querySelector=sel=>{if(!children.has(sel))children.set(sel,makeElement());return children.get(sel);};
  let lastChild;
@@ -153,4 +162,274 @@ test('drawMap forwards the expected fields to exploration-map and writes the map
  assert.equal(args.bossType,ctx.bossType);
  assert.equal(doc.getElementById('map-title').textContent,'Hallowmere');
  assert.equal(doc.getElementById('map-exploration').textContent,'42% charted · saved 2m ago');
+});
+
+// ---------------------------------------------------------------------------
+// Reference implementation for the P6c parity test, copied verbatim from
+// dist/hud.js as it existed before this task's edits (M7's codex/hud-audio-
+// 2811c280-cd13, confirmed byte-identical to the checked-out dist/hud.js via
+// `git show codex/hud-audio-2811c280-cd13:dist/hud.js` -- dist/hud.js is not
+// on main yet, so that branch stands in for "main" per this task's brief).
+// Untouched below; do not reformat. Kept permanently as the parity oracle.
+// ---------------------------------------------------------------------------
+function createReferenceHud(ctx){
+ function updateClassHud(){
+  const c=classFor(ctx.state),key=conceptFor(ctx.state.classId,ctx.state.appearanceId)+'|'+!!ctx.activeJourney;if(ctx.hudClass===key)return;ctx.hudClass=key;
+  $('character-name').textContent=c.name;$('class-caption').textContent=c.name.toUpperCase();
+  $('character-button').disabled=!!ctx.activeJourney;$('character-button').title=ctx.activeJourney?'This journey keeps its chosen character.':'Change character (C)';
+  $('world').setAttribute('aria-label','Village play area. Use W A S D to move, mouse to aim and attack, F to speak or collect loot, I for equipment, '+(ctx.activeJourney?'':'C to choose a class at a sanctuary, ')+'2 for your class skill, 1 to dodge, and 3 to heal.');
+  for(const [action,skill] of Object.entries(c.abilities)){const button=document.querySelector(`[data-action="${action}"]`);button.querySelector('.ability-name').textContent=skill.name;button.title=`${skill.name} · ${skill.cost} essence · ${skill.cooldown}s cooldown. ${skill.description}`;button.setAttribute('aria-label',button.title);const index=['attack','bolt','dodge','nova'].indexOf(action);if(index>=0&&classIconNames[c.id]){const mark=button.querySelector('.ability-icon');mark.innerHTML=icon(classIconNames[c.id][index]);mark.style.color=skill.color||classColor(ctx.state);}}
+ }
+ function updateUI(){if(!ctx.player)return;updateClassHud();$('health-liquid').style.height=`${ctx.state.hp/ctx.state.maxHp*100}%`;$('mana-liquid').style.height=`${ctx.state.mana/ctx.state.maxMana*100}%`;$('potion-count').textContent=ctx.state.potions;$('souls-counter').textContent=`${ctx.state.souls} SOULS`;$('experience-fill').style.width=`${ctx.state.souls%100}%`;$('level-label').textContent=`${classAppearance(ctx.state.classId,ctx.state.appearanceId)?.name||classFor(ctx.state).name} · LEVEL ${ctx.state.level}`;document.querySelector('.rank').textContent=String(ctx.state.level).padStart(2,'0');
+  for(const[name,data]of Object.entries(abilitiesFor(ctx.state))){const button=document.querySelector(`[data-action="${name}"]`);const cd=ctx.state.cooldowns[name];button.classList.toggle('on-cooldown',cd>.12&&name!=='attack');button.querySelector('.cooldown').textContent=cd>=1?Math.ceil(cd):cd.toFixed(1);button.classList.toggle('unavailable',ctx.state.mana<data.cost||name==='heal'&&!ctx.state.potions);}
+  const quest=questSummary(ctx.state);$('quest-kind').lastChild.textContent=mapFor(ctx.renderedMap).theme==='cave'?' SIDE CAVE':' MAIN QUEST';if(ctx.renderedMap==='overworld'&&ctx.state.questCompleted&&!ctx.state.questRewarded){quest.objective='Quest complete · Claim your reward from Rowan';quest.hint=ctx.sessionMode==='single-player'?'You completed The Last Toll. Your reward awaits in Ashwick.':'Your allies completed The Last Toll. Your reward awaits in Ashwick.';}$('quest-title').textContent=quest.title;$('quest-count').textContent=quest.count;$('objective').textContent=quest.objective;$('quest-hint').textContent=quest.hint;$('quest-marker').classList.toggle('done',ctx.state.questRewarded);$('gold-counter').textContent=`${ctx.state.gold} CROWNS`;$('location-name').textContent=ctx.environment.currentBuilding(ctx.player.position)?.name||(ctx.renderedMap==='overworld'?zoneName(ctx.state.zone):mapFor(ctx.renderedMap).name);$('location-type').textContent=ctx.safeHere()?'SANCTUARY':mapFor(ctx.renderedMap).theme==='cave'?'WORLD I · BENEATH HALLOWMERE':ctx.renderedMap!=='overworld'?'THE FORSAKEN REACH':ctx.state.zone==='road'?'THE FORSAKEN REACH':'WORLD I · THE LAST TOLL';const interaction=ctx.nearbyInteraction(),building=interaction?.building,target=interaction?.target;$('interact-button').hidden=!interaction;$('interaction-name').textContent=interaction?.regional?regionActionName(interaction.regional):building?(!building.doorCollider.disabled?'Chapel sealed':ctx.environment.currentBuilding(ctx.player.position)?.id===building.id?'Leave '+building.name:'Enter '+building.name):target?(target.kind==='forage'?'Harvest '+target.name:target.kind?'Collect '+target.name:'Speak to '+target.name):'';const enemyTarget=ctx.mouseTargeting?.selected,boss=ctx.enemies.find(e=>!e.dead&&ctx.bossType(e.type));$('boss-bar').hidden=!boss||!!enemyTarget&&!ctx.bossType(enemyTarget.type);if(boss){$('boss-fill').style.width=`${Math.max(0,boss.hp/boss.maxHp*100)}%`;$('boss-bar').querySelector('span').textContent=ctx.renderedMap==='overworld'?'THE LAST TOLL':mapFor(ctx.renderedMap).name.toUpperCase();const title=$('boss-bar').querySelector('h2');if(title)title.textContent=`${boss.data.name}${boss.net?.bossStage>1?' · Phase '+boss.net.bossStage:''}${boss.net?.exposedUntil>(ctx.lastSnapshot?.time||0)?' · Exposed':''}`;}
+  $('enemy-target').hidden=!enemyTarget||ctx.bossType(enemyTarget.type);
+  if(enemyTarget&&!ctx.bossType(enemyTarget.type)){$('target-name').textContent=enemyTarget.data.name;$('target-type').textContent=(enemyTarget.data.attackStyle==='orb'?'CASTER':enemyTarget.data.attackStyle==='bite'?'DEVOURER':'KNIFE')+' · '+(ctx.attackHeld&&ctx.lockedEnemy===enemyTarget?'LOCKED · HOLD TO ATTACK':'MOUSE LOCK · CLICK TO ATTACK');$('target-fill').style.width=`${Math.max(0,enemyTarget.hp/enemyTarget.maxHp*100)}%`;}
+  if(ctx.state.time>14)$('combat-guide').style.opacity='0';}
+ return {updateClassHud,updateUI};
+}
+
+// ---------------------------------------------------------------------------
+// P6c: updateUI() caches ability-button/.cooldown/.ability-name lookups and the
+// .rank element, writes DOM properties only when the value actually changed
+// (read-back against the live element, not a shadow copy), and memoizes
+// questSummary(ctx.state) on the state fields it reads. The tests below prove
+// this is a zero-observable-change optimization: a parity run against a
+// verbatim reference (above) across many randomized frames, then write-count
+// and querySelector-count checks showing the optimization actually happens.
+// ---------------------------------------------------------------------------
+
+function mulberry32(seed){
+ return function(){
+  seed|=0;seed=seed+0x6D2B79F5|0;
+  let t=Math.imul(seed^seed>>>15,1|seed);
+  t=t+Math.imul(t^t>>>7,61|t)^t;
+  return((t^t>>>14)>>>0)/4294967296;
+ };
+}
+function pick(rand,arr){return arr[Math.floor(rand()*arr.length)];}
+
+const CLASS_IDS=['geralt','sorcerer','ranger','reaver','nightblade','oathkeeper','alchemist','unknown-legacy-class'];
+const SORCERER_APPEARANCE_IDS=['C01','W06','W07','W10'];
+const ZONES=['hallowmere','ashwick','road','outlands'];
+const RENDERED_MAPS=['overworld','drowned-wood','underways'];
+const SESSION_MODES=['single-player','multiplayer'];
+
+const BUILDINGS=[null,
+ {name:'Chapel',id:'chapel',doorCollider:{disabled:true}},
+ {name:'Shrine',id:'shrine',doorCollider:{disabled:false}}];
+const TARGETS=[null,
+ {kind:'forage',name:'Berries'},
+ {kind:'loot',name:'Gold Pile'},
+ {kind:undefined,name:'Rowan'}];
+const REGIONALS=[null,
+ {operation:'objective',active:true,name:'Beacon',wave:2,waves:4},
+ {operation:'travel',locked:true,name:'Old Gate'},
+ {operation:'checkpoint',completed:true,name:'Waystone'},
+ {operation:'travel',name:'Return to Ashwick'},
+ {operation:'cache',name:'Hidden Cache'}];
+const ENEMIES=[
+ {type:'wolf',dead:false,data:{name:'Grey Wolf',attackStyle:'bite'},hp:40,maxHp:60},
+ {type:'wisp',dead:false,data:{name:'Wisp',attackStyle:'orb'},hp:20,maxHp:20},
+ {type:'thug',dead:false,data:{name:'Thug',attackStyle:'blade'},hp:55,maxHp:80}];
+const BOSS_ENEMY={type:'dragon',dead:false,data:{name:'Ancient Wyrm'},hp:300,maxHp:500,net:{bossStage:2,exposedUntil:5}};
+const bossType=type=>type==='dragon';
+
+function randomState(rand){
+ const classId=pick(rand,CLASS_IDS);
+ return {
+  classId,
+  appearanceId:classId==='sorcerer'&&rand()<.5?pick(rand,SORCERER_APPEARANCE_IDS):undefined,
+  hp:rand()*150,maxHp:150,mana:rand()*100,maxMana:100,
+  potions:Math.floor(rand()*5),souls:Math.floor(rand()*500),level:1+Math.floor(rand()*20),
+  cooldowns:{attack:rand()*2,bolt:rand()*2,dodge:rand()*2,nova:rand()*2,heal:rand()*2},
+  gold:Math.floor(rand()*999),zone:pick(rand,ZONES),time:rand()*30,
+  questAccepted:rand()<.7,questRewarded:rand()<.3,questCompleted:rand()<.5,victory:rand()<.4,
+  bossSpawned:rand()<.3,bossLootClaimed:rand()<.5,campaignComplete:rand()<.2,
+  visited:rand()<.6?['hallowmere']:[],villageKills:Math.floor(rand()*12),
+  mapId:undefined,
+ };
+}
+
+function randomFrame(rand){
+ return {
+  state:randomState(rand),
+  renderedMap:pick(rand,RENDERED_MAPS),
+  sessionMode:pick(rand,SESSION_MODES),
+  attackHeld:rand()<.5,
+  safeHere:rand()<.3,
+  currentBuilding:pick(rand,BUILDINGS),
+  interaction:rand()<.5?null:{building:pick(rand,BUILDINGS),target:pick(rand,TARGETS),regional:pick(rand,REGIONALS)},
+  enemyTarget:rand()<.6?null:(rand()<.25?BOSS_ENEMY:pick(rand,ENEMIES)),
+  lockSame:rand()<.5,
+  bossPresent:rand()<.4,
+  lastSnapshot:rand()<.5?{time:rand()*10}:null,
+ };
+}
+
+function applyFrame(ctx,state,frame){
+ Object.assign(state,frame.state);
+ ctx.renderedMap=frame.renderedMap;
+ ctx.sessionMode=frame.sessionMode;
+ ctx.attackHeld=frame.attackHeld;
+ ctx.safeHere=()=>frame.safeHere;
+ ctx.environment.currentBuilding=()=>frame.currentBuilding;
+ ctx.nearbyInteraction=()=>frame.interaction;
+ ctx.mouseTargeting={selected:frame.enemyTarget};
+ ctx.lockedEnemy=frame.enemyTarget&&frame.lockSame?frame.enemyTarget:null;
+ ctx.enemies=frame.bossPresent?[BOSS_ENEMY,...(frame.enemyTarget&&frame.enemyTarget!==BOSS_ENEMY?[frame.enemyTarget]:[])]:(frame.enemyTarget&&frame.enemyTarget!==BOSS_ENEMY?[frame.enemyTarget]:[]);
+ ctx.bossType=bossType;
+ ctx.lastSnapshot=frame.lastSnapshot;
+}
+
+function snapshotHud(doc){
+ const ids=['character-name','class-caption','character-button','world','health-liquid','mana-liquid',
+  'potion-count','souls-counter','experience-fill','level-label','quest-title','quest-count','objective',
+  'quest-hint','quest-marker','gold-counter','location-name','location-type','interact-button',
+  'interaction-name','boss-bar','boss-fill','enemy-target','target-name','target-type','target-fill',
+  'combat-guide'];
+ const out={};
+ for(const id of ids){
+  const el=doc.getElementById(id);
+  out[id]={textContent:el.textContent,style:{...el.style},hidden:el.hidden,disabled:el.disabled,
+   title:el.title,attrs:{...el.attrs},
+   onCooldown:el.classList.contains('on-cooldown'),unavailable:el.classList.contains('unavailable'),
+   done:el.classList.contains('done')};
+ }
+ out.questKindLastChild=doc.getElementById('quest-kind').lastChild.textContent;
+ out.rank=doc.querySelector('.rank').textContent;
+ out.bossBarSpan=doc.getElementById('boss-bar').querySelector('span').textContent;
+ out.bossBarH2=doc.getElementById('boss-bar').querySelector('h2').textContent;
+ for(const action of ['attack','bolt','dodge','nova','heal']){
+  const button=doc.querySelector(`[data-action="${action}"]`);
+  out['ability-'+action]={
+   abilityName:button.querySelector('.ability-name').textContent,
+   title:button.title,ariaLabel:button.attrs['aria-label'],
+   cooldown:button.querySelector('.cooldown').textContent,
+   onCooldown:button.classList.contains('on-cooldown'),
+   unavailable:button.classList.contains('unavailable'),
+   iconHtml:button.querySelector('.ability-icon').innerHTML,
+   iconColor:button.querySelector('.ability-icon').style.color,
+  };
+ }
+ return out;
+}
+
+test('updateUI matches the original reference DOM output across 600 randomized frames (no observable difference)',t=>{
+ const rand=mulberry32(0x5EED1234);
+ const docA=stubDocument(),docB=stubDocument();
+ const stateA=makeState(),stateB=makeState();
+ const ctxA=makeCtx({state:stateA}),ctxB=makeCtx({state:stateB});
+ installGlobals(t,{document:docA});
+ const {updateUI:updateUIOptimized}=createHud(ctxA);
+ installGlobals(t,{document:docB});
+ const {updateUI:updateUIReference}=createReferenceHud(ctxB);
+
+ const FRAMES=600;
+ for(let frame=0;frame<FRAMES;frame++){
+  const spec=randomFrame(rand);
+  applyFrame(ctxA,stateA,spec);
+  applyFrame(ctxB,stateB,spec);
+  globalThis.document=docA;updateUIOptimized();
+  globalThis.document=docB;updateUIReference();
+  assert.deepEqual(snapshotHud(docA),snapshotHud(docB),`frame ${frame}: HUD output diverged from the reference`);
+ }
+});
+
+test('updateUI performs 0 property writes and 0 document.querySelector calls per frame once warm and state is unchanged',t=>{
+ const doc=stubDocument();
+ installGlobals(t,{document:doc});
+ const state=makeState({cooldowns:{attack:0,bolt:1.4,dodge:0,nova:0,heal:0}});
+ const ctx=makeCtx({state});
+ ctx.enemies=[BOSS_ENEMY];ctx.mouseTargeting={selected:ENEMIES[0]};ctx.lockedEnemy=ENEMIES[0];
+ ctx.bossType=bossType;ctx.lastSnapshot={time:1};
+ const {updateUI}=createHud(ctx);
+
+ updateUI(); // warm-up: populates the ability/.rank caches and performs the first (necessary) writes
+
+ let docQueries=0;
+ const originalQuerySelector=doc.querySelector.bind(doc);
+ doc.querySelector=(...args)=>{docQueries++;return originalQuerySelector(...args);};
+ function countWrites(el){
+  let n=0;
+  const origToggle=el.classList.toggle.bind(el.classList);
+  el.classList.toggle=(...args)=>{n++;return origToggle(...args);};
+  const styleTarget=el.style;
+  el.style=new Proxy(styleTarget,{set(t,p,v){n++;t[p]=v;return true;}});
+  let text=el.textContent,hidden=el.hidden;
+  Object.defineProperty(el,'textContent',{get:()=>text,set(v){n++;text=v;}});
+  Object.defineProperty(el,'hidden',{get:()=>hidden,set(v){n++;hidden=v;}});
+  return ()=>n;
+ }
+ const ids=['health-liquid','mana-liquid','potion-count','souls-counter','experience-fill','level-label',
+  'quest-title','quest-count','objective','quest-hint','quest-marker','gold-counter','location-name',
+  'location-type','interact-button','interaction-name','boss-bar','boss-fill','enemy-target',
+  'target-name','target-type','target-fill','combat-guide'];
+ const readers=ids.map(id=>countWrites(doc.getElementById(id)));
+ for(const action of ['attack','bolt','dodge','nova','heal']){
+  const button=doc.querySelector(`[data-action="${action}"]`);
+  readers.push(countWrites(button));
+  readers.push(countWrites(button.querySelector('.cooldown')));
+ }
+ readers.push(countWrites(doc.querySelector('.rank')));
+ readers.push(countWrites(doc.getElementById('quest-kind').lastChild));
+ readers.push(countWrites(doc.getElementById('boss-bar').querySelector('span')));
+ readers.push(countWrites(doc.getElementById('boss-bar').querySelector('h2')));
+
+ // Everything above (warm-up call, wrapping doc.querySelector, fetching+wrapping every
+ // element) is setup and legitimately calls doc.querySelector a few times -- reset both
+ // counters here so only the 100 measured frames below count toward the assertions.
+ docQueries=0;
+
+ for(let i=0;i<100;i++)updateUI();
+
+ const totalWrites=readers.reduce((sum,read)=>sum+read(),0);
+ assert.equal(totalWrites,0,`expected 0 writes across 100 unchanged frames, got ${totalWrites}`);
+ assert.equal(docQueries,0,`expected 0 document.querySelector calls across 100 unchanged frames, got ${docQueries}`);
+});
+
+test('the unoptimized reference performs at least 20 writes per frame for the same unchanged state (baseline for the write-count claim)',t=>{
+ const doc=stubDocument();
+ installGlobals(t,{document:doc});
+ const state=makeState({cooldowns:{attack:0,bolt:1.4,dodge:0,nova:0,heal:0}});
+ const ctx=makeCtx({state});
+ ctx.enemies=[BOSS_ENEMY];ctx.mouseTargeting={selected:ENEMIES[0]};ctx.lockedEnemy=ENEMIES[0];
+ ctx.bossType=bossType;ctx.lastSnapshot={time:1};
+ const {updateUI}=createReferenceHud(ctx);
+
+ // Count every classList.toggle call and every textContent/style/hidden assignment by
+ // wrapping the shared makeElement() instances the reference touches, the same way the
+ // optimized-path test above does, but WITHOUT a warm-up call: the reference has no cache
+ // to warm, so its write count should be effectively the same on every frame.
+ function countWrites(el){
+  let n=0;
+  const origToggle=el.classList.toggle.bind(el.classList);
+  el.classList.toggle=(...args)=>{n++;return origToggle(...args);};
+  const styleTarget=el.style;
+  el.style=new Proxy(styleTarget,{set(t,p,v){n++;t[p]=v;return true;}});
+  let text=el.textContent,hidden=el.hidden;
+  Object.defineProperty(el,'textContent',{get:()=>text,set(v){n++;text=v;}});
+  Object.defineProperty(el,'hidden',{get:()=>hidden,set(v){n++;hidden=v;}});
+  return ()=>n;
+ }
+ const ids=['health-liquid','mana-liquid','potion-count','souls-counter','experience-fill','level-label',
+  'quest-title','quest-count','objective','quest-hint','quest-marker','gold-counter','location-name',
+  'location-type','interact-button','interaction-name','boss-bar','boss-fill','enemy-target',
+  'target-name','target-type','target-fill','combat-guide'];
+ const readers=ids.map(id=>countWrites(doc.getElementById(id)));
+ for(const action of ['attack','bolt','dodge','nova','heal']){
+  const button=doc.querySelector(`[data-action="${action}"]`);
+  readers.push(countWrites(button));
+  readers.push(countWrites(button.querySelector('.cooldown')));
+ }
+ readers.push(countWrites(doc.querySelector('.rank')));
+ readers.push(countWrites(doc.getElementById('quest-kind').lastChild));
+ readers.push(countWrites(doc.getElementById('boss-bar').querySelector('span')));
+ readers.push(countWrites(doc.getElementById('boss-bar').querySelector('h2')));
+
+ const FRAMES=100;
+ for(let i=0;i<FRAMES;i++)updateUI();
+ const totalWrites=readers.reduce((sum,read)=>sum+read(),0);
+ const perFrame=totalWrites/FRAMES;
+ assert.ok(perFrame>=20,`expected >=20 writes/frame from the unoptimized reference, got ${perFrame}`);
 });
