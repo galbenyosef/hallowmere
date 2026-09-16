@@ -1,19 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import vm from 'node:vm';
 import * as T from '../dist/vendor/three.core.js';
-import {abilitiesFor,classFor} from '../dist/classes.js';
-import {distance} from '../dist/combat.js';
-import {sliceBetween,readDist} from './helpers/source.mjs';
 import {installGlobals} from './helpers/dom.mjs';
 import {bindInput} from '../dist/input-bindings.js';
-
-const main=readDist('main.js');
+import {createPlayerMotion} from '../dist/player-motion.js';
 
 // attacksFromHere left main.js in M5 (dist/input-bindings.js). bindInput registers the whole
 // input region, so it needs one stub element per id plus injectable window/document targets;
-// the function itself is then read off ctx and handed to the updatePlayer slice as the same
-// free identifier main.js still spells bare.
+// ctx.attacksFromHere is then read the same way updatePlayer itself reads it (M6 moved
+// updatePlayer into dist/player-motion.js, so it is now called through createPlayerMotion
+// instead of sliced out of main.js as text).
 function inputTargets(t){
  const nodes=new Map();
  const node=id=>{if(!nodes.has(id))nodes.set(id,{id,dataset:{},style:{},innerHTML:'',
@@ -33,19 +29,20 @@ function attackFrame(targets,{classId,range,clear,shift=false}){
   lockedEnemy:{model:enemy,dead:false},attackHeld:true,aimActive:true,
   keys:new Set(),joystickValue:{x:0,y:0},dodgeTime:0,angle:0,moveTarget:null,movePath:[],lastMove:new T.Vector3(),
   network:{id:'local'},lastSnapshot:null,environment:{obstacles:[]},worldBounds:()=>({}),pointerShift:shift,
-  heroRig:{},selection:{position:new T.Vector3(),material:{}},playerLight:{position:new T.Vector3()},
-  ready:true,paused:false,backgrounded:false,mapExpanded:false,rosterPicker:{open:false},
+  heroRig:{legs:[],arms:[]},selection:{position:new T.Vector3(),material:{}},playerLight:{position:new T.Vector3()},
+  ready:true,paused:false,backgrounded:false,mapExpanded:false,rosterPicker:{open:false},footstepCue:()=>'step',
   joystickPointer:null,syncAudioState(){},audio:{play(){}},exploration:{save(){}}};
  Object.assign(ctx,bindInput(ctx,targets));
- const context={T,ctx,abilitiesFor,classFor,distance,attacksFromHere:ctx.attacksFromHere,
-  hasLineOfSight:()=>clear,findPath:()=>[{x:0,z:range}],
-  moveEntity(){assert.fail('A stationary attack must not request walking');},
-  perform:action=>attacks.push(action),animateRig(){},animateHeroAttack(){}};
- vm.createContext(context);
- vm.runInContext(sliceBetween(main,'function updatePlayer(','function updateEffects(',{file:'dist/main.js'}),context);
- context.updatePlayer(.016,1);context.updatePlayer(.016,1.016);
+ ctx.perform=action=>attacks.push(action);
+ Object.assign(ctx,createPlayerMotion(ctx,{hasLineOfSight:()=>clear,findPath:()=>[{x:0,z:range}],animateHeroAttack(){}}));
+ ctx.updatePlayer(.016,1);ctx.updatePlayer(.016,1.016);
  assert.deepEqual(attacks,['attack','attack']);
  assert.equal(player.position.length(),0);
+ // moveEntity is now internal to createPlayerMotion (no longer a free identifier the vm
+ // context could replace with an assert.fail guard). ctx.lastMove is only ever touched by
+ // the movement branch that calls moveEntity, so it staying at its initial (0,0,0) is the
+ // observable proof that a stationary attack never reached that branch.
+ assert.equal(ctx.lastMove.length(),0);
  assert.equal(ctx.network.input.x,0);assert.equal(ctx.network.input.z,0);
 }
 
