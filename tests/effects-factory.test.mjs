@@ -188,6 +188,8 @@ test('particles pools geometry+velocity buffers per count, zeroing the position 
  const first=ctx.effects.at(-1),mesh1=first.mesh,geom1=mesh1.geometry,velocity1=first.velocity;
  const data1=geom1.attributes.position.array;
  for(let i=0;i<data1.length;i++)data1[i]=42; // simulate updateEffects having moved the particles
+ geom1.computeBoundingSphere();geom1.computeBoundingBox(); // simulate a render having cached bounds for this burst
+ assert.ok(geom1.boundingSphere&&geom1.boundingBox,'sanity: bounds are actually cached before release');
  removeObject(mesh1);
  particles({x:9,y:0,z:9},0x00ff00,10,3);
  const second=ctx.effects.at(-1),mesh2=second.mesh;
@@ -196,6 +198,8 @@ test('particles pools geometry+velocity buffers per count, zeroing the position 
  assert.ok(Array.from(mesh2.geometry.attributes.position.array).every(v=>v===0),'the reused position buffer is zeroed on acquire');
  assert.equal(mesh2.geometry.attributes.position.count,10);
  assert.equal(mesh2.material.color.getHex(),0x00ff00);
+ assert.equal(mesh2.geometry.boundingSphere,null,"the previous burst's cached boundingSphere is cleared so it recomputes fresh");
+ assert.equal(mesh2.geometry.boundingBox,null,"the previous burst's cached boundingBox is cleared so it recomputes fresh");
  particles({x:0,y:0,z:0},0x0000ff,20,1);
  const third=ctx.effects.at(-1);
  assert.notEqual(third.mesh.geometry,geom1,"a different count does not reuse another count's buffer");
