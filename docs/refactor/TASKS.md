@@ -23,7 +23,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (+tracker b33135e) |
 | G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (+tracker d08b553) |
 | G2.1 | 2.1 | M6, T2-6 | blanket 2026-09-15 | 44fdf01, 15bfa5e (+tracker ad3a6e5) |
-| G2.2 | 2.2 | M7, P8 | blanket 2026-09-15 | 552d796 (P8); M7 pending |
+| G2.2 | 2.2 | M7, P8 | blanket 2026-09-15 | 552d796 (P8); +tracker 5d40ecc; M7 pending (changes requested) |
 | G2.3 | 2.3 | M8, T2-6 | — | — |
 | G2.4 | 2.4 | M9 | — | — |
 | G2.5 | 2.5 | M10 | — | — |
@@ -71,7 +71,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | merged | codex/player-motion-c39fa48e-ec75 | 5943 | 346142e..17fd66f → 15bfa5e | orchestrator static review clean: 5 functions verbatim modulo ctx.attacksFromHere/perform/footstepCue; deps defaults for hasLineOfSight/findPath/animateHeroAttack (real imports by default); WIRED_SLOTS 48→54; last mouse-targeting vm slice migrated (5 asserts kept); 9 new tests; 441/441; 13-shot capture 11/11 (04-hud-spawn 0.1165% = orb animation + autosave flash, inspected on the diff image) |
 | T2-2 | 2.1 | — | tokens.css | — | — | dropped | — | — | — | after T0-5 only two :root blocks remain (style.css for the game, character-studies.css for a dev page) and they deliberately differ (--muted, --line, --bright); only --gold/--serif/--sans are shared. Not worth an agent under the no-visible-change rule |
 | T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
-| M7 | 2.2 | sonnet | hud.js, game-audio.js | dist/main.js, 2 new | M6 | running | codex/hud-audio-2811c280-cd13 | 5773 | — | sonnet; stacked on M6 (merge 1e29a23 over main d08b553); hud.js = toast/updateClassHud/updateUI/drawMap; game-audio.js = syncAudioState/awaken/audioAt/footstepCue/updateAudioWorld |
+| M7 | 2.2 | sonnet | hud.js, game-audio.js | dist/main.js, 2 new | M6 | changes-requested | codex/hud-audio-2811c280-cd13 | 5773 | f54593e..f564a9c | 9 functions verbatim per agent; drawExplorationMap via deps default; WIRED_SLOTS +4; hud (4) + game-audio (6) tests; suite RED 446/451: game-mode-choice slices now see ctx.syncAudioState — fix requested: extend the bare-name destructuring to syncAudioState/toast (M5 pattern), no test edits |
 | T2-4 | 2.2 | opus | chronicle.css layering map (docs only) | docs/refactor/CSS-LAYERS.md | — | merged | codex/css-layers-map-0ee3d5d2-be1b | 5386 | 8629b4f → 6695720 | docs-only (833 lines); 96 shared selectors (not 108) across 8 sheets; 120 deletable whole rules = 5,898 B; §4 is the T2-5 spec (merged overlay block verified via CSSOM at 3 viewports × 4 states, 0 diffs); §5 is the T2-6 execution list; roster/inventory/dialogue screens not live-verified; folded into Gate 1.3 since it is disjoint |
 | T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-4 | merged | codex/connection-overlay-87dc45f9-192b | 6130 | 4119482 → 124d7ad | started early from eb359f9 (disjoint CSS-only); spec = CSS-LAYERS.md §4; orchestrator static review clean: 38 rules deleted + 3 mixed rules rewritten, merged block == T2-4 spec byte-for-byte (whitespace-insensitive) at the old chronicle position, keyframes kept, no empty @media; computed-style golden 707,340 readings / 0 diffs (6 states × 5 viewports, whole-document hashes); bytes style −1107, title-screen −1575, chronicle +1442; 13-shot compare 11/11 within threshold, 07-connection-overlay 0 px (re-run by orchestrator); committed 4119482 |
 | M8 | 2.3 | sonnet | modals.js, inventory-ui.js | dist/main.js, 2 new, tests/modals.test.mjs | M7 | todo | — | — | — | |
@@ -185,3 +185,4 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — P8 started (sonnet) from ad3a6e5.
 - 2026-09-15 — P8 reported (25771d9); approved in substance; one-line bounding-volume reset requested.
 - 2026-09-15 — P8 merged (552d796). Tracker integrating.
+- 2026-09-15 — M7 reported (f54593e..f564a9c) with 5 red game-mode-choice tests; bare-spelling fix requested (one round).
