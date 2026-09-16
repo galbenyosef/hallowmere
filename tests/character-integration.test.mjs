@@ -6,7 +6,7 @@ import * as T from '../dist/vendor/three.core.js';
 import {CLASS_LIST,CLASSES,classAppearance} from '../dist/classes.js';
 import {createPlayableCharacter} from '../dist/playable-characters.js';
 import {menuNavigationMarkup,updateMenuNavigation} from '../dist/menu-chrome.js';
-import {sliceBetween,readDist} from './helpers/source.mjs';
+import {readDist} from './helpers/source.mjs';
 
 // dist/model-kit.js imports the bare 'three' specifier, which only the page's import map
 // resolves; match it in Node the way tests/npc-portraits.test.mjs does for GLTFLoader.js.
