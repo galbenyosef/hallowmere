@@ -1,4 +1,4 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import * as P from './model-primitives.js';
 
 export const PREDATOR_POSES = Object.freeze(['stalk', 'blades', 'aim']);

@@ -1,4 +1,4 @@
-import * as T from './vendor/three.module.js';
+import * as T from './vendor/three.core.js';
 
 // Frames every mesh under root inside camera's orthographic bounds: projects each
 // vertex through camera.matrixWorldInverse into a Box3, then pads the tighter of the

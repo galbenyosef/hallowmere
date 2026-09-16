@@ -5,10 +5,8 @@ import {readFile} from 'node:fs/promises';
 import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.module.js';
 import {CLASS_LIST,SORCERER_APPEARANCES,conceptFor} from '../dist/classes.js';
-import {createInventoryStudy} from '../dist/inventory-portraits.js';
 import {disposeStudy} from '../dist/character-study-models.js';
 import {NPCS} from '../dist/campaign.js';
-import {createNpcPortraitStudy} from '../dist/npc-portraits.js';
 
 // Golden-camera proof for T1-8: these hashes were captured on the unmodified
 // dist/inventory-portraits.js and dist/npc-portraits.js, before their duplicated
@@ -35,11 +33,15 @@ function bboxState(root){
 const hashOf=obj=>createHash('sha256').update(JSON.stringify(obj)).digest('hex');
 
 // Match the game's import map while loading its real GLB assets in Node (same
-// pattern as tests/npc-portraits.test.mjs).
+// pattern as tests/npc-portraits.test.mjs). dist/inventory-portraits.js and
+// dist/npc-portraits.js also need this: both import the bare 'three' specifier (they need
+// WebGLRenderer, which only the full build exports).
 const hook=registerHooks({resolve(specifier,context,nextResolve){
   return nextResolve(specifier==='three'?new URL('../dist/vendor/three.module.js',import.meta.url).href:specifier,context);
 }});
 const {GLTFLoader}=await import('../dist/vendor/loaders/GLTFLoader.js');
+const {createInventoryStudy}=await import('../dist/inventory-portraits.js');
+const {createNpcPortraitStudy}=await import('../dist/npc-portraits.js');
 hook.deregister();
 
 // Every class/appearance combination createInventoryStudy can build (mirrors the

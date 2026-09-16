@@ -12,7 +12,7 @@
 // task adds to ctx, since setDestination calls it), Math (global). getPointerWorld/pointerAction/
 // enemyAtPoint/updateMouseTarget call each other directly within this closure, same as groundPing
 // calling ringEffect in effects-factory.js.
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {$} from './dom.js';
 import {distance,findPath} from './combat.js';
 export function createPointerTargeting(ctx){

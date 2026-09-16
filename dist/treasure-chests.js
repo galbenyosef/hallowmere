@@ -1,4 +1,4 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {createGeometryBatcher} from './geometry-batch.js';
 
 const vertex=`varying vec2 vUv,vWorld;

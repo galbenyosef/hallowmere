@@ -1,4 +1,4 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 
 // One `Object.fromEntries(Object.entries(colors).map(...))` palette builder for the
 // scenery tier. `params(key,color)` supplies each site's extra MeshStandardMaterial

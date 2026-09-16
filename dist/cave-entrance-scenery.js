@@ -1,4 +1,4 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {createGeometryBatcher} from './geometry-batch.js';
 import {createPalette} from './palette.js';
 import {caveSceneryFor} from './cave-scenery-layout.js';

@@ -1,14 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
 import {CLASS_LIST,SORCERER_APPEARANCES,conceptFor,applyClass} from '../dist/classes.js';
-import {createInventoryStudy} from '../dist/inventory-portraits.js';
 import {createPlayableCharacter} from '../dist/playable-characters.js';
 import {disposeStudy} from '../dist/character-study-models.js';
 import {inventoryPortraits,characterPortraits} from '../dist/character-art.js';
 import {inventoryMarkup} from '../dist/inventory.js';
 import {createState} from '../dist/combat.js';
 import {createCampaign} from '../dist/campaign.js';
+
+// dist/inventory-portraits.js imports the bare 'three' specifier (it needs WebGLRenderer,
+// which only the full build exports), which only the page's import map resolves; match it in
+// Node the way tests/effects-factory.test.mjs and tests/enemy-spawner.test.mjs do.
+const hook=registerHooks({resolve(specifier,context,nextResolve){
+ if(specifier==='three')return nextResolve(new URL('../dist/vendor/three.module.js',import.meta.url).href,context);
+ return nextResolve(specifier,context);
+}});
+const {createInventoryStudy}=await import('../dist/inventory-portraits.js');
+hook.deregister();
 
 const choices=[...Object.keys(SORCERER_APPEARANCES).map(id=>['sorcerer',id]),...CLASS_LIST.filter(c=>c.id!=='sorcerer').map(c=>[c.id,c.concept])];
 

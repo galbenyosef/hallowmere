@@ -1,4 +1,4 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {createPredatorCharacter} from './predator-model.js';
 
 // A visual actor in the safe village square; it never enters the combat roster.
