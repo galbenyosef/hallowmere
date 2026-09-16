@@ -13,9 +13,15 @@ import {mapFor} from '../dist/regions.js';
 function makeElement(){
  const el={style:{},dataset:{},attrs:{},textContent:'',innerHTML:'',title:'',disabled:false,hidden:false};
  const children=new Map();
- el.classList={added:[],removed:[],toggled:[],
-  add(...c){this.added.push(...c);},remove(...c){this.removed.push(...c);},
-  toggle(c,force){this.toggled.push([c,force]);}};
+ el.classList={added:[],removed:[],toggled:[],_has:new Map(),
+  // _has starts each token as unset (contains() returns undefined) so the very first
+  // toggle/add/remove of a class still records a call for the pre-existing assertions
+  // below that inspect .toggled; once a token has been touched, contains() reflects its
+  // real membership so dist/hud.js's own read-back write guards can skip redundant calls.
+  add(...c){for(const x of c)this._has.set(x,true);this.added.push(...c);},
+  remove(...c){for(const x of c)this._has.set(x,false);this.removed.push(...c);},
+  toggle(c,force){const next=force===undefined?!this._has.get(c):!!force;this._has.set(c,next);this.toggled.push([c,force]);return next;},
+  contains(c){return this._has.has(c)?this._has.get(c):undefined;}};
  el.setAttribute=(k,v)=>{el.attrs[k]=v;};
  el.querySelector=sel=>{if(!children.has(sel))children.set(sel,makeElement());return children.get(sel);};
  let lastChild;
