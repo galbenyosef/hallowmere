@@ -63,7 +63,6 @@
   max-width: 40%;
   font-variant-numeric: tabular-nums;
 }
-.inventory-modal .inventory-crowns[hidden] { display: none; }
 .inventory-crowns strong { font: 500 24px var(--serif); color: #dfc58c; overflow-wrap: anywhere; }
 .inventory-crowns span { color: #b4a17a; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; }
 .inventory-modal #modal-content {
@@ -143,7 +142,6 @@
 .inventory-modal .gear-tile:focus-visible { outline: 2px solid #fae0a3; outline-offset: -4px; }
 .inventory-modal .gear-equipped { position: absolute; right: 3px; bottom: 2px; color: #e8cea0; font: 10px var(--serif); text-shadow: 0 1px 3px #000; }
 .inventory-detail { position: fixed; inset: auto; margin: 0; padding: 18px; width: min(340px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow: auto; overscroll-behavior: contain; color: var(--inventory-text); background: #101e28; border: 1px solid #9b987a80; box-shadow: 0 12px 36px #0009; text-align: left; overflow-wrap: anywhere; }
-.inventory-detail[hidden] { display: none; }
 .inventory-detail::backdrop { background: transparent; pointer-events: none; }
 .item-detail-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .inventory-detail .item-rarity { color: #9bacb2; font-size: 12px; letter-spacing: 1.3px; text-transform: uppercase; }

@@ -171,7 +171,6 @@
 
 /* Transitional and multiplayer prompts carry the same type, color and framing. */
 #connection-overlay{position:fixed;inset:0;z-index:65;display:grid;place-items:center;backdrop-filter:none;isolation:isolate;background:linear-gradient(90deg,#061016f7,#08151beb),url('./assets/menu/twin-paths-solo.webp') center/cover}
-#connection-overlay[hidden]{display:none}
 .connection-card{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;--chronicle-gold:#e0c989;--chronicle-ivory:#eee2c5;--chronicle-muted:#a8babd;--chronicle-line:#c6b58c35;color:#d5dddd;position:relative;width:min(720px,calc(100vw - 48px));padding:35px 35px 35px 225px;min-height:235px;border:0;border-radius:0;background:none;text-align:left}
 .connection-card h2{font:32px/1.3 var(--serif);color:#eee2c5;margin:15px 0}
 .connection-card p{font:16px/1.5 Inter,sans-serif;margin:0 0 8px;max-width:620px;text-wrap:balance;font-size:14px;color:#a8babd}
@@ -179,14 +178,11 @@
 #connection-retry{min-height:44px;margin-top:12px;font:14px/1.5 Inter,sans-serif;color:#a6b4b1;text-decoration:underline;text-underline-offset:4px;padding:12px 0}
 #connection-retry:hover{color:#e4e5d6}
 #connection-retry:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px;border-radius:2px}
-#connection-retry[hidden]{display:none}
-#connection-spinner[hidden]{display:none}
 .connection-brand>span{font:400 11px/1.5 var(--sans);color:#cbbf9e;display:block;text-align:center;font-size:9px;letter-spacing:2px;margin-top:10px}
 #connection-overlay::before{content:'';position:absolute;inset:0;background:#08121760;z-index:-1;box-shadow:inset 0 -200px 140px #081217}
 .connection-brand{display:flex;flex-direction:column;align-items:center;gap:10px;position:absolute;left:0;top:52px;width:180px}
 .connection-brand img{width:100%;height:auto;aspect-ratio:4.4;object-fit:cover;mix-blend-mode:screen}
 #connection-back{display:block;min-height:44px;font-size:14px}
-#connection-back[hidden]{display:none}
 #connection-overlay #connection-back{margin:16px 0 0;padding:12px 0;color:#e7d8b6}
 .connection-card .text-button{padding:12px 0;color:#dfcc9c;min-height:44px}
 @media(max-width:540px){.connection-card{padding:20px 0;width:calc(100vw - 48px)}.connection-brand{position:static;width:165px;margin-bottom:45px}.connection-card h2{font-size:28px}}

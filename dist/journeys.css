@@ -59,7 +59,6 @@
 #character-button:disabled strong::after { content:none; }
 .journey-save-status[data-kind="error"] { color:#f0b49e; }
 #journey-save-indicator { position:fixed;right:24px;bottom:145px;z-index:15;max-width:320px;padding:8px 12px;background:#08151be8;border:1px solid #c6b58c35;pointer-events:none; }
-#journey-save-indicator[hidden] { display:none; }
 .pause-journey { padding:12px 0 0;margin:0; }
 .pause-journey p { font:12px/1.5 var(--sans);margin:0 0 12px;color:var(--chronicle-muted); }
 .pause-journey .primary-button { width:100%; }
