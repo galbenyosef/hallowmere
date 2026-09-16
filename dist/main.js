@@ -47,6 +47,7 @@ import {createEnemySpawner} from './enemy-spawner.js';
 import {createPointerTargeting} from './pointer-targeting.js';
 import {createInteraction} from './interaction.js';
 import {createRegionTravel} from './region-travel.js';
+import {bindInput} from './input-bindings.js';
 paintIcons(document);
 const resourceOrbs=createResourceOrbs();
 const exploration=new ExplorationAtlas();
@@ -77,6 +78,7 @@ async function init(){let loadingFailed=false;try{
  ctx.life.requestCollect=id=>!ctx.paused&&!ctx.backgrounded&&!ctx.state.ended&&ctx.network.send('collect',{id});ctx.life.requestForage=id=>!ctx.paused&&!ctx.backgrounded&&!ctx.state.ended&&ctx.network.send('forage',{id});
  ctx.clock=new T.Clock();ctx.assetsReady=true;updateUI();drawMap();ctx.titleScreen.setProgress(100);showModeChoice();ctx.renderer.setAnimationLoop(frame);
  }catch(error){loadingFailed=true;console.error(error);ctx.titleScreen.showError();}}
+ctx.syncAudioState=syncAudioState;
 function setModeChoiceInert(inert){for(const child of $('game').children)if(child.id!=='loading')child.inert=inert;}
 function syncAudioState(connected=!!ctx.network?.connected){const silent=!ctx.ready||!connected||ctx.paused||ctx.backgrounded||!!ctx.rosterPicker?.open;if(ctx.audio.paused!==silent||ctx.audio.backgrounded!==ctx.backgrounded)ctx.audio.pause(silent,ctx.backgrounded);}
 setModeChoiceInert(true);
@@ -165,6 +167,7 @@ function resumeFromMainMenu(){
  ctx.mainMenuOpen=false;$('loading').inert=false;ctx.titleScreen.hide();setModeChoiceInert(false);
  ctx.paused=false;releaseInput();ctx.clock.getDelta();syncAudioState();$('world').focus({preventScroll:true});
 }
+ctx.resumeFromMainMenu=resumeFromMainMenu;
 function closeRoster(){
  releaseInput();
  if(ctx.creatingJourney){ctx.creatingJourney=false;openJourneys();return;}
@@ -183,72 +186,12 @@ function resize(){if(!ctx.renderer)return;const w=innerWidth,h=innerHeight;ctx.r
 window.addEventListener('resize',resize);
 function awaken(){if(ctx.ready)ctx.started=true;syncAudioState();ctx.audio.unlock().then(()=>{if(!ctx.audio.ready)return;syncAudioState();$('audio-prompt').style.opacity='0';$('sound-button').setAttribute('aria-label',ctx.audio.muted?'Enable sound':'Mute sound');});}
 ctx.awaken=awaken;
-$('world').addEventListener('pointermove',ctx.updatePointer);
-$('world').addEventListener('pointerleave',()=>{ctx.mouseInWorld=false;ctx.updateMouseTarget();});
-$('world').addEventListener('pointerdown',event=>{
- if(!ctx.ready||ctx.paused||ctx.backgrounded||ctx.state.ended||!ctx.network?.connected)return;
- event.preventDefault();$('world').focus({preventScroll:true});awaken();ctx.updatePointer(event);
- if(event.button===2){stopAttackMovement();perform('bolt');return;}if(event.button!==0)return;
- const action=ctx.mouseAction;
- if(action?.kind==='loot'){ctx.collectClickedLoot(action.target.id);return;}
- if(action?.kind==='region'){ctx.interactRegion(action.target);return;}
- if(action?.kind==='door'){ctx.enterBuilding(action.target);return;}
- if(action?.kind==='npc'){ctx.life.interact(action.target.id);return;}
- ctx.lockedEnemy=action?.kind==='enemy'?action.target:null;
- if(ctx.lockedEnemy){
-  ctx.attackHeld=true;
-  ctx.angle=Math.atan2(ctx.lockedEnemy.model.position.x-ctx.player.position.x,ctx.lockedEnemy.model.position.z-ctx.player.position.z);
-  stopAttackMovement();
-  if(attacksFromHere()||distance(ctx.player.position,ctx.lockedEnemy.model.position)<=abilitiesFor(ctx.state).attack.range)perform('attack');
- }else if(event.shiftKey||distance(ctx.player.position,ctx.targetWorld)<2.4){stopAttackMovement();ctx.attackHeld=true;perform('attack');}
- else ctx.setDestination(ctx.targetWorld);
- ctx.updateMouseTarget();
-});
-// Ranged attacks never turn into movement, even beyond projectile range or
-// when a wall blocks the shot. Shift also keeps melee attacks in place.
-function attacksFromHere(){return abilitiesFor(ctx.state).attack.kind==='projectile'||ctx.pointerShift;}
-function stopAttackMovement(){
- ctx.moveTarget=null;ctx.movePath=[];ctx.life.pending=null;ctx.pendingRegionInteraction=null;
- ctx.networkDirection={x:0,z:0};ctx.network.input={x:0,z:0,angle:ctx.angle};ctx.network.send('input',ctx.network.input);
-}
-function releaseMouseAttack(){if(ctx.lockedEnemy)stopAttackMovement();ctx.attackHeld=false;ctx.lockedEnemy=null;ctx.updateMouseTarget();}
-window.addEventListener('pointerup',event=>{if(event.button===0)releaseMouseAttack();});
-window.addEventListener('pointercancel',()=>{ctx.mouseInWorld=false;releaseMouseAttack();});$('world').addEventListener('contextmenu',e=>e.preventDefault());
-for(const type of ['keydown','keyup'])window.addEventListener(type,event=>{if(event.key==='Shift'){ctx.pointerShift=event.shiftKey;ctx.updateMouseTarget();}});
-window.addEventListener('keydown',event=>{if(event.defaultPrevented||ctx.journeyLeaving||ctx.journeyConflict||!ctx.ready||!ctx.network?.connected||!$('loading').hidden)return;if(event.key!=='Escape'&&(event.target instanceof HTMLInputElement||event.target instanceof HTMLTextAreaElement||event.target instanceof HTMLSelectElement))return;const key=event.key.toLowerCase();if(ctx.rosterPicker?.open)return;if(key==='c'&&!event.repeat){openRoster();return;}if(event.target instanceof HTMLButtonElement&&[' ','enter'].includes(key))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(key)&&key!=='tab')event.preventDefault();if(event.repeat&&['escape','1','2','3','h','j','m','f','i'].includes(key))return;if(key==='escape'){if(ctx.mapExpanded)toggleMap();else if(ctx.paused)closeModal();else showModal('pause');return;}if(key==='h'){ctx.paused?closeModal():showModal('help');return;}if(key==='j'){ctx.paused?closeModal():showModal('journal');return;}if(key==='m'){toggleMap();return;}if(key==='i'){ctx.paused?closeModal():showModal('inventory');return;}if(!ctx.ready||ctx.paused||ctx.backgrounded||ctx.state.ended||!ctx.network?.connected)return;ctx.keys.add(key);if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','1','2','3'].includes(key))awaken();if(key==='1')perform('dodge');if(key==='2')perform('nova');if(key==='3')perform('heal');if(key==='f'){awaken();const result=ctx.interact();if(!result.ok)toast(result.reason);}});window.addEventListener('keyup',event=>ctx.keys.delete(event.key.toLowerCase()));
-function releaseInput({resetTouch=true}={}){ctx.keys.clear();ctx.attackHeld=false;ctx.moveTarget=null;ctx.movePath=[];ctx.lockedEnemy=null;ctx.pendingRegionInteraction=null;ctx.mouseInWorld=false;ctx.pointerShift=false;ctx.mouseAction=null;ctx.mouseTargeting?.show(null);$('world').classList.remove('enemy-hover','enemy-attacking','loot-hover');if(ctx.network){ctx.network.input={x:0,z:0,angle:ctx.angle};ctx.network.send('input',ctx.network.input);}if(resetTouch)releaseJoystick();}
-ctx.releaseInput=releaseInput;
-bindPageActivity({releaseInput,setBackgrounded:hidden=>{if(hidden){ctx.autosave?.emergency();ctx.autosave?.changed();ctx.autosave?.flush().catch(()=>{});}ctx.backgrounded=hidden;ctx.clock?.getDelta();ctx.network?.advance?.(0,true);syncAudioState();}});
-document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(ctx.paused||ctx.backgrounded||ctx.state.ended)return;awaken();if(ctx.coarse||!ctx.aimActive){const near=ctx.nearestEnemy();if(near)ctx.angle=Math.atan2(near.model.position.x-ctx.player.position.x,near.model.position.z-ctx.player.position.z);}perform(button.dataset.action);}));
-document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',event=>{if(event.detail===0&&!ctx.paused&&!ctx.backgrounded){awaken();perform(button.dataset.action);}}));
-$('sound-button').onclick=async()=>{const wasReady=ctx.audio.ready;await ctx.audio.unlock();if(!ctx.audio.ready){toast('Sound could not start. Try again.');return;}const muted=wasReady?ctx.audio.toggle():ctx.audio.muted;syncAudioState();$('sound-button').innerHTML=icon(muted?'muted':'volume');$('sound-button').setAttribute('aria-label',muted?'Enable sound':'Mute sound');$('audio-prompt').style.opacity='0';toast(muted?'Sound muted':'Sound enabled');};$('help-button').onclick=()=>showModal('help');$('journal-button').onclick=()=>showModal('journal');$('pause-button').onclick=()=>showModal('pause');$('map-button').onclick=toggleMap;$('inventory-button').onclick=()=>showModal('inventory');$('character-button').onclick=openRoster;$('interact-button').onclick=()=>{if(ctx.paused||ctx.backgrounded)return;awaken();const r=ctx.interact();if(!r.ok)toast(r.reason);};$('fullscreen-button').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen?.();else $('game').requestFullscreen?.().catch(()=>toast('Fullscreen is unavailable in this view.'));};
-function toggleMap(){
- if(!ctx.ready||ctx.state.ended||ctx.paused&&!ctx.mapExpanded)return;
- ctx.mapExpanded=!ctx.mapExpanded;ctx.audio.play(ctx.mapExpanded?'ui-open':'ui-close',.5);
- const panel=document.querySelector('.map-panel');panel.classList.toggle('expanded',ctx.mapExpanded);
- $('map-button').setAttribute('aria-label',ctx.mapExpanded?'Close map':'Expand map');
- if(ctx.mapExpanded){panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','map-title');updateMenuNavigation($('map-navigation'),'map',{canChangeCharacter:!ctx.activeJourney&&ctx.safeHere(),characterLocked:!!ctx.activeJourney});$('map-button').focus({preventScroll:true});}
- else{panel.removeAttribute('role');panel.removeAttribute('aria-modal');panel.removeAttribute('aria-labelledby');$('world').focus({preventScroll:true});}
- ctx.paused=ctx.mapExpanded;releaseInput();syncAudioState();drawMap();ctx.exploration.save();
-}
-function navigateMenu(kind){
- if(!ctx.ready||!ctx.network?.connected||ctx.state.ended)return;
- if(ctx.mainMenuOpen)resumeFromMainMenu();
- if(kind==='character'){openRoster();return;}
- if(ctx.mapExpanded)toggleMap();
- if(kind==='map'){if(ctx.modalKind)closeModal();toggleMap();return;}
- ctx.currentNpc=null;showModal(kind);
-}
-for(const id of ['modal-navigation','map-navigation']){
- $(id).innerHTML=menuNavigationMarkup();
- $(id).addEventListener('click',event=>{const button=event.target.closest('[data-menu]');if(button&&!button.disabled)navigateMenu(button.dataset.menu);});
-}
-document.querySelector('.map-panel').addEventListener('keydown',event=>{
- if(!ctx.mapExpanded||event.key!=='Tab')return;
- const buttons=[...document.querySelectorAll('.map-panel button:not(:disabled)')].filter(el=>el.getClientRects().length),first=buttons[0],last=buttons.at(-1);
- if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
-});
-const joystick=$('joystick');joystick.addEventListener('pointerdown',event=>{if(ctx.paused||ctx.backgrounded||!ctx.ready||!ctx.network?.connected||ctx.joystickPointer!==null)return;event.preventDefault();ctx.joystickPointer=event.pointerId;joystick.setPointerCapture(event.pointerId);awaken();updateJoystick(event);});joystick.addEventListener('pointermove',event=>{if(event.pointerId===ctx.joystickPointer)updateJoystick(event);});function releaseJoystick(){const pointerId=ctx.joystickPointer;ctx.joystickPointer=null;ctx.joystickValue={x:0,y:0};$('joystick-thumb').style.transform='';const stick=$('joystick');if(pointerId!==null&&stick.hasPointerCapture(pointerId))stick.releasePointerCapture(pointerId);}for(const type of ['pointerup','pointercancel','lostpointercapture'])joystick.addEventListener(type,event=>{if(event.pointerId===ctx.joystickPointer)releaseJoystick();});function updateJoystick(event){const r=joystick.getBoundingClientRect(),x=event.clientX-r.left-r.width/2,y=event.clientY-r.top-r.height/2,length=Math.hypot(x,y),scale=Math.min(34,length)/Math.max(1,length);ctx.joystickValue={x:x*scale/34,y:y*scale/34};$('joystick-thumb').style.transform=`translate(${x*scale}px,${y*scale}px)`;}
+// openRoster is hoisted; bindInput reads ctx.openRoster while it wires $('character-button').onclick.
+ctx.openRoster=openRoster;
+Object.assign(ctx,bindInput(ctx));
+// The four names main.js still calls itself stay module-scope bindings, so every remaining
+// call site (and the vm slices that quote them) keeps the spelling it had before the move.
+const {attacksFromHere,releaseInput,toggleMap,navigateMenu}=ctx;
 function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(ctx.toastTimer);ctx.toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2500);}
 ctx.toast=toast;
 function perform(action){
@@ -264,6 +207,7 @@ function perform(action){
  ctx.state.cooldowns[action]=abilitiesFor(ctx.state)[action].cooldown;
  const button=document.querySelector(`[data-action="${action}"]`);button?.classList.add('active');setTimeout(()=>button?.classList.remove('active'),130);return true;
 }
+ctx.perform=perform;
 function moveEntity(model,dx,dz,radius=.42){if(model===ctx.player){const length=Math.hypot(dx,dz);if(length>0)ctx.networkDirection={x:dx/length,z:dz/length,...(ctx.moveTarget?{stopAt:{x:ctx.moveTarget.x,z:ctx.moveTarget.z}}:{})};}const p=resolveMove(model.position,dx,dz,ctx.environment.obstacles,radius,ctx.worldBounds());const moved=Math.hypot(p.x-model.position.x,p.z-model.position.z);model.position.x=p.x;model.position.z=p.z;return moved;}
 function animateRig(rig,t,moving,windup=0,type='warden'){const speed=type==='hound'?13:9;for(let i=0;i<rig.legs.length;i++){const leg=rig.legs[i];const sign=leg.name.includes('L')?-1:1;const back=leg.name.includes('Back')?-1:1;leg.rotation.x=moving?Math.sin(t*speed)*.55*sign*back:Math.sin(t*1.7)*.025;}if(rig.body){rig.body.rotation.z=Math.sin(t*2.1)*.016;rig.body.rotation.x=windup*-.22;rig.body.position.y=(rig.baseY??1.18)+(moving?Math.abs(Math.sin(t*speed))*.035:0);}for(let i=0;i<rig.arms.length;i++){rig.arms[i].rotation.x=windup*-1.3+(moving?Math.sin(t*speed)*(i%2?-.2:.2):Math.sin(t*1.8+i)*.04);}}
 function updatePlayer(dt,t){ctx.networkDirection={x:0,z:0};if(ctx.state.ended){ctx.player.rotation.z=T.MathUtils.lerp(ctx.player.rotation.z,-1.5,dt*3);return;}let moving=false;const horiz=(ctx.keys.has('d')||ctx.keys.has('arrowright')?1:0)-(ctx.keys.has('a')||ctx.keys.has('arrowleft')?1:0)+ctx.joystickValue.x,vert=(ctx.keys.has('s')||ctx.keys.has('arrowdown')?1:0)-(ctx.keys.has('w')||ctx.keys.has('arrowup')?1:0)+ctx.joystickValue.y;let dx=.837*horiz+.547*vert,dz=-.547*horiz+.837*vert;
@@ -304,6 +248,7 @@ function drawMap(){
  const percent=drawExplorationMap({canvas:$('minimap'),atlas:ctx.exploration,map,player:ctx.player.position,angle:ctx.angle,expanded:ctx.mapExpanded,environment:ctx.environment,npcs:ctx.renderedMap==='overworld'?NPCS:[],interactions:ctx.regionInteractions(),drops:ctx.life?.drops||[],enemies:ctx.enemies,players:ctx.lastSnapshot?.players||[],you:ctx.network?.id,bossType:ctx.bossType});
  $('map-title').textContent=map.name;$('map-exploration').textContent=`${percent}% charted · ${ctx.exploration.saveLabel}`;
 }
+ctx.drawMap=drawMap;
 
 // Sound locations use the player's ears and the isometric camera's horizontal axis.
 function audioAt(cue,position,volume=1,rate=1){ctx.audio.listener={x:ctx.player.position.x,z:ctx.player.position.z};return ctx.audio.play(cue,volume,rate,{position,occluded:!hasLineOfSight(ctx.player.position,position,ctx.environment.obstacles,.1)});}
@@ -366,7 +311,9 @@ function showModal(kind){if(ctx.mainMenuOpen&&kind!=='death')return;if(!ctx.read
  if(kind==='inventory'){title.textContent='Inventory';renderInventory();primary.textContent='Close inventory';}
  if(kind==='death'){title.textContent='Return to the lanterns';content.innerHTML=`<p>${ctx.sessionMode==='multiplayer'?'Your allies continue the fight.<br>':''}Return to ${CHECKPOINTS.find(c=>c.id===ctx.state.checkpointId)?.name||'Ashwick'} with your equipment intact.</p><div class="victory-stats"><div><strong>${ctx.state.kills}</strong><span>SLAIN</span></div><div><strong>${ctx.state.souls}</strong><span>SOULS</span></div></div>`;primary.textContent='Respawn at checkpoint';if(ctx.activeJourney)content.insertAdjacentHTML('beforeend','<button type="button" class="text-button" data-save-exit>Save &amp; exit</button><span class="journey-save-status" data-save-status role="status"></span>');}
  if(kind==='victory'){title.textContent='At last, silence';content.innerHTML=`<p>The Bellkeeper falls. For the first time in thirteen years, Hallowmere hears the wind.</p><div class="legendary-reward"><span>LEGENDARY WEAPON RECOVERED</span><strong>Bellkeeper’s Requiem</strong><p>+18 primary damage · Equip it in your inventory.</p></div><p>Return to Elder Rowan in Ashwick to claim the villages’ thanks.</p>`;primary.textContent='Continue playing';}if(kind==='npc')content.querySelector('.dialogue-response:not(:disabled), [data-dialogue-close]')?.focus({preventScroll:true});else if(kind==='pause')content.querySelector('[data-resume-game]').focus({preventScroll:true});else primary.focus({preventScroll:true});}
+ctx.showModal=showModal;
 function closeModal(){if(ctx.journeyLeaving||ctx.journeyConflict)return;if(ctx.state.ended||ctx.rosterPicker?.open)return;if(ctx.mainMenuOpen){resumeFromMainMenu();return;}inventoryPreviews.hide();ctx.audio.play('ui-close',.5);$('modal-shade').hidden=true;ctx.paused=false;syncAudioState();ctx.modalKind='';ctx.currentNpc=null;ctx.previousFocus?.focus?.({preventScroll:true});$('world').focus({preventScroll:true});}
+ctx.closeModal=closeModal;
 bindPauseMenu($('modal-content'),{
  onResume:()=>{closeModal();awaken();},
  onSaveExit:saveAndExit,
