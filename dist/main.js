@@ -53,6 +53,8 @@ import {createHud} from './hud.js';
 import {createGameAudio} from './game-audio.js';
 import {createInventoryUi} from './inventory-ui.js';
 import {createModals} from './modals.js';
+import {createConnectionUi} from './connection-ui.js';
+import {createSessionLifecycle} from './session-lifecycle.js';
 paintIcons(document);
 const resourceOrbs=createResourceOrbs();
 const exploration=new ExplorationAtlas();
@@ -63,8 +65,12 @@ Object.assign(ctx,createModelCache(ctx));
 Object.assign(ctx,createEffects(ctx),createEnemySpawner(ctx));
 Object.assign(ctx,createPointerTargeting(ctx),createInteraction(ctx),createRegionTravel(ctx));
 ctx.state=Object.assign(createState(),createCampaign(crypto.getRandomValues(new Uint32Array(1))[0]));
-ctx.titleScreen=createTitleScreen($('loading'),{onBegin:chooseMode,onResume:resumeFromMainMenu,onChangeCharacter:openRoster});
-ctx.journeysMenu=createJourneysMenu({store:ctx.journeyStore,onNew:chooseJourneyCharacter,onContinue:continueJourney,onBack:showModeChoice});
+// The whole mode-choice/journey/session/main-menu/roster region, wired where its import-time
+// statements stood: it creates ctx.titleScreen/ctx.journeysMenu here, and registers its pagehide
+// after bindExplorationSaving's and before bindInput's page-activity pair, the automation
+// surface's abort, and the worldPreview dispose. bindInput below reads ctx.openRoster eagerly
+// while it wires $('character-button').onclick, so this line has to stay above it.
+Object.assign(ctx,createSessionLifecycle(ctx));
 const loadingFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
 async function init(){let loadingFailed=false;try{
  await loadingFrame();
@@ -79,124 +85,19 @@ async function init(){let loadingFailed=false;try{
  ctx.life=new VillageLife({scene:ctx.scene,camera:ctx.camera,player:ctx.player,state:ctx.state,cloneModel:ctx.cloneModel,reducedMotion:ctx.reducedMotion,obstacles:ctx.environment.obstacles,onTalk:ctx.talkTo,onCollect:ctx.lootCollected,onLootClick:ctx.collectClickedLoot,onApproach:point=>{awaken();return ctx.setDestination(point);}});
  ctx.mouseTargeting=createMouseTargeting({scene:ctx.scene,camera:ctx.camera,canvas:$('world'),enemies:ctx.enemies});
  ctx.multiplayerView=createMultiplayerView({scene:ctx.scene,camera:ctx.camera,cloneModel:ctx.cloneModel,getRig,animateRig:ctx.animateRig,animateHeroAttack,player:ctx.player});
- ctx.rosterPicker=createRosterPicker({getState:()=>ctx.creatingJourney?{}:ctx.state,onChoose:chooseCharacter,onClose:closeRoster,onNavigate:navigateMenu});
+ ctx.rosterPicker=createRosterPicker({getState:()=>ctx.creatingJourney?{}:ctx.state,onChoose:ctx.chooseCharacter,onClose:ctx.closeRoster,onNavigate:navigateMenu});
  ctx.life.requestCollect=id=>!ctx.paused&&!ctx.backgrounded&&!ctx.state.ended&&ctx.network.send('collect',{id});ctx.life.requestForage=id=>!ctx.paused&&!ctx.backgrounded&&!ctx.state.ended&&ctx.network.send('forage',{id});
- ctx.clock=new T.Clock();ctx.assetsReady=true;ctx.updateUI();ctx.drawMap();ctx.titleScreen.setProgress(100);showModeChoice();ctx.renderer.setAnimationLoop(frame);
+ ctx.clock=new T.Clock();ctx.assetsReady=true;ctx.updateUI();ctx.drawMap();ctx.titleScreen.setProgress(100);ctx.showModeChoice();ctx.renderer.setAnimationLoop(frame);
  }catch(error){loadingFailed=true;console.error(error);ctx.titleScreen.showError();}}
 Object.assign(ctx,createHud(ctx),createGameAudio(ctx));
 const {awaken,audioAt}=ctx;
-function setModeChoiceInert(inert){for(const child of $('game').children)if(child.id!=='loading')child.inert=inert;}
-setModeChoiceInert(true);
-function showModeChoice(){
- setModeChoiceInert(true);
- ctx.ready=false;ctx.sessionMode=null;ctx.mainMenuOpen=false;ctx.syncAudioState();
- ctx.titleScreen.showModes();$('connection-overlay').hidden=true;
-}
-function chooseMode(mode){if(mode==='single-player'&&!ctx.previewMode)openJourneys();else startSession(mode);}
-function openJourneys(preferredId){
- ctx.titleScreen.hide();setModeChoiceInert(true);ctx.ready=false;ctx.journeysMenu.show(preferredId);
-}
-function chooseJourneyCharacter(){ctx.creatingJourney=true;ctx.rosterPicker.show({journey:true});}
-function chooseCharacter(choice){
- if(ctx.creatingJourney){beginJourney(choice);return true;}
- return ctx.network?.send('select-class',choice);
-}
-async function beginJourney(choice){
- // Let the existing picker enter its pending state before resolving it.
- await Promise.resolve();let record;
- try{
-  record=await ctx.journeyStore.create(createJourney(choice));ctx.activeJourney=record;
-  startSession('single-player',record.data);attachAutosave(record);
-  ctx.creatingJourney=false;ctx.rosterPicker.resolve({ok:true});
- }catch(error){if(record){stopJourneySession();await ctx.journeyStore.release(record.id).catch(()=>{});}ctx.activeJourney=null;ctx.rosterPicker.resolve({ok:false,reason:error.message});}
-}
-async function continueJourney(id){
- const record=await ctx.journeyStore.acquire(id);
- try{ctx.activeJourney=record;startSession('single-player',record.data);attachAutosave(record);if(record.recovered)ctx.toast('Journey recovered from its previous save.');}
- catch(error){stopJourneySession();await ctx.journeyStore.release(id).catch(()=>{});throw error;}
-}
-function attachAutosave(record){
- ctx.autosave=createAutosave({store:ctx.journeyStore,record,getSave:()=>ctx.network.capture(),onStatus:updateSaveStatus,onConflict:error=>{
-  ctx.journeyConflict=true;ctx.paused=true;releaseInput();ctx.audio.pause(true,ctx.backgrounded);
-  ctx.journeysMenu.showConflict(error.message,()=>{stopJourneySession();openJourneys();});
-  updateSaveStatus({kind:'error',message:error.message});
- }});
-}
-function updateSaveStatus(value=ctx.saveStatus){
- ctx.saveStatus=value;
- for(const element of document.querySelectorAll('[data-save-status], #journey-save-indicator')){element.textContent=value.message;element.dataset.kind=value.kind;}
- const indicator=$('journey-save-indicator');indicator.hidden=!ctx.activeJourney;clearTimeout(ctx.saveIndicatorTimer);
- if(value.kind==='saved')ctx.saveIndicatorTimer=setTimeout(()=>{indicator.hidden=true;},2500);
-}
-ctx.updateSaveStatus=updateSaveStatus;
-async function saveAndExit(){
- if(!ctx.autosave||ctx.journeyLeaving||ctx.journeyConflict)return;
- ctx.journeyLeaving=true;ctx.paused=true;releaseInput();
- for(const button of document.querySelectorAll('[data-save-exit], [data-resume-game]'))button.disabled=true;
- try{const id=ctx.activeJourney.id;await ctx.autosave.exit();stopJourneySession();openJourneys(id);}
- catch(error){updateSaveStatus({kind:'error',message:error.message});}
- finally{ctx.journeyLeaving=false;for(const button of document.querySelectorAll('[data-save-exit], [data-resume-game]'))button.disabled=false;}
-}
-ctx.saveAndExit=saveAndExit;
-function stopJourneySession(){
- ctx.autosave?.stop();ctx.autosave=null;ctx.network?.close();ctx.network=null;ctx.sessionGeneration++;ctx.ready=false;ctx.started=false;
- ctx.activeJourney=null;ctx.sessionMode=null;ctx.lastSnapshot=null;ctx.lastNetworkEvent=0;ctx.mainMenuOpen=false;ctx.journeyConflict=false;
- clearTimeout(ctx.victoryTimer);clearTimeout(ctx.saveIndicatorTimer);ctx.victoryShown=false;ctx.cavePreviewStarted=false;
- releaseInput();inventoryPreviews.hide();toggleMapForDeath();ctx.modalKind='';ctx.currentNpc=null;
- $('modal-shade').hidden=true;$('journey-save-indicator').hidden=true;$('connection-overlay').hidden=true;$('restart-vote').hidden=true;
- ctx.audio.pause(true,ctx.backgrounded);ctx.accumulated=0;ctx.uiTimer=0;ctx.audioTimer=0;ctx.dodgeTime=0;ctx.shake=0;ctx.resetMovement=true;
-}
-function startSession(mode,save){
- if(!ctx.assetsReady||ctx.sessionMode)return;
- ctx.sessionMode=mode;ctx.ready=true;setModeChoiceInert(false);const generation=++ctx.sessionGeneration;
- const current=callback=>(...args)=>{if(generation===ctx.sessionGeneration)callback(...args);};
- const callbacks={onSnapshot:current(applySnapshot),onProgress:current(soon=>ctx.autosave?.changed(soon)),onStatus:current(connectionStatus),onWelcome:current(()=>{releaseInput();ctx.movementCorrection.reset();ctx.resetMovement=true;ctx.moveTarget=null;ctx.movePath=[];})};
- ctx.network=mode==='single-player'?new LocalSession({...callbacks,save}):new MultiplayerClient(callbacks);
- ctx.titleScreen.hide();ctx.clock.getDelta();ctx.network.start();awaken();
-}
-function returnToModeChoice(){
- if(ctx.lastSnapshot)return;
- ctx.sessionGeneration++;ctx.network?.close();ctx.network=null;releaseInput();showModeChoice();
-}
-function mainMenuSession(){
- return {mode:ctx.sessionMode,canChangeCharacter:!ctx.activeJourney&&!!ctx.network?.connected&&!ctx.state.ended&&ctx.safeHere(),character:classFor(ctx.state).name,characterLocked:!!ctx.activeJourney};
-}
-function openMainMenu(){
- if(!ctx.ready||!ctx.network?.connected||!ctx.lastSnapshot||ctx.state.ended||ctx.rosterPicker?.open)return;
- if(ctx.mapExpanded)toggleMap();
- inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.currentNpc=null;
- ctx.mainMenuOpen=true;ctx.paused=true;releaseInput();ctx.audio.pause(true,ctx.backgrounded);
- setModeChoiceInert(true);ctx.titleScreen.showMainMenu(mainMenuSession());
-}
-function resumeFromMainMenu(){
- if(ctx.journeyLeaving||ctx.journeyConflict)return;
- if(!ctx.mainMenuOpen||!ctx.network?.connected||ctx.state.ended)return;
- ctx.mainMenuOpen=false;$('loading').inert=false;ctx.titleScreen.hide();setModeChoiceInert(false);
- ctx.paused=false;releaseInput();ctx.clock.getDelta();ctx.syncAudioState();$('world').focus({preventScroll:true});
-}
-ctx.resumeFromMainMenu=resumeFromMainMenu;
-function closeRoster(){
- releaseInput();
- if(ctx.creatingJourney){ctx.creatingJourney=false;openJourneys();return;}
- if(ctx.mainMenuOpen){ctx.paused=true;ctx.audio.pause(true,ctx.backgrounded);ctx.titleScreen.showMainMenu(mainMenuSession());return;}
- ctx.paused=false;ctx.syncAudioState();$('world').focus({preventScroll:true});
-}
-function dismissMainMenu(){
- if(!ctx.mainMenuOpen)return;
- ctx.mainMenuOpen=false;$('loading').inert=false;ctx.titleScreen.hide();setModeChoiceInert(false);
-}
-$('connection-back').onclick=returnToModeChoice;
-window.addEventListener('pagehide',()=>{ctx.autosave?.emergency();ctx.autosave?.exit().catch(()=>{});ctx.network?.close();});
-window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
 
 function resize(){if(!ctx.renderer)return;const w=innerWidth,h=innerHeight;ctx.renderer.setSize(w,h,false);const height=ctx.worldPreview||new URLSearchParams(location.search).get('preview')==='enemies'?19:w<650?28:29;ctx.camera.left=-height*(w/h)/2;ctx.camera.right=-ctx.camera.left;ctx.camera.top=height/2;ctx.camera.bottom=-height/2;ctx.camera.updateProjectionMatrix();}
 window.addEventListener('resize',resize);
-// openRoster is hoisted; bindInput reads ctx.openRoster while it wires $('character-button').onclick.
-ctx.openRoster=openRoster;
 Object.assign(ctx,bindInput(ctx));
-// The four names main.js still calls itself stay module-scope bindings, so every remaining
+// The names main.js still calls itself stay module-scope bindings, so every remaining
 // call site (and the vm slices that quote them) keeps the spelling it had before the move.
-const {attacksFromHere,releaseInput,toggleMap,navigateMenu}=ctx;
+const {attacksFromHere,releaseInput,navigateMenu}=ctx;
 function perform(action){
  if(!ctx.ready||ctx.paused||ctx.rosterPicker?.open||ctx.backgrounded||ctx.state.ended||!ctx.network?.connected||!canUse(ctx.state,action))return false;
  const skill=abilitiesFor(ctx.state)[action],offensive=action!=='dodge'&&action!=='heal'&&skill.kind!=='support';
@@ -212,32 +113,13 @@ function perform(action){
 }
 ctx.perform=perform;
 Object.assign(ctx,createPlayerMotion(ctx));
-function syncPlayerCharacter(){
- if(ctx.state.classId&&!ctx.portraitsRequested){ctx.portraitsRequested=true;prepareCharacterPortraits().then(()=>{if(ctx.modalKind==='inventory')ctx.renderInventory();}).catch(error=>console.error('Character portraits unavailable',error));}
- const key=conceptFor(ctx.state.classId,ctx.state.appearanceId);if(ctx.player.userData.characterKey===key)return;
- for(const child of [...ctx.player.children])disposeActor(child);ctx.player.add(ctx.cloneModel(key));ctx.player.userData.characterKey=key;ctx.heroRig=getRig(ctx.player);
-}
-function openRoster(){
- if(ctx.activeJourney){ctx.toast('This journey keeps its chosen character. Start a new journey to choose another.');return;}
- if(!ctx.ready||!ctx.network?.connected||!ctx.rosterPicker||ctx.rosterPicker.open||ctx.state.ended)return;
- if(!ctx.safeHere()){if(ctx.mainMenuOpen)ctx.titleScreen.updateSession(mainMenuSession());else ctx.toast('Return to a sanctuary to change class.');return;}
- if(ctx.mainMenuOpen)ctx.titleScreen.hide();
- if(ctx.mapExpanded)toggleMap();inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.currentNpc=null;ctx.paused=true;releaseInput();ctx.audio.pause(true,ctx.backgrounded);ctx.rosterPicker.show();
-}
 function frame(){if(!ctx.ready)return;const raw=ctx.clock.getDelta(),dt=Math.min(raw,.035),frozen=ctx.paused||ctx.rosterPicker?.open||ctx.backgrounded||!ctx.network?.connected;ctx.network?.advance?.(raw,frozen);if(ctx.network?.connected&&!ctx.backgrounded&&(ctx.sessionMode==='multiplayer'||!frozen))ctx.movementCorrection.update(ctx.player.position,dt,ctx.environment.obstacles,ctx.worldBounds());if(!frozen){ctx.accumulated+=dt;for(const k in ctx.state.cooldowns)ctx.state.cooldowns[k]=Math.max(0,ctx.state.cooldowns[k]-dt);ctx.updatePlayer(dt,ctx.accumulated);if(!ctx.state.ended){ctx.life.update(ctx.accumulated);if(ctx.pendingRegionInteraction){const interaction=ctx.regionInteractions().find(r=>r.id===ctx.pendingRegionInteraction);if(!interaction)ctx.pendingRegionInteraction=null;else if(ctx.canReachRegion(interaction,2.7))ctx.interactRegion(interaction);}}const zone=ctx.renderedMap==='overworld'?zoneAt(ctx.player.position):ctx.renderedMap;if(zone!==ctx.state.zone){ctx.state.zone=zone;if(!ctx.state.visited.includes(zone))ctx.state.visited.push(zone);ctx.toast(zoneName(zone)+(zone==='ashwick'?' · Sanctuary':''));}ctx.audioTimer+=dt;if(ctx.audioTimer>=.1){ctx.updateAudioWorld(ctx.audioTimer);ctx.audioTimer=0;}}
  if(frozen&&ctx.network)ctx.network.input={x:0,z:0,angle:ctx.angle};
  if(!ctx.backgrounded){if(frozen)ctx.accumulated+=dt;renderSharedWorld(dt,ctx.accumulated);ctx.renderRegionLabels();ctx.updateEffects(dt);ctx.environment.update(ctx.accumulated,dt,ctx.state.victory,ctx.camera,ctx.player.position);if(ctx.renderedMap==='overworld')ctx.landmarks?.update?.(ctx.accumulated);}
  const desired=ctx.player.position.clone().add(new T.Vector3(0,0,-3.4));ctx.cameraTarget.lerp(desired,1-Math.exp(-dt*4));ctx.camera.position.copy(ctx.cameraTarget).add(ctx.cameraOffset);ctx.shake=Math.max(0,ctx.shake-dt*.35);if(ctx.shake>0&&!frozen&&ctx.gameSettings.cameraShake){ctx.camera.position.x+=(Math.random()-.5)*ctx.shake;ctx.camera.position.z+=(Math.random()-.5)*ctx.shake;}ctx.camera.lookAt(ctx.cameraTarget);ctx.worldPreview?.update(ctx.camera);ctx.moonLight.position.set(ctx.player.position.x-16,29,ctx.player.position.z+9);ctx.moonLight.target.position.set(ctx.player.position.x,0,ctx.player.position.z);ctx.moonLight.target.updateMatrixWorld();ctx.updateMouseTarget();ctx.life.renderLabels(ctx.enemies.some(e=>!e.dead&&distance(e.model.position,ctx.player.position)<8&&!ctx.safeHere()),ctx.keys.has('alt'));ctx.updateFloaters(ctx.backgrounded?0:dt);ctx.uiTimer+=dt;if(ctx.uiTimer>.09){ctx.uiTimer=0;ctx.updateUI();ctx.drawMap();}ctx.multiplayerView?.update(dt,ctx.accumulated);ctx.renderer.render(ctx.scene,ctx.camera);ctx.resourceOrbs.update(frozen?0:dt,ctx.state.hp/ctx.state.maxHp,ctx.state.mana/ctx.state.maxMana);}
 Object.assign(ctx,createInventoryUi(ctx),createModals(ctx));
 const {inventoryPreviews,toggleMapForDeath}=ctx;
-function connectionStatus(message,connected,{retryable=false,failed=false}={}){
- ctx.syncAudioState(connected);
- // A reconnect overlay must remain reachable while the main menu traps focus.
- if(ctx.mainMenuOpen){const wasInert=$('loading').inert;$('loading').inert=!connected;if(connected&&wasInert&&!ctx.rosterPicker?.open)$('menu-resume').focus();}
- const el=$('multiplayer-status');if(el.textContent!==message)el.textContent=message;el.hidden=!connected||ctx.sessionMode==='single-player';$('connection-back').hidden=!!ctx.lastSnapshot;$('connection-overlay').hidden=connected;if(!connected){inventoryPreviews.hide();$('connection-title').textContent=failed?'Unable to connect':ctx.lastSnapshot?'Reconnecting to game':'Loading game';$('connection-message').textContent=message;$('connection-spinner').hidden=failed;$('connection-retry').hidden=!retryable;if(ctx.modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),ctx.state,false);releaseInput();ctx.rosterPicker?.resolve({ok:false,reason:'Connection lost. Try again once connected.'});if(ctx.mainMenuOpen){const focusTarget=$(retryable?'connection-retry':'connection-title');focusTarget.tabIndex=retryable?0:-1;focusTarget.focus();}}}
-$('connection-retry').onclick=()=>{if(ctx.lastSnapshot){location.reload();return;}returnToModeChoice();startSession('multiplayer');};
-$('restart-yes').onclick=()=>ctx.network?.send('vote',{agree:true});
-$('restart-no').onclick=()=>ctx.network?.send('vote',{agree:false});
+Object.assign(ctx,createConnectionUi(ctx));
 function applySnapshot(snapshot,changed){
  const initialSnapshot=!ctx.lastSnapshot,wasDead=ctx.state.ended,oldLevel=ctx.state.level,beforeServices=JSON.stringify([ctx.state.gold,ctx.state.potions,ctx.state.forgeLevel,ctx.state.questAccepted,ctx.state.questRewarded,ctx.state.victory,ctx.state.bossLootClaimed,ctx.state.rookSupplies]),beforeInventory=JSON.stringify([ctx.state.inventory,ctx.state.equipped]);
  const nextMap=snapshot.mapId||snapshot.state.mapId||snapshot.players.find(p=>p.id===snapshot.you)?.mapId||'overworld',mapChanged=nextMap!==ctx.renderedMap;
@@ -246,7 +128,7 @@ function applySnapshot(snapshot,changed){
  // Fresh server sessions omit the old class; clear it before merging so the
  // client cannot show Sorcerer skills while the server awaits a new choice.
  if(initialSnapshot)for(const key of Object.keys(ctx.state))delete ctx.state[key];
- Object.assign(ctx.state,{classId:undefined,appearanceId:undefined,baseHp:undefined},snapshot.state);ctx.lastSnapshot=snapshot;ctx.started=true;syncPlayerCharacter();
+ Object.assign(ctx.state,{classId:undefined,appearanceId:undefined,baseHp:undefined},snapshot.state);ctx.lastSnapshot=snapshot;ctx.started=true;ctx.syncPlayerCharacter();
  // The first snapshot is a state baseline; retained server events predate this client.
  if(initialSnapshot){ctx.victoryShown=!!ctx.state.bossLootClaimed;ctx.lastNetworkEvent=Math.max(ctx.lastNetworkEvent,...snapshot.events.map(event=>event.id));}
  const me=snapshot.players.find(p=>p.id===snapshot.you);if(!me)return;
@@ -264,16 +146,17 @@ function applySnapshot(snapshot,changed){
   ctx.updateEnemyBar(e);
  }
  ctx.life.syncLoot(snapshot.loot);ctx.life.syncForage(snapshot.forage);ctx.environment.updateProgress?.(ctx.state);ctx.environment.sync?.(snapshot.interactions,ctx.state.discoveries);if(ctx.renderedMap==='overworld'){ctx.landmarks?.updateProgress?.(ctx.state);ctx.landmarks?.sync?.(snapshot.interactions,ctx.state.discoveries);}
- connectionStatus(`${snapshot.players.length} / 8 adventurers · ${classFor(ctx.state).name} ${me.slot+1}`,true);
+ ctx.connectionStatus(`${snapshot.players.length} / 8 adventurers · ${classFor(ctx.state).name} ${me.slot+1}`,true);
  $('restart-vote').hidden=ctx.sessionMode==='single-player'||!snapshot.votes.length;$('restart-vote-text').textContent=`Restart the game? ${snapshot.votes.length} / ${snapshot.players.length} agree. All progress will reset.`;
  $('restart-yes').disabled=snapshot.votes.includes(snapshot.you);
  for(const event of snapshot.events)if(event.id>ctx.lastNetworkEvent){networkEvent(event);ctx.lastNetworkEvent=event.id;}
- if(ctx.state.level>oldLevel&&!changed){ctx.toast(`Oath strengthened · Level ${ctx.state.level}`);ctx.audio.play('levelup',.65);}if(ctx.state.ended&&!wasDead){dismissMainMenu();ctx.audio.play('death-player',.8);releaseInput();if(ctx.mapExpanded)toggleMapForDeath();ctx.showModal('death');}
- if(wasDead&&!ctx.state.ended||changed){dismissMainMenu();inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.paused=false;toggleMapForDeath();ctx.syncAudioState();ctx.player.rotation.z=0;ctx.player.position.y=0;}
- if(ctx.mainMenuOpen&&!ctx.rosterPicker?.open)ctx.titleScreen.updateSession(mainMenuSession());
- if(!ctx.state.classId&&!ctx.rosterPicker?.open)openRoster();
+ if(ctx.state.level>oldLevel&&!changed){ctx.toast(`Oath strengthened · Level ${ctx.state.level}`);ctx.audio.play('levelup',.65);}if(ctx.state.ended&&!wasDead){ctx.dismissMainMenu();ctx.audio.play('death-player',.8);releaseInput();if(ctx.mapExpanded)toggleMapForDeath();ctx.showModal('death');}
+ if(wasDead&&!ctx.state.ended||changed){ctx.dismissMainMenu();inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.paused=false;toggleMapForDeath();ctx.syncAudioState();ctx.player.rotation.z=0;ctx.player.position.y=0;}
+ if(ctx.mainMenuOpen&&!ctx.rosterPicker?.open)ctx.titleScreen.updateSession(ctx.mainMenuSession());
+ if(!ctx.state.classId&&!ctx.rosterPicker?.open)ctx.openRoster();
  if(ctx.modalKind==='npc'&&beforeServices!==JSON.stringify([ctx.state.gold,ctx.state.potions,ctx.state.forgeLevel,ctx.state.questAccepted,ctx.state.questRewarded,ctx.state.victory,ctx.state.bossLootClaimed,ctx.state.rookSupplies]))ctx.renderNpc();if(ctx.modalKind==='inventory'&&beforeInventory!==JSON.stringify([ctx.state.inventory,ctx.state.equipped]))ctx.renderInventory();if(ctx.modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),ctx.state,ctx.network.connected);ctx.updateUI();
 }
+ctx.applySnapshot=applySnapshot;
 function networkEvent(event){
  if(event.type==='result'&&event.operation==='class'&&ctx.state.classId&&ctx.sessionMode==='single-player'&&!ctx.cavePreviewStarted&&new URLSearchParams(location.search).get('preview')==='enemies'){ctx.cavePreviewStarted=true;const generation=ctx.sessionGeneration;import('./enemy-preview.js').then(({createEnemyPreview})=>{if(generation===ctx.sessionGeneration)createEnemyPreview(ctx.network,()=>{releaseInput();ctx.resetMovement=true;});});}
  if(event.type==='result'&&event.operation==='class'){ctx.rosterPicker?.resolve(event);if(ctx.state.classId&&ctx.sessionMode==='single-player'&&!ctx.cavePreviewStarted&&['caves','exploration'].includes(new URLSearchParams(location.search).get('preview'))){ctx.cavePreviewStarted=true;const generation=ctx.sessionGeneration;import('./cave-preview.js').then(({createCavePreview})=>{if(generation===ctx.sessionGeneration)createCavePreview(ctx.network,()=>{releaseInput();ctx.resetMovement=true;});});}}
