@@ -15,7 +15,7 @@
 import * as T from './vendor/three.core.js';
 import {createLootVisual} from './loot-effects.js';
 import {createEnemyOrb} from './enemy-visuals.js';
-import {CLASSES} from './classes.js';
+import {CLASSES,classColor} from './classes.js';
 
 // Far outside the overworld and every region map, so a throwaway stays invisible even if some
 // later change did manage to render a frame while one is alive.
@@ -44,11 +44,17 @@ export function warmUpEffects(ctx){
  // false for sorcerer -- it has no palette and runs through combat-effects above -- so the loop
  // stays uniform rather than special-casing it.
  const actor=new T.Group();actor.position.copy(WARM);
- for(const [classId,{abilities}] of Object.entries(CLASSES))for(const [action,skill] of Object.entries(abilities)){
-  classEffects.ability({classId,action,kind:skill.kind,x:WARM.x,z:WARM.z,angle:0},skill,actor);
-  if(skill.kind==='projectile')classEffects.projectile({classId,action,visual:skill.projectile,x:WARM.x,z:WARM.z,angle:0,speed:skill.speed});
-  if(skill.kind==='zone')classEffects.zone({classId,action,radius:skill.radius,x:WARM.x,z:WARM.z,start:0,until:skill.duration});
-  if(skill.kind==='support')classEffects.zone({kind:'support',classId,action,casterId:'warmup',targetId:'warmup',radius:.5,x:WARM.x,z:WARM.z,start:0,until:skill.duration});
+ for(const [classId,{abilities}] of Object.entries(CLASSES)){
+  // Sorcerer zones fall through to class-effects' legacy path, which reads zone.color for all 19
+  // of its materials; class-combat.js sends classColor(p.state), so a zone literal without it
+  // would build them all with an undefined colour.
+  const color=classColor({classId});
+  for(const [action,skill] of Object.entries(abilities)){
+   classEffects.ability({classId,action,kind:skill.kind,x:WARM.x,z:WARM.z,angle:0},skill,actor);
+   if(skill.kind==='projectile')classEffects.projectile({classId,action,visual:skill.projectile,x:WARM.x,z:WARM.z,angle:0,speed:skill.speed});
+   if(skill.kind==='zone')classEffects.zone({classId,action,color,radius:skill.radius,x:WARM.x,z:WARM.z,start:0,until:skill.duration});
+   if(skill.kind==='support')classEffects.zone({kind:'support',classId,action,color,casterId:'warmup',targetId:'warmup',radius:.5,x:WARM.x,z:WARM.z,start:0,until:skill.duration});
+  }
  }
  ctx.renderer.compile(scene,ctx.camera);
  for(const item of disposables)item.dispose();
