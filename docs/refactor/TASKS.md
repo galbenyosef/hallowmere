@@ -23,7 +23,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (+tracker b33135e) |
 | G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (+tracker d08b553) |
 | G2.1 | 2.1 | M6, T2-6 | blanket 2026-09-15 | 44fdf01, 15bfa5e (+tracker ad3a6e5) |
-| G2.2 | 2.2 | M7, T2-5 | — | — |
+| G2.2 | 2.2 | M7, P8 | blanket 2026-09-15 | 552d796 (P8); M7 pending |
 | G2.3 | 2.3 | M8, T2-6 | — | — |
 | G2.4 | 2.4 | M9 | — | — |
 | G2.5 | 2.5 | M10 | — | — |
@@ -95,7 +95,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | P6c | 3.3 | sonnet | HUD writes | dist/hud.js | G2.6 | todo | — | — | — | |
 | P6d | 3.4 | sonnet | enemy sync + bars | dist/shared-world-render.js, dist/enemy-spawner.js | G2.6 | todo | — | — | — | |
 | P6e | 3.4 | sonnet | interaction memo | dist/interaction.js, dist/pointer-targeting.js | G2.6 | merged | codex/interaction-memo-90ff650c-90f2 | 6134 | ab85658..c17f64e → 8856a7b | orchestrator review: memo keyed on lastSnapshot/interactions/state/discoveries identity + length; callers verified read-only; one pre-existing test mutated a snapshot in place and was changed to swap the snapshot (matches the real contract); 600-scenario parity + frozen-consumer test; perf-smoke row 0.0031→0.0000 ms, 5,364→44 B; 422/422; re-run 17/17. Note: window.hallowmere.getState().interactions now returns the memoized array instance (read-only by contract) |
-| P8 | 3.4 | sonnet | effect pooling | dist/effects-factory.js, tests/effects-factory.test.mjs | G2.6 | changes-requested | codex/effect-pooling-4425180c-60fc | 6149 | 25771d9 | orchestrator review: 12-line diff — per-key pools (ring, slash by radius, particles by count, 3 material pools, cap 32), full reset on acquire, tagged release in removeObject with the verbatim dispose path for everything else; parity vs verbatim reference over 300 events/2100 steps; allocations 222/222/78/78 → 14/9/8/4; 448/448; one minor change requested: null boundingSphere/boundingBox on particle-geometry reuse so first-render culling matches a fresh geometry |
+| P8 | 3.4 | sonnet | effect pooling | dist/effects-factory.js, tests/effects-factory.test.mjs | G2.6 | merged | codex/effect-pooling-4425180c-60fc | 6149 | 25771d9..45a83e2 → 552d796 | orchestrator review: 12-line diff — per-key pools (ring, slash by radius, particles by count, 3 material pools, cap 32), full reset on acquire, tagged release in removeObject with the verbatim dispose path for everything else; parity vs verbatim reference over 300 events/2100 steps; allocations 222/222/78/78 → 14/9/8/4; 448/448; bounding volumes nulled on reuse (45a83e2); browser heap-delta to be recorded in the final PERF.md pass |
 
 ## Log
 
@@ -184,3 +184,4 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — Gate 2.1 complete (tracker ad3a6e5); main = ad3a6e5. P8 (effect pooling) starting now that effects-factory.js and player-motion.js are both on main.
 - 2026-09-15 — P8 started (sonnet) from ad3a6e5.
 - 2026-09-15 — P8 reported (25771d9); approved in substance; one-line bounding-volume reset requested.
+- 2026-09-15 — P8 merged (552d796). Tracker integrating.
