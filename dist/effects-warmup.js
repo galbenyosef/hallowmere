@@ -12,9 +12,17 @@
 // renderer.setAnimationLoop, so no frame can draw a throwaway even for one tick. Passing the
 // real ctx.scene/ctx.camera matters: the program a material compiles to depends on the scene's
 // lights, so warming against a bare scene would cache programs the real render never uses.
+//
+// A 20th program comes from a different lazy path: enemy-visuals' enchantBody (large/orb
+// enemies -- gravecaller, bone-colossus) patches a built-in MeshStandardMaterial shader via
+// onBeforeCompile instead of building a T.ShaderMaterial, so it still stalls the first frame
+// that renders one, same as the other 19. Its customProgramCacheKey is the fixed string
+// 'enemy-enchantment-v1' for every enchanted material regardless of enemy or colour, so one
+// throwaway MeshStandardMaterial run through enchantBody warms the program for every enemy
+// of that shape, for the rest of the session.
 import * as T from './vendor/three.core.js';
 import {createLootVisual} from './loot-effects.js';
-import {createEnemyOrb} from './enemy-visuals.js';
+import {createEnemyOrb,enchantBody} from './enemy-visuals.js';
 import {CLASSES,classColor} from './classes.js';
 
 // Far outside the overworld and every region map, so a throwaway stays invisible even if some
@@ -38,6 +46,14 @@ export function warmUpEffects(ctx){
  loot.model.position.copy(WARM);scene.add(loot.model);disposables.push(loot);
  // Hostile caster projectile (quarry-mage, pyromancer), spelled like shared-world-render's call.
  disposables.push(createEnemyOrb(scene,ctx.overworldEnvironment.glowTexture,WARM,0,'#ff714b',{reducedMotion}));
+ // Large/orb enemy body enchantment (gravecaller, bone-colossus): enchantBody patches whatever
+ // MeshStandardMaterial it is handed, and every enchanted material shares one fixed program
+ // cache key, so any single throwaway mesh run through it warms every enemy of that shape.
+ // model is always the enemy's root T.Group at the real call site, so wrap the mesh the same way.
+ const enchantModel=new T.Group();enchantModel.position.copy(WARM);
+ const enchantMesh=new T.Mesh(new T.SphereGeometry(1,8,6),new T.MeshStandardMaterial({color:0xffffff}));
+ enchantModel.add(enchantMesh);scene.add(enchantModel);enchantBody(enchantModel,'#ffffff');
+ disposables.push({dispose(){enchantMesh.geometry.dispose();enchantMesh.material.dispose();enchantModel.removeFromParent();}});
  // Every class-effect-materials kind, across every class a journey can be: melee/burst/dodge
  // through ability(), plus the projectile and zone shapes the snapshot renderer builds. The
  // event and zone literals mirror class-combat.js's emit/zones.push shapes. ability() returns
