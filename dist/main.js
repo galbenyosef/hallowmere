@@ -16,6 +16,7 @@ import {createPointerTargeting} from './pointer-targeting.js';
 import {createInteraction} from './interaction.js';
 import {createRegionTravel} from './region-travel.js';
 import {createSceneSetup} from './scene-setup.js';
+import {warmUpEffects} from './effects-warmup.js';
 import {bindInput} from './input-bindings.js';
 import {createPlayerMotion} from './player-motion.js';
 import {createRenderLoop} from './render-loop.js';
@@ -61,7 +62,7 @@ async function init(){ctx.loadingFailed=false;try{
  await ctx.buildRenderer();
  await ctx.buildWorld();
  ctx.titleScreen.setProgress(92,'Preparing your calling…');await loadingFrame();
- await ctx.buildHero();
+ await ctx.buildHero();warmUpEffects(ctx);
  ctx.clock=new T.Clock();ctx.assetsReady=true;ctx.updateUI();ctx.drawMap();ctx.titleScreen.setProgress(100);ctx.showModeChoice();ctx.renderer.setAnimationLoop(ctx.frame);
  }catch(error){ctx.loadingFailed=true;console.error(error);ctx.titleScreen.showError();}}
 function perform(action){
