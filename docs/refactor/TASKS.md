@@ -24,7 +24,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (+tracker d08b553) |
 | G2.1 | 2.1 | M6, T2-6 | blanket 2026-09-15 | 44fdf01, 15bfa5e (+tracker ad3a6e5) |
 | G2.2 | 2.2 | M7, P8 | blanket 2026-09-15 | 552d796 (P8), caf3b42 (M7) (+tracker b30cd65) |
-| G2.3 | 2.3 | M8, P6c | blanket 2026-09-15 | 2db9556 (P6c), f925fd8 (M8) (+tracker e12fe4c; tracker follows) |
+| G2.3 | 2.3 | M8, P6c | blanket 2026-09-15 | 2db9556 (P6c), f925fd8 (M8) (+tracker 374b1e2) |
 | G2.4 | 2.4 | M9 | — | — |
 | G2.5 | 2.5 | M10 | — | — |
 | G2.6 | 2.6 | M11 | — | — |
@@ -195,3 +195,4 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — M8 fix 8e57f64 verified by boot probe; capture re-running. M9 told to merge the fix.
 - 2026-09-15 — M9 reported (88ecf64..59bd14e); static review clean; M10 started (opus) stacked on M9.
 - 2026-09-15 — M8 merged (f925fd8). Gate 2.3 complete (M8, P6c). Tracker integrating.
+- 2026-09-15 — Gate 2.3 closed (tracker 374b1e2); main = 374b1e2; 39 tasks merged. Note: the headless boot probe sometimes reports the first GLB fetch as canceled even on known-good trees (seen on M7 and M9) while the capture harness succeeds — treat only JS exceptions from the probe as findings. M9 capture running; M10 running.
