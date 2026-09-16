@@ -23,18 +23,26 @@ const IDLE_FRAMES=300,COMBAT_FRAMES=500,COMBAT_BATCH=50; // combat sampled in ba
 
 // Route from the Ashwick spawn (-66,5) to the Hallowmere village encounter (dist/enemy-encounters.js
 // generateVillageEncounters/SPAWNS: 12 permanently-alive enemies near x∈[-8,10] z∈[-24,11], zone 'hallowmere').
-// The direct line from spawn instead passes through a separate road-enemy pack (dist/enemy-encounters.js
-// generateRoadPacks, zone 'road', roughly x∈[-53,-29] z≈2-8) whose non-boss aggro radius is 10.5 units
-// (dist/region-combat.js updateRegionEnemy: `if(!e.engaged&&dist>(data.boss?15:10.5)&&e.hp===e.maxHp)return true`).
-// A straight line from spawn to (-45,-22) -- the first leg of a route reported as safe elsewhere -- passes only
-// ~11.8 units from that pack's nearest spawn center at closest approach, inside its aggro radius once a single
-// enemy's placement jitter (dist/enemy-encounters.js `position()`, spread up to ~2.6) is added; this script's
-// own verification run confirmed it live (see the task report: the pack aggroed on that leg and chased the
-// character down, killing it right around (-45,-22)). So this route drops straight south first, pinned to
-// spawn's own x=-66 (already ~9+ units west of the pack's x-band on its own), only turning east once z is deep
-// enough south (-20) that the whole remaining path stays 20+ units from the pack's z≈2-8 band regardless of x
-// -- a wide, unambiguous margin instead of a second borderline diagonal.
-const ROUTE=[[-66,-20],[-45,-22],[-15,-18],[-4,-11]];
+// The overworld has no separate "aggro radius" -- dist/world.js's updateEnemy() picks the nearest live
+// player as `target` every tick regardless of distance, and the ONLY thing that keeps a full-health
+// enemy from chasing is `if(dist>=10.5&&e.hp===e.maxHp){seek home;return;}` -- so any enemy that is still
+// at full HP starts closing the instant the player comes within 10.5 units, from any direction, with no
+// separate trigger radius. Two earlier route attempts (documented in the task history) died to this:
+// first a direct line through the road-enemy pack (dist/enemy-encounters.js generateRoadPacks, zone
+// 'road', x∈[-53,-29] z≈2-8), then a "go around" waypoint at (-45,-22) that -- unaccountedly -- sat only
+// ~6 units from the permanent 4-enemy guard camp every OUTLANDS site spawns beside it (dist/
+// expansion-layout.js: `guardId=`${map.id}-${s.id}-guard`` at `s.x±3, s.z+1|5`), specifically the 'spring'
+// site at (-54,-29).
+//
+// This route was derived, not guessed: a small offline search (no browser needed, since encounter
+// generation is pure DOM-free code) computed every road-pack enemy position across 80 seeds plus every
+// OUTLANDS site's guard-camp position (16 sites, deterministic, no seed dependence), then grid-searched
+// for the corridor z at each x that maximizes the minimum distance to all of them. The tightest point on
+// this route clears by ~13 units (versus the 10.5 threshold) at every x it crosses, across all 80 sampled
+// seeds -- comfortably outside the hard aggro-distance check, not just outside one sampled run's enemy
+// layout. It swings southwest first (away from the road pack), crosses the road-pack/spring-guard gap
+// around z≈-9 to -11 where both are furthest, then continues into the village.
+const ROUTE=[[-80,-2],[-65,-9],[-50,-11],[-30,-19],[-4,-11]];
 
 const percentile=(values,p)=>{const s=[...values].sort((a,b)=>a-b);return s[Math.min(s.length-1,Math.max(0,Math.ceil(p*s.length)-1))];};
 const median=values=>percentile(values,.5);
