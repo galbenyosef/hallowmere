@@ -22,7 +22,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | G1.6 | 1.6 | M5 | 2026-09-15 (user) | ee26424 (+tracker 0c24cd6) |
 | G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (+tracker b33135e) |
 | G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (+tracker d08b553) |
-| G2.1 | 2.1 | M6, T2-6 | blanket 2026-09-15 | 44fdf01, 15bfa5e (tracker follows) |
+| G2.1 | 2.1 | M6, T2-6 | blanket 2026-09-15 | 44fdf01, 15bfa5e (+tracker ad3a6e5) |
 | G2.2 | 2.2 | M7, T2-5 | — | — |
 | G2.3 | 2.3 | M8, T2-6 | — | — |
 | G2.4 | 2.4 | M9 | — | — |
@@ -181,3 +181,4 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — Gate 2.0 complete (tracker d08b553); main = d08b553. User granted blanket merge authorization. T2-6 verified and merging; M6 review clean (capture running); M7 registering stacked on M6.
 - 2026-09-15 — T2-6 merged (44fdf01) under blanket authorization. M7 started (sonnet) stacked on M6. M6 capture running.
 - 2026-09-15 — M6 merged (15bfa5e). Gate 2.1 complete (M6, T2-6). Tracker integrating.
+- 2026-09-15 — Gate 2.1 complete (tracker ad3a6e5); main = ad3a6e5. P8 (effect pooling) starting now that effects-factory.js and player-motion.js are both on main.
