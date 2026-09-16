@@ -38,7 +38,10 @@ test('regionInteractions drops hidden records unless discovered or already known
  const ctx=baseCtx({lastSnapshot:{interactions:{portals:[{id:'p1',hidden:true}]}},state:{discoveries:[]}});
  const {regionInteractions}=createInteraction(ctx);
  assert.deepEqual(regionInteractions(),[]);
- ctx.lastSnapshot.interactions.portals[0].discovered=true;
+ // regionInteractions memoizes on ctx.lastSnapshot identity (snapshots are replaced
+ // wholesale on every publish, never mutated in place - see dist/main.js applySnapshot), so
+ // this simulates a real snapshot update instead of mutating the prior snapshot in place.
+ ctx.lastSnapshot={interactions:{portals:[{id:'p1',hidden:true,discovered:true}]}};
  assert.deepEqual(regionInteractions().map(r=>r.id),['p1']);
 });
 
