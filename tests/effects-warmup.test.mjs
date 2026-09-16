@@ -40,20 +40,27 @@ function resourcesIn(scene){
 }
 const shaderNames=scene=>{const names=[];scene.traverse(n=>{for(const m of n.material?(Array.isArray(n.material)?n.material:[n.material]):[])if(m.isShaderMaterial)names.push(m.name);});return names;};
 const shaderSources=scene=>{const sources=new Set();scene.traverse(n=>{for(const m of n.material?(Array.isArray(n.material)?n.material:[n.material]):[])if(m.isShaderMaterial)sources.add(m.fragmentShader);});return sources;};
+// enemy-visuals' enchantBody patches a MeshStandardMaterial's built-in program via
+// onBeforeCompile rather than building a T.ShaderMaterial, so it never shows up in
+// shaderSources -- its fixed customProgramCacheKey is the only way to see it staged.
+const enchantedMaterials=scene=>{const found=[];scene.traverse(n=>{for(const m of n.material?(Array.isArray(n.material)?n.material:[n.material]):[])if(m.customProgramCacheKey?.()==='enemy-enchantment-v1')found.push(m);});return found;};
 
 test('the warm-up compiles once, against the real scene and camera, with every throwaway already in it',()=>{
  let inFlight=null;
- const {ctx,scene,camera,compiles}=makeCtx(s=>{inFlight={children:s.children.length,sources:shaderSources(s).size};});
+ const {ctx,scene,camera,compiles}=makeCtx(s=>{inFlight={children:s.children.length,sources:shaderSources(s).size,enchanted:enchantedMaterials(s).length};});
  const baseline=scene.children.length;
  warmUpEffects(ctx);
  assert.equal(compiles.length,1,'renderer.compile must be called exactly once');
  assert.equal(compiles[0].target,scene,'compile must see the real scene, whose lights decide which programs a material builds');
  assert.equal(compiles[0].view,camera);
  assert.ok(inFlight.children>baseline+40,`only ${inFlight.children-baseline} throwaways were in the scene when compile ran`);
- // 19 distinct fragment bodies, which is every lazily-built one in the game: 8 from
- // class-effect-materials, 5 from loot-effects, 1 from enemy-visuals' energy orb, and 5 from
- // combat-effects (emberbolt tail, arcane core, arcane tail, arcane wave, cleave arc).
+ // 19 distinct fragment bodies, which is every lazily-built T.ShaderMaterial in the game: 8
+ // from class-effect-materials, 5 from loot-effects, 1 from enemy-visuals' energy orb, and 5
+ // from combat-effects (emberbolt tail, arcane core, arcane tail, arcane wave, cleave arc). A
+ // 20th program -- enemy-visuals' enchantBody, patched onto a MeshStandardMaterial rather than
+ // built as a T.ShaderMaterial -- is invisible to shaderSources, so it is checked separately.
  assert.ok(inFlight.sources>=19,`only ${inFlight.sources} distinct shader programs were staged`);
+ assert.equal(inFlight.enchanted,1,"enchantBody's warm-up MeshStandardMaterial was not staged for compile");
 });
 
 test('it warms every distinct class-effect-materials kind',()=>{
@@ -77,6 +84,7 @@ test('the scene is left exactly as it was found, with every warmed resource rele
  let textureDisposals=0;glowTexture.addEventListener('dispose',()=>textureDisposals++);
  warmUpEffects(ctx);
  assert.ok(allocated.length>100,`the warm-up only allocated ${allocated.length} resources`);
+ assert.ok(allocated.some(r=>r.customProgramCacheKey?.()==='enemy-enchantment-v1'),"enchantBody's warm-up material was never allocated");
  const leaked=[...disposals].filter(([,count])=>count===0);
  assert.deepEqual(leaked.map(([r])=>r.name||r.type),[],'a warm-up resource was never disposed');
  assert.equal(textureDisposals,0,'the shared glow texture the rest of the game draws with was disposed');
