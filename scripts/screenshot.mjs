@@ -158,6 +158,10 @@ const FREEZE=keepCanvas=>`(async()=>{
   style.textContent='*{animation-play-state:paused!important;transition:none!important;caret-color:transparent!important}';document.head.append(style);}
  document.getAnimations().forEach(animation=>{try{animation.pause();}catch{}});
  await document.fonts.ready;
+ // fonts.ready also resolves when a web font FAILED to load (a fallback face would then reach the PNG);
+ // throwing here makes the scenario loop retry the capture in a fresh browser instead of diffing garbage.
+ const failedFonts=[...new Set([...document.fonts].filter(face=>face.status==='error').map(face=>face.family))];
+ if(failedFonts.length)throw Error('Web fonts failed to load: '+failedFonts.join(', '));
  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
  return true;})()`;
 const THAW=`(()=>{document.getElementById('world').style.visibility='';document.getElementById('__shot-freeze')?.remove();

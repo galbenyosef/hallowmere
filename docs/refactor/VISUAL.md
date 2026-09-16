@@ -138,3 +138,24 @@ Notes from getting this to work on macOS, all of which the harness now handles:
   few times a second is by itself enough to stall the page. Every wait in the harness reads the DOM.
 - `07-connection-overlay` blocks `*multiplayer-config.json*` with `Network.setBlockedURLs`. That is a
   harness-side stand-in for "no backend configured"; nothing in `dist/` is modified.
+
+## Observations from the refactor captures (2026-09-15)
+
+Every main.js step (M1–M11), the CSS tasks (T2-5, T2-6) and the import normalisation (T2-1) were
+captured with `--all` on their branch before merging; 17 full runs in total. What the diffs showed:
+
+- `04-hud-spawn` never reaches 0 px: the two resource orbs animate (tidal-glass waves and bubbles)
+  and the "All progress saved" autosave flash is timing-dependent. Observed range 0.02–0.12%.
+- `09-journal`, `10-help` and `13-map-expanded` occasionally differ by exactly 877 px (0.0677%) —
+  the same autosave-flash box. Treat anything under ~0.12% on those four scenarios as noise.
+- One capture (M11, `13-map-expanded`) diffed 2.17% because the Google web font request failed in
+  that fresh browser and the page rendered in the fallback serif; re-capturing the scenario matched.
+  `scripts/screenshot.mjs` now throws when any `document.fonts` face has `status==='error'`, so the
+  scenario loop retries in a fresh browser instead of producing a fallback-font PNG.
+- Captures must run one at a time on this machine: two SwiftShader Chromes at once make every
+  HUD-dependent scenario time out ("Timed out waiting for the HUD to settle").
+- A headless boot probe (load `index.html`, print `Runtime.exceptionThrown`) caught the one real
+  regression of the whole refactor — an M8 branch whose `init()` still passed a bare `talkTo`
+  callback after the function moved — which no node test could reach. The probe sometimes reports
+  the first GLB fetch as canceled even on known-good trees; only JavaScript exceptions from it are
+  findings.
