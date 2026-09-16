@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createTitleScreen} from '../dist/title-screen.js';
+import {createConnectionUi} from '../dist/connection-ui.js';
 import {sliceBetween,readDist} from './helpers/source.mjs';
+import {installGlobals} from './helpers/dom.mjs';
 
 // Exercise the real entrypoint's mode transitions without requiring WebGL.
 const main=readDist('main.js');
@@ -116,15 +118,20 @@ test('main-menu navigation cannot revive a dead or disconnected player',()=>{
 });
 
 
-test('reconnect controls remain reachable while the main menu is open',()=>{
- const {run,ctx,context,$}=setup();ctx.assetsReady=true;run("startSession('multiplayer')");ctx.lastSnapshot={};
+// connectionStatus and the connection/restart-vote bindings are dist/connection-ui.js now (M9);
+// the same node map backs the module's $ through a stubbed global document, and the two names
+// the old vm context injected by name (releaseInput, inventoryPreviews) arrive through ctx.
+test('reconnect controls remain reachable while the main menu is open',t=>{
+ const {run,ctx,$}=setup();ctx.assetsReady=true;run("startSession('multiplayer')");ctx.lastSnapshot={};
  run('openMainMenu()');ctx.rosterPicker.resolve=()=>{};
- run(sliceBetween(main,'function connectionStatus(',"$('connection-retry').onclick",{file:'dist/main.js'}));
- run("connectionStatus('Reconnecting',false)");
+ installGlobals(t,{document:{getElementById:$}});
+ Object.assign(ctx,{releaseInput(){},inventoryPreviews:{hide(){}}},createConnectionUi(ctx));
+ const {connectionStatus}=ctx;
+ connectionStatus('Reconnecting',false);
  assert.equal($('loading').inert,true);assert.equal($('connection-title').focusCalls,1);
- run("connectionStatus('Unable to connect',false,{retryable:true,failed:true})");
+ connectionStatus('Unable to connect',false,{retryable:true,failed:true});
  assert.equal($('connection-retry').hidden,false);assert.equal($('connection-retry').focusCalls,1);
- run("connectionStatus('Connected',true)");
+ connectionStatus('Connected',true);
  assert.equal($('loading').inert,false);assert.equal($('connection-overlay').hidden,true);
  assert.equal($('menu-resume').focusCalls,1);assert.equal(ctx.mainMenuOpen,true);assert.equal(ctx.paused,true);
 });

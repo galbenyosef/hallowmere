@@ -53,6 +53,7 @@ import {createHud} from './hud.js';
 import {createGameAudio} from './game-audio.js';
 import {createInventoryUi} from './inventory-ui.js';
 import {createModals} from './modals.js';
+import {createConnectionUi} from './connection-ui.js';
 paintIcons(document);
 const resourceOrbs=createResourceOrbs();
 const exploration=new ExplorationAtlas();
@@ -150,14 +151,16 @@ function startSession(mode,save){
  if(!ctx.assetsReady||ctx.sessionMode)return;
  ctx.sessionMode=mode;ctx.ready=true;setModeChoiceInert(false);const generation=++ctx.sessionGeneration;
  const current=callback=>(...args)=>{if(generation===ctx.sessionGeneration)callback(...args);};
- const callbacks={onSnapshot:current(applySnapshot),onProgress:current(soon=>ctx.autosave?.changed(soon)),onStatus:current(connectionStatus),onWelcome:current(()=>{releaseInput();ctx.movementCorrection.reset();ctx.resetMovement=true;ctx.moveTarget=null;ctx.movePath=[];})};
+ const callbacks={onSnapshot:current(applySnapshot),onProgress:current(soon=>ctx.autosave?.changed(soon)),onStatus:current(ctx.connectionStatus),onWelcome:current(()=>{releaseInput();ctx.movementCorrection.reset();ctx.resetMovement=true;ctx.moveTarget=null;ctx.movePath=[];})};
  ctx.network=mode==='single-player'?new LocalSession({...callbacks,save}):new MultiplayerClient(callbacks);
  ctx.titleScreen.hide();ctx.clock.getDelta();ctx.network.start();awaken();
 }
+ctx.startSession=startSession;
 function returnToModeChoice(){
  if(ctx.lastSnapshot)return;
  ctx.sessionGeneration++;ctx.network?.close();ctx.network=null;releaseInput();showModeChoice();
 }
+ctx.returnToModeChoice=returnToModeChoice;
 function mainMenuSession(){
  return {mode:ctx.sessionMode,canChangeCharacter:!ctx.activeJourney&&!!ctx.network?.connected&&!ctx.state.ended&&ctx.safeHere(),character:classFor(ctx.state).name,characterLocked:!!ctx.activeJourney};
 }
@@ -230,14 +233,7 @@ function frame(){if(!ctx.ready)return;const raw=ctx.clock.getDelta(),dt=Math.min
  const desired=ctx.player.position.clone().add(new T.Vector3(0,0,-3.4));ctx.cameraTarget.lerp(desired,1-Math.exp(-dt*4));ctx.camera.position.copy(ctx.cameraTarget).add(ctx.cameraOffset);ctx.shake=Math.max(0,ctx.shake-dt*.35);if(ctx.shake>0&&!frozen&&ctx.gameSettings.cameraShake){ctx.camera.position.x+=(Math.random()-.5)*ctx.shake;ctx.camera.position.z+=(Math.random()-.5)*ctx.shake;}ctx.camera.lookAt(ctx.cameraTarget);ctx.worldPreview?.update(ctx.camera);ctx.moonLight.position.set(ctx.player.position.x-16,29,ctx.player.position.z+9);ctx.moonLight.target.position.set(ctx.player.position.x,0,ctx.player.position.z);ctx.moonLight.target.updateMatrixWorld();ctx.updateMouseTarget();ctx.life.renderLabels(ctx.enemies.some(e=>!e.dead&&distance(e.model.position,ctx.player.position)<8&&!ctx.safeHere()),ctx.keys.has('alt'));ctx.updateFloaters(ctx.backgrounded?0:dt);ctx.uiTimer+=dt;if(ctx.uiTimer>.09){ctx.uiTimer=0;ctx.updateUI();ctx.drawMap();}ctx.multiplayerView?.update(dt,ctx.accumulated);ctx.renderer.render(ctx.scene,ctx.camera);ctx.resourceOrbs.update(frozen?0:dt,ctx.state.hp/ctx.state.maxHp,ctx.state.mana/ctx.state.maxMana);}
 Object.assign(ctx,createInventoryUi(ctx),createModals(ctx));
 const {inventoryPreviews,toggleMapForDeath}=ctx;
-function connectionStatus(message,connected,{retryable=false,failed=false}={}){
- ctx.syncAudioState(connected);
- // A reconnect overlay must remain reachable while the main menu traps focus.
- if(ctx.mainMenuOpen){const wasInert=$('loading').inert;$('loading').inert=!connected;if(connected&&wasInert&&!ctx.rosterPicker?.open)$('menu-resume').focus();}
- const el=$('multiplayer-status');if(el.textContent!==message)el.textContent=message;el.hidden=!connected||ctx.sessionMode==='single-player';$('connection-back').hidden=!!ctx.lastSnapshot;$('connection-overlay').hidden=connected;if(!connected){inventoryPreviews.hide();$('connection-title').textContent=failed?'Unable to connect':ctx.lastSnapshot?'Reconnecting to game':'Loading game';$('connection-message').textContent=message;$('connection-spinner').hidden=failed;$('connection-retry').hidden=!retryable;if(ctx.modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),ctx.state,false);releaseInput();ctx.rosterPicker?.resolve({ok:false,reason:'Connection lost. Try again once connected.'});if(ctx.mainMenuOpen){const focusTarget=$(retryable?'connection-retry':'connection-title');focusTarget.tabIndex=retryable?0:-1;focusTarget.focus();}}}
-$('connection-retry').onclick=()=>{if(ctx.lastSnapshot){location.reload();return;}returnToModeChoice();startSession('multiplayer');};
-$('restart-yes').onclick=()=>ctx.network?.send('vote',{agree:true});
-$('restart-no').onclick=()=>ctx.network?.send('vote',{agree:false});
+Object.assign(ctx,createConnectionUi(ctx));
 function applySnapshot(snapshot,changed){
  const initialSnapshot=!ctx.lastSnapshot,wasDead=ctx.state.ended,oldLevel=ctx.state.level,beforeServices=JSON.stringify([ctx.state.gold,ctx.state.potions,ctx.state.forgeLevel,ctx.state.questAccepted,ctx.state.questRewarded,ctx.state.victory,ctx.state.bossLootClaimed,ctx.state.rookSupplies]),beforeInventory=JSON.stringify([ctx.state.inventory,ctx.state.equipped]);
  const nextMap=snapshot.mapId||snapshot.state.mapId||snapshot.players.find(p=>p.id===snapshot.you)?.mapId||'overworld',mapChanged=nextMap!==ctx.renderedMap;
@@ -264,7 +260,7 @@ function applySnapshot(snapshot,changed){
   ctx.updateEnemyBar(e);
  }
  ctx.life.syncLoot(snapshot.loot);ctx.life.syncForage(snapshot.forage);ctx.environment.updateProgress?.(ctx.state);ctx.environment.sync?.(snapshot.interactions,ctx.state.discoveries);if(ctx.renderedMap==='overworld'){ctx.landmarks?.updateProgress?.(ctx.state);ctx.landmarks?.sync?.(snapshot.interactions,ctx.state.discoveries);}
- connectionStatus(`${snapshot.players.length} / 8 adventurers · ${classFor(ctx.state).name} ${me.slot+1}`,true);
+ ctx.connectionStatus(`${snapshot.players.length} / 8 adventurers · ${classFor(ctx.state).name} ${me.slot+1}`,true);
  $('restart-vote').hidden=ctx.sessionMode==='single-player'||!snapshot.votes.length;$('restart-vote-text').textContent=`Restart the game? ${snapshot.votes.length} / ${snapshot.players.length} agree. All progress will reset.`;
  $('restart-yes').disabled=snapshot.votes.includes(snapshot.you);
  for(const event of snapshot.events)if(event.id>ctx.lastNetworkEvent){networkEvent(event);ctx.lastNetworkEvent=event.id;}
