@@ -1,4 +1,4 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {pointBlocked} from './combat.js';
 import {BUILDING_SPECS,insideBuilding} from './buildings.js';
 

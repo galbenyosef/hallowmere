@@ -1,4 +1,4 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 // One merge-batcher for the "accumulate transformed geometries per material, then

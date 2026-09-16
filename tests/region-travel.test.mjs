@@ -7,15 +7,17 @@ import {distance} from '../dist/combat.js';
 import {regionActionName} from '../dist/region-client-ui.js';
 import {$} from '../dist/dom.js';
 
-// dist/region-travel.js imports the bare 'three' specifier, which only the page's import map
-// resolves; match it in Node the way tests/effects-factory.test.mjs and
+// dist/region-travel.js imports the relative './vendor/three.core.js' specifier (and, via
+// dist/region-environment.js -> dist/treasure-chests.js -> dist/geometry-batch.js, the bare
+// 'three/addons/utils/BufferGeometryUtils.js' specifier, which only the page's import map
+// resolves); match both in Node the way tests/effects-factory.test.mjs and
 // tests/enemy-spawner.test.mjs do.
 //
-// 'three' is routed through a data: module that re-exports three.module.js unchanged except
-// for Vector3, subclassed to tick a resettable counter. A module namespace's exported
-// bindings are read-only from the importer's side (reassigning three.module.js's own Vector3
-// property silently no-ops), so redirecting the resolution is the only way to observe, from
-// this test, how many `new T.Vector3(...)` dist/region-travel.js's renderRegionLabels
+// The Three specifier is routed through a data: module that re-exports three.module.js
+// unchanged except for Vector3, subclassed to tick a resettable counter. A module namespace's
+// exported bindings are read-only from the importer's side (reassigning three.module.js's own
+// Vector3 property silently no-ops), so redirecting the resolution is the only way to observe,
+// from this test, how many `new T.Vector3(...)` dist/region-travel.js's renderRegionLabels
 // performs internally.
 const threeModuleUrl=new URL('../dist/vendor/three.module.js',import.meta.url).href;
 const vector3Stats={count:0};
@@ -26,7 +28,10 @@ const vector3SpyUrl='data:text/javascript,'+encodeURIComponent(
  `export class Vector3 extends Base.Vector3{constructor(...a){super(...a);globalThis.__regionTravelVector3Stats.count++;}}\n`
 );
 const hook=registerHooks({resolve(specifier,context,nextResolve){
- if(specifier==='three')return {url:vector3SpyUrl,shortCircuit:true};
+ // dist/region-travel.js and its scenery dependencies now import the relative
+ // './vendor/three.core.js' specifier instead of bare 'three' (T2-1); spy on both so the
+ // Vector3 allocation count below still reflects what actually runs.
+ if(specifier==='three'||specifier==='./vendor/three.core.js')return {url:vector3SpyUrl,shortCircuit:true};
  if(specifier==='three/addons/utils/BufferGeometryUtils.js')return nextResolve(new URL('../dist/vendor/utils/BufferGeometryUtils.js',import.meta.url).href,context);
  if(specifier==='three/addons/loaders/GLTFLoader.js')return nextResolve(new URL('../dist/vendor/loaders/GLTFLoader.js',import.meta.url).href,context);
  return nextResolve(specifier,context);

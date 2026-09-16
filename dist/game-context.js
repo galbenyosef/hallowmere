@@ -4,7 +4,7 @@
 // a module that needs `renderedMap` reads `ctx.renderedMap` from the same object main.js
 // writes. Data fields carry the initial values main.js used to declare inline; slots that
 // a wiring step must fill are null and listed in WIRED_SLOTS.
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {mapFor} from './regions.js';
 import {isSanctuary} from './campaign.js';
 import {distance,ENEMY_TYPES} from './combat.js';

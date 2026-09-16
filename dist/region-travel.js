@@ -11,7 +11,7 @@
 // task's createInteraction, called across module boundary from renderRegionLabels). ctx.awaken/
 // ctx.toast (main.js functions this task adds to ctx, since renderRegionLabels's label click
 // handler calls them). Math/document/innerWidth/innerHeight (globals).
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {$} from './dom.js';
 import {distance} from './combat.js';
 import {mapFor} from './regions.js';

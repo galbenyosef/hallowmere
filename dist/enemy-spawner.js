@@ -5,7 +5,7 @@
 // ctx.cloneModel (ctx field wired by M2's createModelCache), ctx.scene/ctx.enemies/
 // ctx.overworldEnvironment/ctx.reducedMotion (already-declared ctx data fields), Math/document
 // (globals). spawnEnemy calls updateEnemyBar directly — both stay in this closure.
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {createEnemyVisuals} from './enemy-visuals.js';
 import {ENEMY_TYPES} from './combat.js';
 import {getRig} from './model-kit.js';

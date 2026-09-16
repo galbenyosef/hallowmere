@@ -1,18 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
 import {seededRandom} from '../dist/campaign.js';
-
-// dist/interaction.js imports the bare 'three' specifier, which only the page's import map
-// resolves; match it in Node the way tests/effects-factory.test.mjs and
-// tests/enemy-spawner.test.mjs do.
-const hook=registerHooks({resolve(specifier,context,nextResolve){
- if(specifier==='three')return nextResolve(new URL('../dist/vendor/three.module.js',import.meta.url).href,context);
- return nextResolve(specifier,context);
-}});
-const {createInteraction}=await import('../dist/interaction.js');
-hook.deregister();
+import {createInteraction} from '../dist/interaction.js';
 
 function baseCtx(overrides={}){
  return Object.assign({player:{position:{x:0,y:0,z:0}},environment:{obstacles:[],currentBuilding:()=>null},

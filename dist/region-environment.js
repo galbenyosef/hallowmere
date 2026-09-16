@@ -1,6 +1,6 @@
 import {createGroundFog} from './ground-fog.js';
 import {createOutlandScenery} from './outland-scenery.js';
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {MAPS,PORTALS,mapFor,availablePortal} from './regions.js';
 import {createCaveEntranceEffect} from './cave-entrance-effects.js';
 import {createTreasureChest} from './treasure-chests.js';

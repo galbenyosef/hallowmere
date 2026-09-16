@@ -1,10 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {register} from 'node:module';
-import {pathToFileURL} from 'node:url';
-import {dirname, resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {createPredatorCharacter, PREDATOR_POSES, PREDATOR_APPEARANCES} from '../dist/predator-model.js';
 
 // Proves the T1-3 model-primitives adoption changes nothing observable: every
 // Object3D built by createPredatorCharacter().root -- name, transform, shadow
@@ -14,24 +11,6 @@ import {fileURLToPath} from 'node:url';
 // combination the game reaches through setPose()/setAppearance(). The
 // expected hashes below were captured on the unmodified file (three
 // consecutive runs agreed) and must never be edited to make a change pass.
-//
-// dist/predator-model.js imports the bare 'three' specifier, which only the
-// page's <script type="importmap"> can resolve (see dist/index.html); Node
-// has no import map, so this registers a loader hook that redirects just that
-// one specifier to dist/vendor/three.module.js (the same target the page's
-// import map uses), exactly like the browser would. Everything else --
-// including predator-model.js's own relative import of ./model-primitives.js
-// -- resolves normally.
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const vendorUrl = pathToFileURL(resolve(root, 'dist/vendor/three.module.js')).href;
-const hooksSource = `
-export async function resolve(specifier, context, nextResolve) {
- if (specifier === 'three') return nextResolve(${JSON.stringify(vendorUrl)}, context);
- return nextResolve(specifier, context);
-}
-`;
-register('data:text/javascript;base64,' + Buffer.from(hooksSource).toString('base64'), import.meta.url);
-const {createPredatorCharacter, PREDATOR_POSES, PREDATOR_APPEARANCES} = await import(pathToFileURL(resolve(root, 'dist/predator-model.js')).href);
 
 function sha256(arr) {
  const buf = Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength);

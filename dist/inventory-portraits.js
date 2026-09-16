@@ -1,4 +1,4 @@
-import * as T from './vendor/three.module.js';
+import * as T from 'three';
 import {fitOrthographicCamera} from './portrait-fit.js';
 import {roster} from './character-study-roster.js';
 import {createStudyScene,disposeStudy} from './character-study-models.js';

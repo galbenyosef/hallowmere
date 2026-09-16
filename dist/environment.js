@@ -4,7 +4,7 @@ import {createOutlandScenery} from './outland-scenery.js';
 import {MAPS} from './regions.js';
 import {SCENERY_OBSTACLES} from './world-layout.js';
 import {bareTreeSegments} from './bare-tree.js';
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {createGeometryBatcher} from './geometry-batch.js';
 import {BUILDING_SPECS,createBuildingLayout,buildingLocal,insideBuilding,setBuildingAccess} from './buildings.js';
 import {lcg,range as rangeFn} from './random.js';

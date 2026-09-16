@@ -4,7 +4,7 @@
 // ctx.floaters/ctx.combatEffects (already-declared ctx data fields), Math/document (globals).
 // groundPing calls ringEffect and cancelAttack calls removeObject directly — both stay in
 // this closure, same as cloneModel calling optimizeModel directly in model-kit.js.
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {$} from './dom.js';
 export function createEffects(ctx){
  function groundPing(pos){ringEffect(pos,0xc0c2a1,.25,.65,.45);}

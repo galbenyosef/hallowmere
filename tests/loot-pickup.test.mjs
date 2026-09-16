@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
 import {VillageLife} from '../dist/world-actors.js';
 import {World} from '../dist/world.js';
@@ -8,18 +7,9 @@ import {LocalSession} from '../dist/local-session.js';
 import {createState} from '../dist/combat.js';
 import {createCampaign,LOOT_PICKUP_RANGE} from '../dist/campaign.js';
 import {installGlobals} from './helpers/dom.mjs';
-
-// dist/pointer-targeting.js and dist/interaction.js import the bare 'three' specifier, which
-// only the page's import map resolves; match it in Node the way tests/effects-factory.test.mjs
-// and tests/enemy-spawner.test.mjs do.
-const hook=registerHooks({resolve(specifier,context,nextResolve){
- if(specifier==='three')return nextResolve(new URL('../dist/vendor/three.module.js',import.meta.url).href,context);
- return nextResolve(specifier,context);
-}});
-const {createPointerTargeting}=await import('../dist/pointer-targeting.js');
-const {createInteraction}=await import('../dist/interaction.js');
-const {bindInput}=await import('../dist/input-bindings.js');
-hook.deregister();
+import {createPointerTargeting} from '../dist/pointer-targeting.js';
+import {createInteraction} from '../dist/interaction.js';
+import {bindInput} from '../dist/input-bindings.js';
 
 const item={id:'charm',kind:'item',template:'oak-charm',name:'Warding oak charm',rarity:'uncommon',x:10,z:0,mapId:'overworld'};
 function fixture(t){

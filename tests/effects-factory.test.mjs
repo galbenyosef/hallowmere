@@ -1,17 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
 import {installGlobals} from './helpers/dom.mjs';
-
-// dist/effects-factory.js imports the bare 'three' specifier, which only the page's import map
-// resolves; match it in Node the way tests/model-kit.test.mjs does.
-const hook=registerHooks({resolve(specifier,context,nextResolve){
- if(specifier==='three')return nextResolve(new URL('../dist/vendor/three.module.js',import.meta.url).href,context);
- return nextResolve(specifier,context);
-}});
-const {createEffects}=await import('../dist/effects-factory.js');
-hook.deregister();
+import {createEffects} from '../dist/effects-factory.js';
 
 // A minimal document stub: enough for floatText's literal $('float-layer') lookup
 // (dist/dom.js's $ is document.getElementById) and its document.createElement('div').

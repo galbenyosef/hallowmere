@@ -1,4 +1,4 @@
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 
 // Soft, texture-only light keeps the entrance readable without a bloom pass.
 export function createCaveEntranceEffect(parent,portal){

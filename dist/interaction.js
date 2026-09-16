@@ -9,7 +9,7 @@
 // collectClickedLoot/interactRegion call them). regionInteractions/nearbyInteraction/interact/
 // enterBuilding/canReachRegion call each other directly within this closure, same as groundPing
 // calling ringEffect in effects-factory.js.
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {distance,hasLineOfSight} from './combat.js';
 export function createInteraction(ctx){
  let regionCache=null;

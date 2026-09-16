@@ -1,6 +1,6 @@
 // optimizeModel and getRig are pure and standalone; createModelCache(ctx) wires cloneModel onto
 // ctx (ctx.prefabs caches the loaded/optimized prefab per name; see dist/game-context.js).
-import * as T from 'three';
+import * as T from './vendor/three.core.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {CLASS_LIST} from './classes.js';
 import {createPlayableCharacter} from './playable-characters.js';

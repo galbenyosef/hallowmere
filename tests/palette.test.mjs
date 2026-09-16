@@ -1,15 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {registerHooks} from 'node:module';
-
-const THREE_URL = new URL('../dist/vendor/three.module.js', import.meta.url).href;
-const hook = registerHooks({resolve(specifier, context, nextResolve) {
- if (specifier === 'three') return nextResolve(THREE_URL, context);
- return nextResolve(specifier, context);
-}});
-const T = await import('three');
-const {createPalette} = await import('../dist/palette.js');
-hook.deregister();
+import * as T from '../dist/vendor/three.core.js';
+import {createPalette} from '../dist/palette.js';
 
 function fp(m){
  return {color:m.color.getHex(),roughness:m.roughness,metalness:m.metalness,flatShading:!!m.flatShading,emissive:m.emissive?.getHex()??null,emissiveIntensity:m.emissiveIntensity};

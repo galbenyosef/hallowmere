@@ -4,13 +4,15 @@ import {readFile} from 'node:fs/promises';
 import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.module.js';
 import {NPCS} from '../dist/campaign.js';
-import {createNpcPortraitStudy, npcPortraitFor} from '../dist/npc-portraits.js';
 
-// Match the game's import map while loading its real GLB assets in Node.
+// Match the game's import map while loading its real GLB assets in Node. dist/npc-portraits.js
+// also needs this: it imports the bare 'three' specifier (it needs WebGLRenderer, which only
+// the full build exports).
 const hook = registerHooks({resolve(specifier, context, nextResolve) {
   return nextResolve(specifier === 'three' ? new URL('../dist/vendor/three.module.js', import.meta.url).href : specifier, context);
 }});
 const {GLTFLoader} = await import('../dist/vendor/loaders/GLTFLoader.js');
+const {createNpcPortraitStudy, npcPortraitFor} = await import('../dist/npc-portraits.js');
 hook.deregister();
 
 test('every speaking villager uses an unchanged gameplay model with all geometry inside the portrait', async () => {
