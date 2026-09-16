@@ -55,6 +55,9 @@ import {createInventoryUi} from './inventory-ui.js';
 import {createModals} from './modals.js';
 import {createConnectionUi} from './connection-ui.js';
 import {createSessionLifecycle} from './session-lifecycle.js';
+import {createSnapshotApply} from './snapshot-apply.js';
+import {createNetworkEvents} from './network-events.js';
+import {createSharedWorldRender} from './shared-world-render.js';
 paintIcons(document);
 const resourceOrbs=createResourceOrbs();
 const exploration=new ExplorationAtlas();
@@ -90,14 +93,14 @@ async function init(){let loadingFailed=false;try{
  ctx.clock=new T.Clock();ctx.assetsReady=true;ctx.updateUI();ctx.drawMap();ctx.titleScreen.setProgress(100);ctx.showModeChoice();ctx.renderer.setAnimationLoop(frame);
  }catch(error){loadingFailed=true;console.error(error);ctx.titleScreen.showError();}}
 Object.assign(ctx,createHud(ctx),createGameAudio(ctx));
-const {awaken,audioAt}=ctx;
+const {awaken}=ctx;
 
 function resize(){if(!ctx.renderer)return;const w=innerWidth,h=innerHeight;ctx.renderer.setSize(w,h,false);const height=ctx.worldPreview||new URLSearchParams(location.search).get('preview')==='enemies'?19:w<650?28:29;ctx.camera.left=-height*(w/h)/2;ctx.camera.right=-ctx.camera.left;ctx.camera.top=height/2;ctx.camera.bottom=-height/2;ctx.camera.updateProjectionMatrix();}
 window.addEventListener('resize',resize);
 Object.assign(ctx,bindInput(ctx));
 // The names main.js still calls itself stay module-scope bindings, so every remaining
 // call site (and the vm slices that quote them) keeps the spelling it had before the move.
-const {attacksFromHere,releaseInput,navigateMenu}=ctx;
+const {attacksFromHere,navigateMenu}=ctx;
 function perform(action){
  if(!ctx.ready||ctx.paused||ctx.rosterPicker?.open||ctx.backgrounded||ctx.state.ended||!ctx.network?.connected||!canUse(ctx.state,action))return false;
  const skill=abilitiesFor(ctx.state)[action],offensive=action!=='dodge'&&action!=='heal'&&skill.kind!=='support';
@@ -115,122 +118,16 @@ ctx.perform=perform;
 Object.assign(ctx,createPlayerMotion(ctx));
 function frame(){if(!ctx.ready)return;const raw=ctx.clock.getDelta(),dt=Math.min(raw,.035),frozen=ctx.paused||ctx.rosterPicker?.open||ctx.backgrounded||!ctx.network?.connected;ctx.network?.advance?.(raw,frozen);if(ctx.network?.connected&&!ctx.backgrounded&&(ctx.sessionMode==='multiplayer'||!frozen))ctx.movementCorrection.update(ctx.player.position,dt,ctx.environment.obstacles,ctx.worldBounds());if(!frozen){ctx.accumulated+=dt;for(const k in ctx.state.cooldowns)ctx.state.cooldowns[k]=Math.max(0,ctx.state.cooldowns[k]-dt);ctx.updatePlayer(dt,ctx.accumulated);if(!ctx.state.ended){ctx.life.update(ctx.accumulated);if(ctx.pendingRegionInteraction){const interaction=ctx.regionInteractions().find(r=>r.id===ctx.pendingRegionInteraction);if(!interaction)ctx.pendingRegionInteraction=null;else if(ctx.canReachRegion(interaction,2.7))ctx.interactRegion(interaction);}}const zone=ctx.renderedMap==='overworld'?zoneAt(ctx.player.position):ctx.renderedMap;if(zone!==ctx.state.zone){ctx.state.zone=zone;if(!ctx.state.visited.includes(zone))ctx.state.visited.push(zone);ctx.toast(zoneName(zone)+(zone==='ashwick'?' · Sanctuary':''));}ctx.audioTimer+=dt;if(ctx.audioTimer>=.1){ctx.updateAudioWorld(ctx.audioTimer);ctx.audioTimer=0;}}
  if(frozen&&ctx.network)ctx.network.input={x:0,z:0,angle:ctx.angle};
- if(!ctx.backgrounded){if(frozen)ctx.accumulated+=dt;renderSharedWorld(dt,ctx.accumulated);ctx.renderRegionLabels();ctx.updateEffects(dt);ctx.environment.update(ctx.accumulated,dt,ctx.state.victory,ctx.camera,ctx.player.position);if(ctx.renderedMap==='overworld')ctx.landmarks?.update?.(ctx.accumulated);}
+ if(!ctx.backgrounded){if(frozen)ctx.accumulated+=dt;ctx.renderSharedWorld(dt,ctx.accumulated);ctx.renderRegionLabels();ctx.updateEffects(dt);ctx.environment.update(ctx.accumulated,dt,ctx.state.victory,ctx.camera,ctx.player.position);if(ctx.renderedMap==='overworld')ctx.landmarks?.update?.(ctx.accumulated);}
  const desired=ctx.player.position.clone().add(new T.Vector3(0,0,-3.4));ctx.cameraTarget.lerp(desired,1-Math.exp(-dt*4));ctx.camera.position.copy(ctx.cameraTarget).add(ctx.cameraOffset);ctx.shake=Math.max(0,ctx.shake-dt*.35);if(ctx.shake>0&&!frozen&&ctx.gameSettings.cameraShake){ctx.camera.position.x+=(Math.random()-.5)*ctx.shake;ctx.camera.position.z+=(Math.random()-.5)*ctx.shake;}ctx.camera.lookAt(ctx.cameraTarget);ctx.worldPreview?.update(ctx.camera);ctx.moonLight.position.set(ctx.player.position.x-16,29,ctx.player.position.z+9);ctx.moonLight.target.position.set(ctx.player.position.x,0,ctx.player.position.z);ctx.moonLight.target.updateMatrixWorld();ctx.updateMouseTarget();ctx.life.renderLabels(ctx.enemies.some(e=>!e.dead&&distance(e.model.position,ctx.player.position)<8&&!ctx.safeHere()),ctx.keys.has('alt'));ctx.updateFloaters(ctx.backgrounded?0:dt);ctx.uiTimer+=dt;if(ctx.uiTimer>.09){ctx.uiTimer=0;ctx.updateUI();ctx.drawMap();}ctx.multiplayerView?.update(dt,ctx.accumulated);ctx.renderer.render(ctx.scene,ctx.camera);ctx.resourceOrbs.update(frozen?0:dt,ctx.state.hp/ctx.state.maxHp,ctx.state.mana/ctx.state.maxMana);}
 Object.assign(ctx,createInventoryUi(ctx),createModals(ctx));
-const {inventoryPreviews,toggleMapForDeath}=ctx;
 Object.assign(ctx,createConnectionUi(ctx));
-function applySnapshot(snapshot,changed){
- const initialSnapshot=!ctx.lastSnapshot,wasDead=ctx.state.ended,oldLevel=ctx.state.level,beforeServices=JSON.stringify([ctx.state.gold,ctx.state.potions,ctx.state.forgeLevel,ctx.state.questAccepted,ctx.state.questRewarded,ctx.state.victory,ctx.state.bossLootClaimed,ctx.state.rookSupplies]),beforeInventory=JSON.stringify([ctx.state.inventory,ctx.state.equipped]);
- const nextMap=snapshot.mapId||snapshot.state.mapId||snapshot.players.find(p=>p.id===snapshot.you)?.mapId||'overworld',mapChanged=nextMap!==ctx.renderedMap;
- if(mapChanged)ctx.switchMap(nextMap);
- if(changed||mapChanged||initialSnapshot){ctx.classEffects.clear();for(const visual of ctx.networkZones.values())visual.dispose();ctx.networkZones.clear();releaseInput();ctx.network.pending=[];if(changed){ctx.victoryShown=false;ctx.lastNetworkEvent=0;clearTimeout(ctx.victoryTimer);}for(const effect of ctx.effects)ctx.removeObject(effect.mesh);ctx.effects.length=0;for(const floater of ctx.floaters)floater.element.remove();ctx.floaters.length=0;for(const e of ctx.enemies){ctx.cancelAttack(e);e.visuals.dispose();disposeActor(e.model);ctx.removeObject(e.bar);e.barTexture.dispose();}ctx.enemies.length=0;ctx.life.syncLoot([]);ctx.life.syncForage([]);for(const b of ctx.networkProjectiles.values())b.visual?b.visual.dispose():ctx.removeObject(b.mesh);ctx.networkProjectiles.clear();if(changed)ctx.toast(ctx.sessionMode==='single-player'?'A new vigil begins.':'A new vigil begins · The shared world has restarted.');else if(mapChanged)ctx.toast(mapFor(nextMap).name);}
- // Fresh server sessions omit the old class; clear it before merging so the
- // client cannot show Sorcerer skills while the server awaits a new choice.
- if(initialSnapshot)for(const key of Object.keys(ctx.state))delete ctx.state[key];
- Object.assign(ctx.state,{classId:undefined,appearanceId:undefined,baseHp:undefined},snapshot.state);ctx.lastSnapshot=snapshot;ctx.started=true;ctx.syncPlayerCharacter();
- // The first snapshot is a state baseline; retained server events predate this client.
- if(initialSnapshot){ctx.victoryShown=!!ctx.state.bossLootClaimed;ctx.lastNetworkEvent=Math.max(ctx.lastNetworkEvent,...snapshot.events.map(event=>event.id));}
- const me=snapshot.players.find(p=>p.id===snapshot.you);if(!me)return;
- ctx.exploration.setSession(snapshot.worldId,snapshot.you,{mode:ctx.sessionMode,preview:ctx.previewMode,journeyId:ctx.activeJourney?.id});
- if(changed&&ctx.sessionMode==='single-player')ctx.exploration.reset();
- ctx.exploration.reveal(mapFor(nextMap),me,ctx.environment.obstacles);
- ctx.environment.updateProgress?.(ctx.state);ctx.environment.updateObstacles?.(snapshot.brokenCover||[]);
- const target=predictedPosition(me,ctx.network.pending,snapshot.ack,ctx.environment.obstacles,ctx.worldBounds());
- // Only discontinuities snap. Walking and dodging reconcile on render frames.
- ctx.movementCorrection.reconcile(ctx.player.position,target,ctx.resetMovement||changed||mapChanged||wasDead&&!ctx.state.ended||ctx.backgrounded,me.dodge>0?4:1.5);ctx.player.rotation.z=ctx.state.ended?-1.5:0;
- if(mapChanged||initialSnapshot)ctx.cameraTarget.set(target.x,0,target.z-3.4);ctx.dodgeTime=me.dodge;if(me.dodge>0)ctx.angle=ctx.dodgeAngle=me.angle;ctx.selection.material.color.set(me.color);ctx.multiplayerView.sync(snapshot.players,snapshot.you,snapshot.time,changed||ctx.resetMovement);ctx.resetMovement=false;
- const enemyIds=new Set(snapshot.enemies.map(e=>e.id));for(let i=ctx.enemies.length-1;i>=0;i--)if(!enemyIds.has(ctx.enemies[i].id)){const e=ctx.enemies[i];ctx.cancelAttack(e);e.visuals.dispose();disposeActor(e.model);ctx.removeObject(e.bar);e.barTexture.dispose();ctx.enemies.splice(i,1);}
- for(const data of snapshot.enemies){let e=ctx.enemies.find(e=>e.id===data.id);if(!e)e=ctx.spawnEnemy(data.type,data.x,data.z,data.zone,data.id);const oldPhase=e.phase;if(e.dead&&data.hp>0){e.model.visible=true;e.model.position.set(data.x,0,data.z);e.model.rotation.z=0;e.barHealth=data.hp;}e.net=data;e.hp=data.hp;e.dead=data.hp<=0;e.phase=data.phase;e.timer=data.timer;e.maxHp=data.maxHp;e.angle=data.angle;
-  if(e.dead||oldPhase!==data.phase||data.phase!=='windup'||!usesLegacyTelegraph(data.type)){ctx.cancelAttack(e);if(data.hp>0&&data.phase==='windup'&&usesLegacyTelegraph(data.type))e.telegraph=ctx.telegraph(e.data.attackStyle==='orb'&&!ctx.bossType(e.type)?data.aim:data,e.data.attackStyle==='orb'&&!ctx.bossType(e.type)?1.5:e.data.range,e.data.attackStyle==='orb'?Math.PI*2:1.9,data.attackAngle);}
-  ctx.updateEnemyBar(e);
- }
- ctx.life.syncLoot(snapshot.loot);ctx.life.syncForage(snapshot.forage);ctx.environment.updateProgress?.(ctx.state);ctx.environment.sync?.(snapshot.interactions,ctx.state.discoveries);if(ctx.renderedMap==='overworld'){ctx.landmarks?.updateProgress?.(ctx.state);ctx.landmarks?.sync?.(snapshot.interactions,ctx.state.discoveries);}
- ctx.connectionStatus(`${snapshot.players.length} / 8 adventurers · ${classFor(ctx.state).name} ${me.slot+1}`,true);
- $('restart-vote').hidden=ctx.sessionMode==='single-player'||!snapshot.votes.length;$('restart-vote-text').textContent=`Restart the game? ${snapshot.votes.length} / ${snapshot.players.length} agree. All progress will reset.`;
- $('restart-yes').disabled=snapshot.votes.includes(snapshot.you);
- for(const event of snapshot.events)if(event.id>ctx.lastNetworkEvent){networkEvent(event);ctx.lastNetworkEvent=event.id;}
- if(ctx.state.level>oldLevel&&!changed){ctx.toast(`Oath strengthened · Level ${ctx.state.level}`);ctx.audio.play('levelup',.65);}if(ctx.state.ended&&!wasDead){ctx.dismissMainMenu();ctx.audio.play('death-player',.8);releaseInput();if(ctx.mapExpanded)toggleMapForDeath();ctx.showModal('death');}
- if(wasDead&&!ctx.state.ended||changed){ctx.dismissMainMenu();inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.paused=false;toggleMapForDeath();ctx.syncAudioState();ctx.player.rotation.z=0;ctx.player.position.y=0;}
- if(ctx.mainMenuOpen&&!ctx.rosterPicker?.open)ctx.titleScreen.updateSession(ctx.mainMenuSession());
- if(!ctx.state.classId&&!ctx.rosterPicker?.open)ctx.openRoster();
- if(ctx.modalKind==='npc'&&beforeServices!==JSON.stringify([ctx.state.gold,ctx.state.potions,ctx.state.forgeLevel,ctx.state.questAccepted,ctx.state.questRewarded,ctx.state.victory,ctx.state.bossLootClaimed,ctx.state.rookSupplies]))ctx.renderNpc();if(ctx.modalKind==='inventory'&&beforeInventory!==JSON.stringify([ctx.state.inventory,ctx.state.equipped]))ctx.renderInventory();if(ctx.modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),ctx.state,ctx.network.connected);ctx.updateUI();
-}
-ctx.applySnapshot=applySnapshot;
-function networkEvent(event){
- if(event.type==='result'&&event.operation==='class'&&ctx.state.classId&&ctx.sessionMode==='single-player'&&!ctx.cavePreviewStarted&&new URLSearchParams(location.search).get('preview')==='enemies'){ctx.cavePreviewStarted=true;const generation=ctx.sessionGeneration;import('./enemy-preview.js').then(({createEnemyPreview})=>{if(generation===ctx.sessionGeneration)createEnemyPreview(ctx.network,()=>{releaseInput();ctx.resetMovement=true;});});}
- if(event.type==='result'&&event.operation==='class'){ctx.rosterPicker?.resolve(event);if(ctx.state.classId&&ctx.sessionMode==='single-player'&&!ctx.cavePreviewStarted&&['caves','exploration'].includes(new URLSearchParams(location.search).get('preview'))){ctx.cavePreviewStarted=true;const generation=ctx.sessionGeneration;import('./cave-preview.js').then(({createCavePreview})=>{if(generation===ctx.sessionGeneration)createCavePreview(ctx.network,()=>{releaseInput();ctx.resetMovement=true;});});}}
- if(ctx.backgrounded||event.mapId&&event.mapId!==ctx.renderedMap)return;
- const pos=new T.Vector3(event.x||0,0,event.z||0);
- if(event.type==='ability'){
-  const actor=event.playerId===ctx.network.id?{model:ctx.player,rig:ctx.heroRig}:ctx.multiplayerView.actors.get(event.playerId);if(!actor)return;
-  const local=event.playerId===ctx.network.id,rig=actor.rig;
-  const skill=abilityForEvent(event),color=event.color||classColor(event),classVisual=ctx.classEffects.ability(event,skill,actor.model);
-  if(skill?.kind==='melee'){rig.attack=.42;rig.attackKind=skill.hits===2?'paired':'attack';if(!classVisual)ctx.slash(pos,event.angle,color,skill.range,.3);audioAt('sword',pos,.6);}
-  if(skill?.kind==='projectile'){
-   rig.attack=.36;rig.attackKind='bolt';
-   const hand=pos.clone().add(new T.Vector3(0,1.2,0)),direction=new T.Vector3(Math.sin(event.angle),0,Math.cos(event.angle));
-   if(skill.projectile==='ember')ctx.combatEffects.cast(hand,direction);
-   else if(skill.projectile==='arcane')ctx.combatEffects.arcaneCast(hand,direction);
-   else if(!classVisual)ctx.particles(hand,color,9,1.8);
-   audioAt(['arrow','knife'].includes(skill.projectile)?'sword':'ember',pos,.5);
-  }
-  if(skill?.kind==='support'){rig.attack=.42;rig.attackKind='support';audioAt('heal',pos,.5);}
-  if(skill?.kind==='burst'||skill?.kind==='zone'){rig.attack=event.classId==='oathkeeper'?.42:.36;rig.attackKind=event.classId==='oathkeeper'?'support':'bolt';if(!classVisual){ctx.ringEffect(pos,color,.3,skill.radius||3,.65);ctx.particles(pos,color,24,3);}audioAt('nova',pos,.55);}
-  if(skill?.kind==='shield'){if(!classVisual)ctx.ringEffect(pos,color,.8,1.2,skill.duration);audioAt('heal',pos,.6);}
-  if(event.action==='heal'){if(!classVisual)ctx.ringEffect(pos,0x97cba5,.2,1.5,.7);audioAt('heal',pos,.6);}
-  if(event.action==='dodge'){audioAt('dodge',pos,.5);if(local){ctx.moveTarget=null;ctx.movePath=[];ctx.lockedEnemy=null;}}
- }
- if(event.type==='hit'){
-  ctx.floatText(String(event.damage),pos,event.magic?'magic':'');
-  const impact=pos.clone().add(new T.Vector3(0,1,0));
-  if(event.visual==='ember')ctx.combatEffects.emberImpact(impact);
-  else if(event.visual==='arcane')ctx.combatEffects.arcaneImpact(impact);
-  else if(!ctx.classEffects.impact(event)){
-   if(event.magic)ctx.particles(impact,event.color||'#88cfdb',12,2.8);else ctx.steelImpact(impact);
-  }
-  audioAt(event.magic?'ember-hit':'impact',pos,.55);
- }
- if(event.type==='respawn'&&event.revivedBy){ctx.ringEffect(pos,0xffdf8b,.3,1.7,1);ctx.particles(pos,0xffe8aa,28,2);audioAt('heal',pos,.7);if(event.playerId===ctx.network.id)ctx.toast('Resurrected by Oathkeeper');}
- if(event.type==='hurt'){ctx.floatText(String(event.damage),pos,'enemy-damage');if(event.playerId===ctx.network.id){ctx.audio.play('hurt',.6);$('damage-vignette').style.opacity='.75';setTimeout(()=>$('damage-vignette').style.opacity='0',210);}}
- if(event.type==='kill'){audioAt(event.typeName==='boss'?'death-boss':event.typeName==='hound'?'death-hound':event.typeName==='revenant'?'death-revenant':'death',pos,.6);if(ctx.lockedEnemy?.id===event.enemyId){ctx.lockedEnemy=null;ctx.attackHeld=false;}if(ctx.bossType(event.typeName))ctx.toast(`${ENEMY_TYPES[event.typeName].name} falls · Claim your personal loot`);}
- if(event.type==='region-boss'){const boss=ctx.enemies.find(e=>e.id===event.enemyId);if(boss)ctx.toast(`${boss.data.name} has awakened.`);ctx.audio.play('boss-windup',.65);}
- if(event.type==='objective-ready')ctx.toast(event.message);
- if(event.type==='boss'){ctx.toast(`${ENEMY_TYPES[event.typeName]?.name||'The Bellkeeper'} has answered.`);ctx.audio.play('bell',.6);}
- if(event.type==='windup'){const e=ctx.enemies.find(e=>e.id===event.enemyId);if(e)audioAt(ctx.bossType(e.type)?'boss-windup':`voice-${ctx.enemyModelType(e.type)}`,e.model.position,.5);}
- if(event.type==='strike'){
-  const e=ctx.enemies.find(e=>e.id===event.enemyId),data=ENEMY_TYPES[event.typeName];e?.visuals.strike();
-  if(ctx.bossType(event.typeName)){ctx.ringEffect(pos,data.orbColor,.2,3.4,.5);audioAt('boss-slam',pos,.7);}
-  else if(data.attackStyle==='knife'){ctx.slash(pos,event.angle,0xd3dfd8,data.range,.22);audioAt('sword',pos,.4);}
-  else if(data.attackStyle==='bite'){const mouth=pos.clone().add(new T.Vector3(Math.sin(event.angle)*.8,.9,Math.cos(event.angle)*.8));ctx.particles(mouth,0xd9c7a4,6,1.3);audioAt('impact',pos,.45);}
-  else {ctx.particles(pos.clone().add(new T.Vector3(0,1.4,0)),data.orbColor,12,2);audioAt('ember',pos,.45);}
- }
- if(event.type==='loot')ctx.lootCollected(event.drop,{collected:true});
- if(event.type==='result'){if(event.ok&&['forage','consume'].includes(event.operation))ctx.audio.play(event.operation==='forage'?'pickup':'heal',.55);if(event.message||event.reason)ctx.toast(event.message||event.reason);}
-}
-function renderSharedWorld(dt,t){ctx.renderHazards();ctx.classEffects.syncActors(ctx.lastSnapshot?.players||[],id=>id===ctx.network?.id?ctx.player:ctx.multiplayerView?.actors.get(id)?.model,ctx.renderedMap);
- for(const e of ctx.enemies){const n=e.net;if(!n)continue;const blend=1-Math.exp(-dt*14);e.model.position.x=T.MathUtils.lerp(e.model.position.x,n.x,blend);e.model.position.z=T.MathUtils.lerp(e.model.position.z,n.z,blend);e.model.rotation.y=angleLerp(e.model.rotation.y,n.angle,blend);
-  if(e.dead){e.visuals.update(n,dt,t);e.model.rotation.z=T.MathUtils.lerp(e.model.rotation.z,1.45,dt*7);e.model.position.y=Math.max(-1,e.model.position.y-dt*.5);e.model.visible=e.model.position.y>-.9;e.bar.visible=false;continue;}
-  if(e.barHealth>e.hp){e.barHealth=Math.max(e.hp,e.barHealth-dt*e.maxHp*1.6);ctx.updateEnemyBar(e);}ctx.animateRig(e.rig,t,n.moving,n.phase==='windup'?1-n.timer/e.data.windup:0,ctx.enemyModelType(e.type));e.visuals.update(n,dt,t+e.seed);e.bar.position.copy(e.model.position).add(new T.Vector3(0,(ctx.enemyModelType(e.type)==='boss'?4.8:ctx.enemyModelType(e.type)==='hound'?1.5:ctx.enemyModelType(e.type)==='hollow'?2.25:3.25)*(e.data.scale||1),0));e.bar.visible=e===ctx.mouseTargeting?.selected||distance(ctx.player.position,e.model.position)<12;
-  if(e.telegraph){e.telegraph.children[0].material.opacity=.08+(1-n.timer/e.data.windup)*.26;}
- }
- const ids=new Set(ctx.lastSnapshot?.projectiles.map(b=>b.id)||[]);
- for(const [id,b] of ctx.networkProjectiles)if(!ids.has(id)){b.visual?b.visual.dispose():ctx.removeObject(b.mesh);ctx.networkProjectiles.delete(id);}
- for(const b of ctx.lastSnapshot?.projectiles||[]){let visual=ctx.networkProjectiles.get(b.id);if(!visual){
-  const pos=new T.Vector3(b.x,b.hostile?.8:1.1,b.z),dir=new T.Vector3(Math.sin(b.angle),0,Math.cos(b.angle));
-  if(!b.hostile){
-   const bolt=b.visual==='arcane'?ctx.combatEffects.arcaneBolt(pos,dir,b.speed):b.visual&&b.visual!=='ember'?ctx.classEffects.projectile(b):ctx.combatEffects.emberbolt(pos,dir);
-   visual={mesh:bolt.mesh,visual:bolt};
-  }else{const bolt=createEnemyOrb(ctx.scene,ctx.overworldEnvironment.glowTexture,pos,b.angle,b.color||'#ff714b',{reducedMotion:ctx.reducedMotion});visual={mesh:bolt.mesh,visual:bolt};}
-  ctx.networkProjectiles.set(b.id,visual);
- }
-  const blend=1-Math.exp(-dt*20);visual.mesh.position.x=T.MathUtils.lerp(visual.mesh.position.x,b.x,blend);visual.mesh.position.z=T.MathUtils.lerp(visual.mesh.position.z,b.z,blend);visual.visual?.update(dt);
- }
- const zoneIds=new Set(ctx.lastSnapshot?.zones?.map(z=>z.id)||[]);
- for(const [id,visual] of ctx.networkZones)if(!zoneIds.has(id)){visual.dispose();ctx.networkZones.delete(id);}
- for(const data of ctx.lastSnapshot?.zones||[]){let visual=ctx.networkZones.get(data.id);if(!visual){visual=ctx.classEffects.zone(data);ctx.networkZones.set(data.id,visual);}visual.update(data,ctx.lastSnapshot.time,dt);}
- ctx.selection.position.set(ctx.player.position.x,.1,ctx.player.position.z);ctx.playerLight.position.copy(ctx.player.position).add(new T.Vector3(0,2.7,0));
-}
+// applySnapshot, networkEvent and renderSharedWorld are runtime-only -- none of them runs at
+// import time -- so this line replaces the three declarations where they stood: after
+// createConnectionUi, whose ctx.connectionStatus applySnapshot calls, and before the
+// window.hallowmere automation surface. startSession reads ctx.applySnapshot lazily and
+// frame() calls ctx.renderSharedWorld, so the wiring only has to land before init().
+Object.assign(ctx,createSnapshotApply(ctx),createNetworkEvents(ctx),createSharedWorldRender(ctx));
 
 // Assistive tools call the same movement, conversations, and combat paths as the visible controls.
 window.hallowmere={getState:()=>({...ctx.state,cooldowns:{...ctx.state.cooldowns},ready:ctx.ready,paused:ctx.paused,backgrounded:ctx.backgrounded,mode:ctx.sessionMode,simulationPaused:!ctx.network?.connected||ctx.sessionMode==='single-player'&&(ctx.paused||ctx.backgrounded||!!ctx.rosterPicker?.open),multiplayer:{connected:ctx.sessionMode==='multiplayer'&&!!ctx.network?.connected,worldId:ctx.network?.worldId,players:ctx.lastSnapshot?.players||[],votes:ctx.lastSnapshot?.votes||[]},modal:ctx.modalKind,interior:ctx.player?ctx.environment.currentBuilding(ctx.player.position)?.id??null:null,buildings:ctx.environment?.buildings.map(b=>({id:b.id,name:b.name,chapel:b.chapel,locked:!b.doorCollider.disabled,inside:b.inside,door:{...b.door},entry:{...b.entry},exit:{...b.exit}})),dialogue:ctx.modalKind==='npc'?npcDialogue(ctx.state,ctx.currentNpc):null,objective:questSummary(ctx.state),mapId:ctx.renderedMap,bounds:ctx.worldBounds(),interactions:ctx.regionInteractions(),hazards:ctx.lastSnapshot?.hazards||[],audio:ctx.audio.getState(),targeting:{hoveredEnemy:ctx.mouseAction?.kind==='enemy'?ctx.mouseAction.target.id:null,lockedEnemy:ctx.lockedEnemy?.id??null,highlightedEnemy:ctx.mouseTargeting?.selected?.id??null},player:ctx.player?{x:ctx.player.position.x,z:ctx.player.position.z,moving:!!ctx.moveTarget,attacking:ctx.attackHeld}:null,...ctx.life?.getState(),enemies:ctx.enemies.filter(e=>!e.dead).map(e=>({id:e.id,type:e.type,zone:e.zone,hp:e.hp,x:e.model.position.x,z:e.model.position.z,phase:e.phase,lineOfSight:hasLineOfSight(ctx.player.position,e.model.position,ctx.environment.obstacles)})),drawCalls:ctx.renderer?.info.render.calls}),showControls:()=>ctx.showModal('help'),pause:()=>ctx.showModal('pause'),resume:ctx.closeModal};

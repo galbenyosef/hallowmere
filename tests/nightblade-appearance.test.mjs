@@ -1,16 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import vm from 'node:vm';
 import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.core.js';
-import {abilityForEvent,classColor} from '../dist/classes.js';
 import {modelBounds} from '../dist/playable-characters.js';
 import {createCharacter} from '../dist/character-study-models.js';
 import {roster} from '../dist/character-study-roster.js';
 import {animateHeroAttack} from '../dist/combat-effects.js';
-import {sliceBetween,readDist} from './helpers/source.mjs';
+import {createNetworkEvents} from '../dist/network-events.js';
 
-const main=readDist('main.js');
 // dist/model-kit.js imports the bare 'three' specifier, which only the page's import map
 // resolves; match it in Node the way tests/npc-portraits.test.mjs does for GLTFLoader.js.
 const hook=registerHooks({resolve(specifier,context,nextResolve){
@@ -20,13 +17,13 @@ const hook=registerHooks({resolve(specifier,context,nextResolve){
 }});
 const {getRig,createModelCache}=await import('../dist/model-kit.js');
 hook.deregister();
-// The networkEvent slice below still runs through vm (M10 migrates it); cloneModel/getRig are
-// real imports now, assigned onto the same vm context so context.cloneModel(...) keeps working
-// and a bare `ctx` stays available as a global for the vm-evaluated networkEvent code.
+// M10 moved networkEvent into dist/network-events.js, so the second test now drives the real
+// factory instead of a vm-evaluated slice of main.js; the vm context it needed for that goes
+// with it, leaving the plain bag of real imports both tests already used (cloneModel/getRig
+// over one shared ctx, which is also the ctx createNetworkEvents receives).
 function gameplay(){
- const ctx={prefabs:{}},context=vm.createContext({T,ctx});
- Object.assign(context,createModelCache(ctx),{getRig});
- return context;
+ const ctx={prefabs:{}};
+ return Object.assign({T,ctx},createModelCache(ctx),{getRig});
 }
 function triangles(root){let n=0;root.traverse(o=>{if(o.isMesh)n+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});return n;}
 
@@ -55,11 +52,14 @@ test('Nightblade ornaments survive batching and follow the body, hands, and legs
 
 test('authoritative Twin Cut animates both Nightblade blades without changing another actor',()=>{
  const context=gameplay(),first=context.cloneModel('C04'),second=context.cloneModel('C04'),rig=context.getRig(first),other=context.getRig(second);
- Object.assign(context.ctx,{backgrounded:false,renderedMap:'overworld',network:{id:'local'},player:first,heroRig:rig,multiplayerView:{actors:new Map([['remote',{model:second,rig:other}]])},classEffects:{ability:()=>true}});
- Object.assign(context,{abilityForEvent,classColor,audioAt(){}});
- // Exercise the real melee event path, through its existing animation selection.
- vm.runInContext(sliceBetween(main,'function networkEvent(event)',"  if(skill?.kind==='projectile')",{file:'dist/main.js'})+'}}',context);
- context.networkEvent({type:'ability',action:'attack',classId:'nightblade',playerId:'local'});
+ Object.assign(context.ctx,{backgrounded:false,renderedMap:'overworld',network:{id:'local'},player:first,heroRig:rig,multiplayerView:{actors:new Map([['remote',{model:second,rig:other}]])},classEffects:{ability:()=>true},audioAt(){}});
+ // Exercise the real melee event path, through its existing animation selection. The slice used
+ // to stop before the projectile branch; the whole function is equivalent for this event, because
+ // every later branch tests skill.kind, event.action or event.type and none of them matches a
+ // melee 'attack' ability event. classEffects.ability() still returns a truthy class visual, so
+ // ctx.slash is still never reached, and audioAt is the same no-op -- now read off ctx.
+ const {networkEvent}=createNetworkEvents(context.ctx);
+ networkEvent({type:'ability',action:'attack',classId:'nightblade',playerId:'local'});
  assert.equal(rig.attackKind,'paired');assert.equal(other.attack,undefined);
  const blades=['weapon','offhand'].map(name=>first.getObjectByName(name));
  const before=blades.map(o=>new T.Box3().setFromObject(o).getCenter(new T.Vector3()));
