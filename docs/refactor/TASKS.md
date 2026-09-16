@@ -95,7 +95,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | P6c | 3.3 | sonnet | HUD writes | dist/hud.js | G2.6 | todo | — | — | — | |
 | P6d | 3.4 | sonnet | enemy sync + bars | dist/shared-world-render.js, dist/enemy-spawner.js | G2.6 | todo | — | — | — | |
 | P6e | 3.4 | sonnet | interaction memo | dist/interaction.js, dist/pointer-targeting.js | G2.6 | merged | codex/interaction-memo-90ff650c-90f2 | 6134 | ab85658..c17f64e → 8856a7b | orchestrator review: memo keyed on lastSnapshot/interactions/state/discoveries identity + length; callers verified read-only; one pre-existing test mutated a snapshot in place and was changed to swap the snapshot (matches the real contract); 600-scenario parity + frozen-consumer test; perf-smoke row 0.0031→0.0000 ms, 5,364→44 B; 422/422; re-run 17/17. Note: window.hallowmere.getState().interactions now returns the memoized array instance (read-only by contract) |
-| P8 | 3.4 | sonnet | effect pooling | dist/effects-factory.js, tests/effects-factory.test.mjs | G2.6 | todo | — | — | — | |
+| P8 | 3.4 | sonnet | effect pooling | dist/effects-factory.js, tests/effects-factory.test.mjs | G2.6 | running | codex/effect-pooling-4425180c-60fc | 6149 | — | sonnet; started after M3+M6 landed; pools keyed by geometry params, tagged meshes released by removeObject instead of disposed, full property reset on acquire; parity vs verbatim effects-factory + updateEffects loop with identical seeded Math.random over ≥300 events / ≥2000 steps; allocation + never-disposed-while-live spies |
 
 ## Log
 
@@ -182,3 +182,4 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — T2-6 merged (44fdf01) under blanket authorization. M7 started (sonnet) stacked on M6. M6 capture running.
 - 2026-09-15 — M6 merged (15bfa5e). Gate 2.1 complete (M6, T2-6). Tracker integrating.
 - 2026-09-15 — Gate 2.1 complete (tracker ad3a6e5); main = ad3a6e5. P8 (effect pooling) starting now that effects-factory.js and player-motion.js are both on main.
+- 2026-09-15 — P8 started (sonnet) from ad3a6e5.
