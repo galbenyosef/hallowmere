@@ -13,7 +13,7 @@ function setup(){
  $('game').children=[$('world'),$('loading')];const sessions=[],snapshots=[],statuses=[];
  class Session{constructor(callbacks){this.callbacks=callbacks;sessions.push(this);}start(){this.started=true;this.connected=true;}close(){this.closed=true;this.connected=false;}}
  const titleScreen={showModes(){},hide(){$('loading').hidden=true;},showMainMenu(session){$('loading').hidden=false;this.session=session;},updateSession(session){this.session=session;}};
- const ctx={paused:false,backgrounded:false,mapExpanded:false,modalKind:'',currentNpc:null,state:{classId:'sorcerer',gold:81},safeHere:()=>context.inSanctuary,audio:{pause(){}},rosterPicker:{open:false},ready:false,network:null,lastSnapshot:null,moveTarget:null,movePath:[],clock:{getDelta(){}},previewMode:false,titleScreen,mainMenuOpen:false,sessionMode:null,assetsReady:false,sessionGeneration:0};
+ const ctx={paused:false,backgrounded:false,mapExpanded:false,modalKind:'',currentNpc:null,state:{classId:'sorcerer',gold:81},safeHere:()=>context.inSanctuary,audio:{pause(){}},rosterPicker:{open:false},ready:false,network:null,lastSnapshot:null,moveTarget:null,movePath:[],clock:{getDelta(){}},previewMode:false,titleScreen,mainMenuOpen:false,sessionMode:null,assetsReady:false,sessionGeneration:0,syncAudioState(){},toast(){}};
  const context=vm.createContext({$,ctx,inSanctuary:true,classFor:()=>({name:'Sorcerer'}),inventoryPreviews:{hide(){}},MultiplayerClient:class extends Session{},LocalSession:class extends Session{},applySnapshot:s=>snapshots.push(s),connectionStatus:s=>statuses.push(s),releaseInput(){},awaken(){}});
  Object.assign(ctx,journeyState);
  vm.runInContext(transitions,context);return {context,ctx,sessions,snapshots,statuses,$,run:code=>vm.runInContext(code,context)};
