@@ -17,11 +17,14 @@ import {distance} from './combat.js';
 import {mapFor} from './regions.js';
 import {createRegionEnvironment} from './region-environment.js';
 import {regionActionName} from './region-client-ui.js';
+const _regionLabelIds=new Set(),_regionLabelScratch=new T.Vector3(),_regionLabelLootNames=new WeakMap();
+const _hazardIds=new Set();
 export function createRegionTravel(ctx){
  function switchMap(mapId){clearTimeout(ctx.victoryTimer);ctx.pendingRegionInteraction=null;ctx.aimActive=false;ctx.dodgeTime=0;ctx.life.pending=null;for(const visual of ctx.networkZones.values())visual.dispose();ctx.networkZones.clear();for(const visual of ctx.networkHazards.values())ctx.removeObject(visual);ctx.networkHazards.clear();for(const label of ctx.regionLabels.values())label.remove();ctx.regionLabels.clear();if(ctx.renderedMap!=='overworld')ctx.environment.dispose();else for(const object of ctx.overworldObjects)object.userData.overworldVisible=object.visible;ctx.renderedMap=mapId;for(const object of ctx.overworldObjects)object.visible=mapId==='overworld'&&(object.userData.overworldVisible??true);ctx.environment=mapId==='overworld'?ctx.overworldEnvironment:createRegionEnvironment(ctx.scene,mapId);ctx.life.obstacles=ctx.environment.obstacles;for(const npc of ctx.life.npcs){npc.model.visible=npc.ring.visible=mapId==='overworld';npc.label.hidden=true;}ctx.cameraTarget.copy(ctx.player.position);const cave=mapFor(mapId).theme==='cave';ctx.hemisphereLight.intensity=cave?.95:1.3;ctx.moonLight.intensity=cave?1.45:2.35;ctx.rimLight.intensity=cave?.55:1.25;ctx.playerLight.intensity=cave?8:10;ctx.scene.fog.density=cave?.021:.017;ctx.scene.background.set((mapId==='underways'||mapFor(mapId).theme==='cave')?0x090d12:0x101c2b);ctx.scene.fog.color.set((mapId==='underways'||mapFor(mapId).theme==='cave')?0x101921:0x14283a);}
  function renderRegionLabels(){
-  const records=ctx.regionInteractions(),ids=new Set(records.map(r=>r.id));
-  for(const[id,label]of ctx.regionLabels)if(!ids.has(id)){label.remove();ctx.regionLabels.delete(id);}
+  const records=ctx.regionInteractions();
+  _regionLabelIds.clear();for(const r of records)_regionLabelIds.add(r.id);
+  for(const[id,label]of ctx.regionLabels)if(!_regionLabelIds.has(id)){label.remove();ctx.regionLabels.delete(id);}
   for(const r of records){
    const cache=r.operation==='cache';let label=ctx.regionLabels.get(r.id);
    if(!label){
@@ -30,13 +33,19 @@ export function createRegionTravel(ctx){
     label.onclick=()=>{if(ctx.paused||ctx.backgrounded||ctx.state.ended)return;ctx.awaken();const result=ctx.interact(r.id);if(!result.ok)ctx.toast(result.reason);};
     $('world-labels').append(label);ctx.regionLabels.set(r.id,label);
    }
-   (cache?label.querySelector('.loot-name'):label).textContent=regionActionName(r);
-   if(cache)label.classList.toggle('in-reach',!r.locked&&!r.completed&&ctx.canReachRegion(r));
-   const projected=new T.Vector3(r.x,2,r.z).project(ctx.camera);
-   label.hidden=r.completed||distance(r,ctx.player.position)>11||projected.z>1||Math.abs(projected.x)>.94||Math.abs(projected.y)>.86;
-   label.style.left=`${(projected.x*.5+.5)*innerWidth}px`;label.style.top=`${(-projected.y*.5+.5)*innerHeight}px`;
+   let nameTarget=label;
+   if(cache){nameTarget=_regionLabelLootNames.get(label);if(!nameTarget)_regionLabelLootNames.set(label,nameTarget=label.querySelector('.loot-name'));}
+   const name=regionActionName(r);
+   if(nameTarget.textContent!==name)nameTarget.textContent=name;
+   if(cache){const inReach=!r.locked&&!r.completed&&ctx.canReachRegion(r);if(label.classList.contains('in-reach')!==inReach)label.classList.toggle('in-reach',inReach);}
+   _regionLabelScratch.set(r.x,2,r.z).project(ctx.camera);
+   const hidden=r.completed||distance(r,ctx.player.position)>11||_regionLabelScratch.z>1||Math.abs(_regionLabelScratch.x)>.94||Math.abs(_regionLabelScratch.y)>.86;
+   if(label.hidden!==hidden)label.hidden=hidden;
+   const left=`${(_regionLabelScratch.x*.5+.5)*innerWidth}px`,top=`${(-_regionLabelScratch.y*.5+.5)*innerHeight}px`;
+   if(label.style.left!==left)label.style.left=left;
+   if(label.style.top!==top)label.style.top=top;
   }
  }
- function renderHazards(){const hazards=ctx.lastSnapshot?.hazards||[],ids=new Set(hazards.map(h=>h.id));for(const[id,visual]of ctx.networkHazards)if(!ids.has(id)){ctx.removeObject(visual);ctx.networkHazards.delete(id);}for(const h of hazards){let visual=ctx.networkHazards.get(h.id);if(!visual){visual=new T.Group();visual.position.set(h.x,.14,h.z);const geometry=h.radius?new T.CircleGeometry(h.radius,48):new T.PlaneGeometry(h.w,h.d);const fill=new T.Mesh(geometry,new T.MeshBasicMaterial({color:0xe88a46,transparent:true,opacity:.2,side:T.DoubleSide,depthWrite:false}));fill.rotation.x=-Math.PI/2;visual.add(fill);const edge=new T.LineSegments(new T.EdgesGeometry(geometry),new T.LineBasicMaterial({color:0xffbf7a,transparent:true,opacity:.9}));edge.rotation.x=-Math.PI/2;visual.add(edge);visual.rotation.y=h.angle||0;ctx.scene.add(visual);ctx.networkHazards.set(h.id,visual);}const active=ctx.lastSnapshot.time>=h.activateAt;visual.children[0].material.opacity=active?.58:.12+.2*Math.max(0,Math.min(1,(ctx.lastSnapshot.time-h.start)/Math.max(.1,h.activateAt-h.start)));visual.children[0].material.color.set(active?0xff4932:0xe88a46);}}
+ function renderHazards(){const hazards=ctx.lastSnapshot?.hazards||[];_hazardIds.clear();for(const h of hazards)_hazardIds.add(h.id);for(const[id,visual]of ctx.networkHazards)if(!_hazardIds.has(id)){ctx.removeObject(visual);ctx.networkHazards.delete(id);}for(const h of hazards){let visual=ctx.networkHazards.get(h.id);if(!visual){visual=new T.Group();visual.position.set(h.x,.14,h.z);const geometry=h.radius?new T.CircleGeometry(h.radius,48):new T.PlaneGeometry(h.w,h.d);const fill=new T.Mesh(geometry,new T.MeshBasicMaterial({color:0xe88a46,transparent:true,opacity:.2,side:T.DoubleSide,depthWrite:false}));fill.rotation.x=-Math.PI/2;visual.add(fill);const edge=new T.LineSegments(new T.EdgesGeometry(geometry),new T.LineBasicMaterial({color:0xffbf7a,transparent:true,opacity:.9}));edge.rotation.x=-Math.PI/2;visual.add(edge);visual.rotation.y=h.angle||0;ctx.scene.add(visual);ctx.networkHazards.set(h.id,visual);}const active=ctx.lastSnapshot.time>=h.activateAt;const material=visual.children[0].material;const opacity=active?.58:.12+.2*Math.max(0,Math.min(1,(ctx.lastSnapshot.time-h.start)/Math.max(.1,h.activateAt-h.start)));if(material.opacity!==opacity)material.opacity=opacity;const color=active?0xff4932:0xe88a46;if(material.color.getHex()!==color)material.color.set(color);}}
  return {switchMap,renderRegionLabels,renderHazards};
 }
