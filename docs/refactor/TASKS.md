@@ -26,7 +26,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | G2.2 | 2.2 | M7, P8 | blanket 2026-09-15 | 552d796 (P8), caf3b42 (M7) (+tracker b30cd65) |
 | G2.3 | 2.3 | M8, P6c | blanket 2026-09-15 | 2db9556 (P6c), f925fd8 (M8) (+tracker 374b1e2) |
 | G2.4 | 2.4 | M9 | blanket 2026-09-15 | 501f7fa (+tracker c6e1938) |
-| G2.5 | 2.5 | M10 | blanket 2026-09-15 | dd5d259 (tracker follows) |
+| G2.5 | 2.5 | M10 | blanket 2026-09-15 | dd5d259 (+tracker cc76a81) |
 | G2.6 | 2.6 | M11 | — | — |
 | G3 | 3.1–3.4 | P1–P8 | — | — |
 
@@ -199,3 +199,4 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — M9 merged (501f7fa), Gate 2.4 complete. M10 static review clean (capture running). M11 (opus) and P6d (sonnet) started stacked on M10. Tracker integrating.
 - 2026-09-15 — Gate 2.4 closed (tracker c6e1938); main = c6e1938; 40 tasks merged. Remaining: M10 (capture running), M11 + P6d (running), P6a (after M11), then the closing perf pass and end-of-Phase-2 checks.
 - 2026-09-15 — M10 merged (dd5d259); Gate 2.5 complete. Tracker integrating. M11 + P6d running.
+- 2026-09-15 — Gate 2.5 closed (tracker cc76a81); main = cc76a81; 41 tasks merged. Running: M11, P6d. Baseline measurement worktree prepared at /tmp/hm-baseline-ff9a17f (detached, tooling copied) for the closing perf A/B.
