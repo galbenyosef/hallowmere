@@ -171,4 +171,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.6: M5 merged (ee26424). Phase 1 main.js steps (M1–M5) complete. Tracker integrating.
 - 2026-09-15 — Gate 1.6 complete (tracker 0c24cd6); main = 0c24cd6. P6b and P6e ready-to-merge; Gate 1.7 authorized, integrating. Next: T2-1 solo (three import normalisation), then M6.
 - 2026-09-15 — Gate 1.7: P6b merged (b07cdcb), P6e merged (8856a7b). Tracker integrating; T2-1 registers next.
-- 2026-09-15 — Gate 1.7 complete (tracker b33135e); main = b33135e; 33 tasks merged. T2-1 started solo (sonnet). M6 prompt staged for after T2-1.
+- 2026-09-15 — Gate 1.7 complete (tracker b33135e); main = b33135e; 31 tasks merged. T2-1 started solo (sonnet). M6 prompt staged for after T2-1.
