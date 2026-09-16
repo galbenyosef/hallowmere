@@ -99,3 +99,43 @@ because `requestAnimationFrame` is pinned to the display cadence, so it only ans
 fit inside 60 fps" — useful once, useless for spotting a 20% slowdown. Do not read the two tables against
 each other; the heap deltas differ between them for the same reason (many more frames run in the same
 wall-clock sampling window when frames are unlocked).
+
+## After the refactor (2026-09-15)
+
+Same-machine A/B, unlocked frames, SwiftShader, run back to back on a quiet machine: the pre-refactor
+tree (`ff9a17f`, with today's `scripts/perf-browser.mjs` copied in) against the final `main`
+(`1d8ecc6`: M1–M11, T2-1, T2-5, T2-6, P1–P3, P5, P6a–P6e, P8). The PERF.md baseline table above was
+taken on an idle machine at 01:00 and is not directly comparable with daytime runs; only paired runs are.
+
+| Tree | Phase | p50 ms | p95 ms | p99 ms | median draw calls | JS heap delta |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `ff9a17f` (before) | idle at spawn | 6.30 | 8.30 | 10.30 | 534 | +2.24 MB (ends 77.6 MB) |
+| `ff9a17f` (before) | walking 3 waypoints | 6.80 | 10.00 | 11.60 | 621 | |
+| final `main`, run 1 | idle at spawn | 6.00 | 7.30 | 8.00 | 533 | −7.91 MB (ends 68.1 MB) |
+| final `main`, run 1 | walking 3 waypoints | 6.40 | 8.60 | 10.00 | 576 | |
+| final `main`, run 2 | idle at spawn | 6.00 | 7.00 | 7.70 | 559 | +3.05 MB (ends 79.7 MB) |
+| final `main`, run 2 | walking 3 waypoints | 6.80 | 8.80 | 10.10 | 624 | |
+
+Read it as: p50 within noise (the split itself cost nothing, which is what P6a re-measured), p95 down
+~13–16% and p99 down ~13–25% in both phases — the tail is where the removed per-frame allocations,
+guarded DOM writes and the dropped `structuredClone` show up. Draw calls vary with the random world
+seed and are not an identity check (see the caveat above). The heap-delta column swings with GC
+timing between runs (one run ended 12 MB lower, one 2 MB higher) and is indicative only.
+
+### Node rows, final tree (`scripts/perf-smoke.mjs --expose-gc`, n=2000, medians of 5 batches)
+
+| Metric | median ms/op | p95 ms/op | bytes/op | Task |
+| --- | ---: | ---: | ---: | --- |
+| `World#step(TICK_SECONDS)` | 0.0701 | 0.0877 | 1,670 | unchanged |
+| `World#snapshot(playerId, lastEvent)` | 0.0706 | 0.0732 | 571 | P5 (was ~6,000 B/op with the clone) |
+| `structuredClone(snapshot)` | 0.1499 | 0.1505 | 2,768 | reference row; no longer on the runtime path |
+| `LocalSession#advance(1/60)` | 0.0532 | 0.0639 | 9,322 | P5 (0.120 → 0.075 in the task's own A/B; 0.053 here) |
+| `createInteraction(ctx).regionInteractions()` | 0.0000 | 0.0001 | 44 | P6e (0.0031 ms, 5,364 B before) |
+| `VillageLife#renderLabels` | 0.0055 | 0.0065 | 7,920 | P2 (0.0080 before) |
+
+Per-task allocation proofs live in the tests: P3 `combat-effects` (0 map calls/frame), P6b
+`region-travel` (0 Vector3/Set per frame vs 700/200), P6c `hud` (0 writes / 0 querySelector per
+unchanged frame vs ≥20), P6d `shared-world-render` (0 Vector3/Set per frame) and `enemy-spawner`
+(bar canvas redrawn only when its inputs change), P6a `render-loop` (0 Vector3 per frame; safeHere
+2000 → 100 calls per 100 frames), P8 `effects-factory` (222/222/78/78 constructions per 300 events
+→ 14/9/8/4).
