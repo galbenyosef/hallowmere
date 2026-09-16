@@ -18,7 +18,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G1.4 | 1.4 | M3, T2-5, P1, P2, P3, P5, T0-8 | 2026-09-15 (user) | fedac5e, 124d7ad, 1044804, 83bc689, fd0404e, 72ec9e0, 22b7207 (+tracker 76b757a) |
 | G1.5 | 1.5 | M4 | 2026-09-15 (user) | 2e9d56c (+tracker e20872f) |
 | G1.6 | 1.6 | M5 | 2026-09-15 (user) | ee26424 (+tracker 0c24cd6) |
-| G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | integrating |
+| G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (tracker follows) |
 | G2.0 | 2.0 | T2-1 | — | — |
 | G2.1 | 2.1 | M6 | — | — |
 | G2.2 | 2.2 | M7, T2-5 | — | — |
@@ -89,10 +89,10 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | P5 | 3.2 | opus | snapshot + clone | dist/world.js, dist/local-session.js, tests/snapshot-aliasing.test.mjs | G2.6 | merged | codex/snapshot-clone-7e1bfefc-0db0 | 5605 | 22cdcdf..953582a → 22b7207 | aliasing test written first and failing on main (state.*, loot, forage, events, enemies[].aim aliased); fix = 2-line detach() on state/loot/events, {...patch} for FORAGE_PATCHES, aim rebuilt in place; structuredClone dropped in publish; 14/14 on orchestrator re-run; equivalence 80 checkpoints vs tests/fixtures/world-ref.js; perf-smoke advance 0.120→0.075 ms (−37..52%), snapshot+clone 0.227→0.083 ms; aim now copied with {...e.aim} (953582a); 376/376 |
 | P7 | 3.2 | haiku | orb disposal | dist/resource-orbs.js, tests/resource-orbs.test.mjs | G2.6 | dropped | — | — | — | createResourceOrbs() runs once at boot (main.js:51) and the HUD orbs live for the whole page; nothing ever tears them down, so a dispose() would be uncalled dead code (no leak). Revisit only if M9 introduces a teardown path. |
 | P6a | 3.3 | opus | render loop | dist/render-loop.js | G2.6 | todo | — | — | — | proves split cost nothing |
-| P6b | 3.3 | sonnet | region labels + hazards | dist/region-travel.js | G2.6 | ready-to-merge | codex/region-render-cache-fe44b0f6-8b3c | 6142 | 8463ffe | orchestrator review: module-scope Sets/scratch Vector3/WeakMap for .loot-name, writes guarded by read-back (textContent/hidden/in-reach/left/top, hazard fill opacity+color); 520-frame parity vs verbatim reference; 0 Vector3/Set allocations per warm frame vs 700/200; 419/419; re-run 9/9 |
+| P6b | 3.3 | sonnet | region labels + hazards | dist/region-travel.js | G2.6 | merged | codex/region-render-cache-fe44b0f6-8b3c | 6142 | 8463ffe → b07cdcb | orchestrator review: module-scope Sets/scratch Vector3/WeakMap for .loot-name, writes guarded by read-back (textContent/hidden/in-reach/left/top, hazard fill opacity+color); 520-frame parity vs verbatim reference; 0 Vector3/Set allocations per warm frame vs 700/200; 419/419; re-run 9/9 |
 | P6c | 3.3 | sonnet | HUD writes | dist/hud.js | G2.6 | todo | — | — | — | |
 | P6d | 3.4 | sonnet | enemy sync + bars | dist/shared-world-render.js, dist/enemy-spawner.js | G2.6 | todo | — | — | — | |
-| P6e | 3.4 | sonnet | interaction memo | dist/interaction.js, dist/pointer-targeting.js | G2.6 | ready-to-merge | codex/interaction-memo-90ff650c-90f2 | 6134 | ab85658..c17f64e | orchestrator review: memo keyed on lastSnapshot/interactions/state/discoveries identity + length; callers verified read-only; one pre-existing test mutated a snapshot in place and was changed to swap the snapshot (matches the real contract); 600-scenario parity + frozen-consumer test; perf-smoke row 0.0031→0.0000 ms, 5,364→44 B; 422/422; re-run 17/17. Note: window.hallowmere.getState().interactions now returns the memoized array instance (read-only by contract) |
+| P6e | 3.4 | sonnet | interaction memo | dist/interaction.js, dist/pointer-targeting.js | G2.6 | merged | codex/interaction-memo-90ff650c-90f2 | 6134 | ab85658..c17f64e → 8856a7b | orchestrator review: memo keyed on lastSnapshot/interactions/state/discoveries identity + length; callers verified read-only; one pre-existing test mutated a snapshot in place and was changed to swap the snapshot (matches the real contract); 600-scenario parity + frozen-consumer test; perf-smoke row 0.0031→0.0000 ms, 5,364→44 B; 422/422; re-run 17/17. Note: window.hallowmere.getState().interactions now returns the memoized array instance (read-only by contract) |
 | P8 | 3.4 | sonnet | effect pooling | dist/effects-factory.js, tests/effects-factory.test.mjs | G2.6 | todo | — | — | — | |
 
 ## Log
@@ -170,3 +170,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — M5 ready-to-merge (41aa1a5..21ab917 incl. merge of main). Gate 1.6 requested.
 - 2026-09-15 — Gate 1.6: M5 merged (ee26424). Phase 1 main.js steps (M1–M5) complete. Tracker integrating.
 - 2026-09-15 — Gate 1.6 complete (tracker 0c24cd6); main = 0c24cd6. P6b and P6e ready-to-merge; Gate 1.7 authorized, integrating. Next: T2-1 solo (three import normalisation), then M6.
+- 2026-09-15 — Gate 1.7: P6b merged (b07cdcb), P6e merged (8856a7b). Tracker integrating; T2-1 registers next.
