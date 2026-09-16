@@ -8,6 +8,8 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 ## Gates
 
+Blanket authorization: on 2026-09-15 the user said merges no longer need a per-gate question ("go ahead and do it"); from Gate 2.1 on, tasks merge as soon as the orchestrator review passes and the Authorized column records "blanket 2026-09-15".
+
 | Gate | Wave | Tasks | Authorized | Merged commits |
 |---|---|---|---|---|
 | G0A | 0A | T0-0, T0-2, T0-5 | 2026-09-14 (user) | 9a5ffde, 2750cda, c62368e |
@@ -19,7 +21,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G1.5 | 1.5 | M4 | 2026-09-15 (user) | 2e9d56c (+tracker e20872f) |
 | G1.6 | 1.6 | M5 | 2026-09-15 (user) | ee26424 (+tracker 0c24cd6) |
 | G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (+tracker b33135e) |
-| G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (tracker follows) |
+| G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (+tracker d08b553) |
 | G2.1 | 2.1 | M6 | — | — |
 | G2.2 | 2.2 | M7, T2-5 | — | — |
 | G2.3 | 2.3 | M8, T2-6 | — | — |
@@ -66,14 +68,14 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | T2-1 | 2.0 | haiku | Three import normalization | all dist/*.js | G1.5 | merged | codex/three-imports-fa51a6c2-112e | 5458 | 8b70404..292f460 → e264a4a | orchestrator static review clean: dist diff = 22 import-specifier lines only (19 three→core, 2 module.js→three forced by WebGLRenderer, 1 module.js→core); 9 test files shim-only edits with identical assertion counts; new tests/three-imports.test.mjs (spellings, single-instance identity, per-module symbol guard); 432/432; 13-shot capture on the branch: 11/11 within threshold (04-hud-spawn 0.0249%), 0 retries |
-| M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | running | codex/player-motion-c39fa48e-ec75 | 5943 | — | sonnet; stacked on T2-1 (worktree fast-forwarded to 292f460); player-motion.js = moveEntity/animateRig/updatePlayer/updateEffects/updateFloaters; migrates the last mouse-targeting vm slice; deps-with-default allowed only for stubbed imported helpers |
+| M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | review | codex/player-motion-c39fa48e-ec75 | 5943 | 346142e..17fd66f | orchestrator static review clean: 5 functions verbatim modulo ctx.attacksFromHere/perform/footstepCue; deps defaults for hasLineOfSight/findPath/animateHeroAttack (real imports by default); WIRED_SLOTS 48→54; last mouse-targeting vm slice migrated (5 asserts kept); 9 new tests; 441/441; capture running |
 | T2-2 | 2.1 | — | tokens.css | — | — | dropped | — | — | — | after T0-5 only two :root blocks remain (style.css for the game, character-studies.css for a dev page) and they deliberately differ (--muted, --line, --bright); only --gold/--serif/--sans are shared. Not worth an agent under the no-visible-change rule |
 | T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
 | M7 | 2.2 | sonnet | hud.js, game-audio.js | dist/main.js, 2 new | M6 | todo | — | — | — | |
 | T2-4 | 2.2 | opus | chronicle.css layering map (docs only) | docs/refactor/CSS-LAYERS.md | — | merged | codex/css-layers-map-0ee3d5d2-be1b | 5386 | 8629b4f → 6695720 | docs-only (833 lines); 96 shared selectors (not 108) across 8 sheets; 120 deletable whole rules = 5,898 B; §4 is the T2-5 spec (merged overlay block verified via CSSOM at 3 viewports × 4 states, 0 diffs); §5 is the T2-6 execution list; roster/inventory/dialogue screens not live-verified; folded into Gate 1.3 since it is disjoint |
 | T2-5 | 2.2 | sonnet | #connection-overlay triplicate | dist/{style,chronicle,title-screen}.css | T2-4 | merged | codex/connection-overlay-87dc45f9-192b | 6130 | 4119482 → 124d7ad | started early from eb359f9 (disjoint CSS-only); spec = CSS-LAYERS.md §4; orchestrator static review clean: 38 rules deleted + 3 mixed rules rewritten, merged block == T2-4 spec byte-for-byte (whitespace-insensitive) at the old chronicle position, keyframes kept, no empty @media; computed-style golden 707,340 readings / 0 diffs (6 states × 5 viewports, whole-document hashes); bytes style −1107, title-screen −1575, chronicle +1442; 13-shot compare 11/11 within threshold, 07-connection-overlay 0 px (re-run by orchestrator); committed 4119482 |
 | M8 | 2.3 | sonnet | modals.js, inventory-ui.js | dist/main.js, 2 new, tests/modals.test.mjs | M7 | todo | — | — | — | |
-| T2-6 | 2.3 | opus | chronicle.css dead-rule deletion | dist/chronicle.css + shadowed base files | T2-4, T2-5 | running | codex/chronicle-dead-rules-b0bcefb1-0c97 | 5670 | — | opus; started early stacked on T2-5 (git merge of codex/connection-overlay-87dc45f9-192b, commit 4119482) from 192c828; batches A,B,C,E,F,G,H (D skipped); proof = whole-document computed-style goldens ×5 viewports per stage + 33 shot pairs at 1440/1024/390; captures queue behind M3 and T2-5 |
+| T2-6 | 2.3 | opus | chronicle.css dead-rule deletion | dist/chronicle.css + shadowed base files | T2-4, T2-5 | ready-to-merge | codex/chronicle-dead-rules-b0bcefb1-0c97 | 5670 | 19ead9a..eaa68c4 | opus; 7 batch commits (A,B,C,E,F,G,H; D skipped); 121 rules deleted + 2 mixed selector edits, −5,813 B across style/inventory/roster/dialogue/chronicle/journeys; V1 computed-style goldens 8 stages × 5 viewports: 0 diffs (autosave-flash and :focus-visible flips proven noise on the untouched tree); V2 1440 11/11, 1024 11/11, 390 unstable even untouched-vs-untouched (7/11) so V1 is the proof; orchestrator re-check: every surviving rule byte-identical to main, only the 2 edited selectors differ; all six captures self-exited (T0-8 verified on the screenshot path); merging under blanket authorization |
 | M9 | 2.4 | opus | session-lifecycle.js, connection-ui.js | dist/main.js, 2 new, tests/game-mode-choice.test.mjs | M8 | todo | — | — | — | |
 | M10 | 2.5 | opus | snapshot-apply.js, network-events.js, shared-world-render.js | dist/main.js, 3 new, tests nightblade-appearance/snapshot-apply | M9 | todo | — | — | — | verbatim |
 | M11 | 2.6 | opus | scene-setup.js, render-loop.js, automation-surface.js, composition root | dist/main.js, 3 new, tests/automation-surface.test.mjs | M10 | todo | — | — | — | |
@@ -176,3 +178,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — M6 started (sonnet) stacked on T2-1.
 - 2026-09-15 — T2-1 ready-to-merge (8b70404..292f460). Gate 2.0 requested.
 - 2026-09-15 — Gate 2.0: T2-1 merged (e264a4a). Tracker integrating.
+- 2026-09-15 — Gate 2.0 complete (tracker d08b553); main = d08b553. User granted blanket merge authorization. T2-6 verified and merging; M6 review clean (capture running); M7 registering stacked on M6.
