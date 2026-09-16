@@ -88,7 +88,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | P1 | 3.1 | sonnet | pointer rect cache | dist/mouse-targeting.js, tests/mouse-targeting-pick.test.mjs | G2.6 | merged | codex/pointer-rect-cache-b12662a3-0faa | 5896 | 00393b9 → 83bc689 | orchestrator review: 16-line diff (windowTarget option, cachedRect + invalidateRect on resize/scroll-capture/visualViewport resize+scroll/orientationchange, fallback = original call when no window); html,body{overflow:hidden} so no scrollbar can move the rect without an event; 11 new tests incl. 500-scenario parity vs verbatim pick(); 382/382 |
 | P2 | 3.1 | sonnet | village-life per-frame allocs | dist/world-actors.js | G2.6 | merged | codex/village-life-allocs-c4339d1e-4d2e | 5541 | 9090375..d3b1f78 → fd0404e | orchestrator review: scratch Vector3 + pooled rects, sorted array cached behind dirty flag (pickup/addLoot/syncForage/syncLoot) + FNV struct key (npc count, mapId, drop/forage ids+claimed) — visibleNpcs() depends only on mapId so the key is complete; DOM writes guarded by read-back (hidden/class/left/top); 520-frame parity vs verbatim reference, shown load-bearing; allocation test ≤5 Vector3 per 100 calls vs ≥2×items; perf-smoke case added (0.0080→0.0058 ms/op); 373/373; orchestrator re-ran 19 related tests green |
 | P3 | 3.1 | sonnet | light-source array | dist/combat-effects.js | G2.6 | merged | codex/light-source-array-d73101a9-fcab | 5489 | 90759d9..7885898 → 72ec9e0 | dist change approved (strict-greater top-two scan == stable sort positions 0/1 for all tie patterns); tests: 2000-frame mirror parity + toString()-based source guard (mirror verbatim in dist) + 600-frame parity of the REAL update() via public API with bolts spawned/disposed mid-run + zero-map-calls allocation check; 375/375; re-run by orchestrator 11/11 |
-| P4 | 3.2 | sonnet | minimap | dist/exploration-map.js | G2.6 | blocked | codex/minimap-cache-c45ef24b-3d88 | 6185 | — | worktree registered but NOT started: the fog-blur cache cannot be pixel-identical while the player moves (origin changes every frame) and LOS caching is a small win; revisit after M11 with browser measurement |
+| P4 | 3.2 | sonnet | minimap | dist/exploration-map.js | G2.6 | merged (investigation-only) | codex/minimap-cache-c45ef24b-685f | 5617 | 5a77389 → 9793c2e | real benchmark (337-obstacle overworld, real hasLineOfSight): worst-case clustered 30 enemies = 1.16ms/redraw = 1.3% of the 90ms/11Hz budget; realistic scattered play = sub-microsecond. Conclusion: no safe win — the LOS check is not a real bottleneck, and a position-keyed cross-redraw cache would miss almost every redraw anyway (established at deferral time). dist/ and tests unchanged; only scripts/p4-los-bench.mjs merged as a kept, reproducible record. The fog-blur half stays out of scope (cannot be pixel-identical while the player moves). |
 | P5 | 3.2 | opus | snapshot + clone | dist/world.js, dist/local-session.js, tests/snapshot-aliasing.test.mjs | G2.6 | merged | codex/snapshot-clone-7e1bfefc-0db0 | 5605 | 22cdcdf..953582a → 22b7207 | aliasing test written first and failing on main (state.*, loot, forage, events, enemies[].aim aliased); fix = 2-line detach() on state/loot/events, {...patch} for FORAGE_PATCHES, aim rebuilt in place; structuredClone dropped in publish; 14/14 on orchestrator re-run; equivalence 80 checkpoints vs tests/fixtures/world-ref.js; perf-smoke advance 0.120→0.075 ms (−37..52%), snapshot+clone 0.227→0.083 ms; aim now copied with {...e.aim} (953582a); 376/376 |
 | P7 | 3.2 | haiku | orb disposal | dist/resource-orbs.js, tests/resource-orbs.test.mjs | G2.6 | dropped | — | — | — | createResourceOrbs() runs once at boot (main.js:51) and the HUD orbs live for the whole page; nothing ever tears them down, so a dispose() would be uncalled dead code (no leak). Revisit only if M9 introduces a teardown path. |
 | P6a | 3.3 | opus | render loop | dist/render-loop.js | G2.6 | merged | codex/render-loop-scratch-a12ce1ee-7fab | 5410 | 1b05165 → d241ee7 | orchestrator review: module-scope scratch Vector3 for the camera target (copy + z-=3.4, identical vector) and lazily memoized safeHere() inside the enemy predicate (0 calls when no enemy qualifies, ≤1 otherwise); 750-frame parity vs verbatim frame(); safeHere 2000→100 calls; 0 Vector3 per frame; 544/544; re-run 19/19 |
@@ -207,3 +207,51 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — P6a merged (d241ee7). All planned Phase 3 tasks except the deferred P4 and dropped P7 are on main. Closing verification in progress: two-client multiplayer check, perf A/B vs ff9a17f, then the wrap-up commit (PERF.md/VISUAL.md, dead import, font-readiness guard in the capture harness).
 - 2026-09-15 — Tracker 1d8ecc6; main = 1d8ecc6; 44 tasks merged (T2-2/T2-3/P7 dropped, P4 deferred). Two-client multiplayer check on main: both headless clients join one world, see 2/8 adventurers, overlay hidden, no exceptions (the scripted movement nudge did not match the automation tool schema, so only join/sync was asserted). Perf A/B vs ff9a17f starting; wrap-up worktree hm-T3-0 opened.
 - 2026-09-15 — DONE. Wrap-up merged (448a645). Final state: main.js 593 lines / 97 KB → 84 lines / 6 KB composition root over 30 tested modules; 269 → 544 tests; no test reads main.js as text; assertWired at boot; automation API contract test green; 13-shot set matches the refactor baseline on every merged step; two-client multiplayer session verified; browser p95/p99 down 13–25% vs ff9a17f in a paired A/B with p50 unchanged. Not done: P4 (deferred: fog-blur cache cannot be made pixel-identical while moving), P7/T2-2/T2-3 (dropped as unnecessary). Task worktrees under .worktrees/ were left in place for inspection.
+
+## Post-refactor housekeeping (2026-09-16)
+
+- **Worktree/branch cleanup**: removed 46 merged task worktrees + branches and 20 further orphaned
+  `codex/refactor-tracker-*` rotation branches (one per gate cycle, never deleted after each
+  `finish`+`start`), freeing 4.3 GB. Every branch was confirmed an ancestor of `main` before
+  deletion (`git merge-base --is-ancestor`) — no unmerged work existed.
+- **Incident**: the cleanup script used `for k in $KEEP` with an unquoted multi-word variable to
+  skip the live tracker and P4 worktrees. This environment's Bash tool runs under zsh, which (unlike
+  bash) does not word-split an unquoted parameter in a `for` list by default, so `k` bound to the
+  whole two-name string on every iteration and the skip check never matched — both excluded
+  worktrees were removed anyway. Verified no data loss (both were clean with zero unique commits at
+  removal time: the tracker was a fresh restart of `main` with no pending edits, and the P4/minimap
+  worktree was registered but never touched). Re-registering surfaced a second issue: `scripts/worktree.mjs`'s
+  `tasks.json` registry had gone stale relative to the raw `git worktree remove` calls, so `start` for
+  both tasks returned a *stale* record (old branch/base, no actual worktree created) instead of
+  detecting the missing directory and recreating it. Fixed by clearing `.git/codex-workflow/tasks.json`
+  (backed up to `/tmp/tasks.json.bak`; every entry pointed at a deleted directory, so nothing live was
+  lost) and re-running `start` for both tasks, which then created real worktrees at current `main`.
+  Lesson for future cleanup: never mix raw `git worktree remove` with `scripts/worktree.mjs`'s own
+  state file without also updating (or clearing) that state file; prefer arrays over unquoted
+  multi-word variables in `for` loops under this environment's shell.
+- **P4 revisited**: registered fresh from current `main` (`.worktrees/minimap-cache-c45ef24b-685f`,
+  branch `codex/minimap-cache-c45ef24b-685f`) and launched as an investigation-first task (sonnet):
+  measure the actual cost of the per-enemy LOS check in `drawExplorationMap` before deciding whether
+  a safe, zero-observable-change win exists; a measured "no win" conclusion is an accepted outcome.
+  Running.
+
+## Manual playtest (2026-09-16)
+
+Served the post-refactor tree (`main` @ `63443f9`) with `scripts/serve.mjs` and played it interactively
+in a real browser tab (not the CDP screenshot harness): title → choose mode → single player → new
+journey → Sorcerer character select (3D portrait wheel) → spawn at Ashwick → WASD movement → talked
+to Elder Rowan (dialogue modal, accepted the quest) → inventory (I) → journal (J) → pause menu (Esc,
+all settings toggles) → resumed. The HUD's location label correctly switched "Sanctuary" → "World I ·
+The Last Toll" on leaving the safe zone; the minimap redrew and tracked the player marker; autosave
+fired ("All progress saved"). Zero console errors and zero dev-server errors for the whole session.
+
+One finding, not a regression: the CDP-driven preview tab starts with `document.hidden=true`, which
+`bindPageActivity` (page-activity.js) correctly reads once at boot and freezes the simulation via
+`setBackgrounded(true)` — this is the same quirk `scripts/screenshot.mjs` already works around with
+`Page.setWebLifecycleState({state:'active'})` after every capture, and it also explains why the
+two-client multiplayer check's scripted movement nudge showed "NO MOVEMENT OBSERVED" earlier today.
+Overriding `document.hidden`/`visibilityState` and dispatching `visibilitychange`+`focus` from the
+page unfroze it immediately, after which WASD produced real, correct movement. No code changes —
+this confirms the page-visibility wiring (moved through M5/M9/M11) is working exactly as designed,
+not broken by the refactor.
+- 2026-09-16 — P4 closed: investigated with a real benchmark, found no safe win, merged only the benchmark script (9793c2e). This is now the final item; refactor + all deferred work is complete.
