@@ -18,7 +18,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 | G1.4 | 1.4 | M3, T2-5, P1, P2, P3, P5, T0-8 | 2026-09-15 (user) | fedac5e, 124d7ad, 1044804, 83bc689, fd0404e, 72ec9e0, 22b7207 (+tracker 76b757a) |
 | G1.5 | 1.5 | M4 | 2026-09-15 (user) | 2e9d56c (+tracker e20872f) |
 | G1.6 | 1.6 | M5 | 2026-09-15 (user) | ee26424 (+tracker 0c24cd6) |
-| G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (tracker follows) |
+| G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (+tracker b33135e) |
 | G2.0 | 2.0 | T2-1 | — | — |
 | G2.1 | 2.1 | M6 | — | — |
 | G2.2 | 2.2 | M7, T2-5 | — | — |
@@ -65,7 +65,7 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| T2-1 | 2.0 | haiku | Three import normalization | all dist/*.js | G1.5 | todo | — | — | — | solo wave |
+| T2-1 | 2.0 | haiku | Three import normalization | all dist/*.js | G1.5 | running | codex/three-imports-fa51a6c2-112e | 5458 | — | sonnet (escalated from haiku: per-symbol core-vs-full decisions); solo on dist/*.js (T2-6 is CSS-only); base b33135e; orchestrator captures shots afterwards |
 | M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | todo | — | — | — | |
 | T2-2 | 2.1 | — | tokens.css | — | — | dropped | — | — | — | after T0-5 only two :root blocks remain (style.css for the game, character-studies.css for a dev page) and they deliberately differ (--muted, --line, --bright); only --gold/--serif/--sans are shared. Not worth an agent under the no-visible-change rule |
 | T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
@@ -171,3 +171,4 @@ Baseline (main `ff9a17f`): 269 tests pass / 0 fail, suite ~84 s, `npm run build`
 - 2026-09-15 — Gate 1.6: M5 merged (ee26424). Phase 1 main.js steps (M1–M5) complete. Tracker integrating.
 - 2026-09-15 — Gate 1.6 complete (tracker 0c24cd6); main = 0c24cd6. P6b and P6e ready-to-merge; Gate 1.7 authorized, integrating. Next: T2-1 solo (three import normalisation), then M6.
 - 2026-09-15 — Gate 1.7: P6b merged (b07cdcb), P6e merged (8856a7b). Tracker integrating; T2-1 registers next.
+- 2026-09-15 — Gate 1.7 complete (tracker b33135e); main = b33135e; 33 tasks merged. T2-1 started solo (sonnet). M6 prompt staged for after T2-1.
