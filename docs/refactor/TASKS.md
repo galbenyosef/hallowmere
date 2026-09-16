@@ -22,7 +22,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | G1.6 | 1.6 | M5 | 2026-09-15 (user) | ee26424 (+tracker 0c24cd6) |
 | G1.7 | 1.7 | P6b, P6e | 2026-09-15 (user) | b07cdcb, 8856a7b (+tracker b33135e) |
 | G2.0 | 2.0 | T2-1 | 2026-09-15 (user) | e264a4a (+tracker d08b553) |
-| G2.1 | 2.1 | M6, T2-6 | blanket 2026-09-15 | 44fdf01 (T2-6); M6 pending capture |
+| G2.1 | 2.1 | M6, T2-6 | blanket 2026-09-15 | 44fdf01, 15bfa5e (tracker follows) |
 | G2.2 | 2.2 | M7, T2-5 | — | — |
 | G2.3 | 2.3 | M8, T2-6 | — | — |
 | G2.4 | 2.4 | M9 | — | — |
@@ -68,7 +68,7 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 | ID | Wave | Model | Title | Owns | Depends | Status | Branch | Port | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | T2-1 | 2.0 | haiku | Three import normalization | all dist/*.js | G1.5 | merged | codex/three-imports-fa51a6c2-112e | 5458 | 8b70404..292f460 → e264a4a | orchestrator static review clean: dist diff = 22 import-specifier lines only (19 three→core, 2 module.js→three forced by WebGLRenderer, 1 module.js→core); 9 test files shim-only edits with identical assertion counts; new tests/three-imports.test.mjs (spellings, single-instance identity, per-module symbol guard); 432/432; 13-shot capture on the branch: 11/11 within threshold (04-hud-spawn 0.0249%), 0 retries |
-| M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | review | codex/player-motion-c39fa48e-ec75 | 5943 | 346142e..17fd66f | orchestrator static review clean: 5 functions verbatim modulo ctx.attacksFromHere/perform/footstepCue; deps defaults for hasLineOfSight/findPath/animateHeroAttack (real imports by default); WIRED_SLOTS 48→54; last mouse-targeting vm slice migrated (5 asserts kept); 9 new tests; 441/441; capture running |
+| M6 | 2.1 | sonnet | player-motion.js | dist/main.js, 1 new, tests/mouse-targeting.test.mjs | T2-1 | merged | codex/player-motion-c39fa48e-ec75 | 5943 | 346142e..17fd66f → 15bfa5e | orchestrator static review clean: 5 functions verbatim modulo ctx.attacksFromHere/perform/footstepCue; deps defaults for hasLineOfSight/findPath/animateHeroAttack (real imports by default); WIRED_SLOTS 48→54; last mouse-targeting vm slice migrated (5 asserts kept); 9 new tests; 441/441; 13-shot capture 11/11 (04-hud-spawn 0.1165% = orb animation + autosave flash, inspected on the diff image) |
 | T2-2 | 2.1 | — | tokens.css | — | — | dropped | — | — | — | after T0-5 only two :root blocks remain (style.css for the game, character-studies.css for a dev page) and they deliberately differ (--muted, --line, --bright); only --gold/--serif/--sans are shared. Not worth an agent under the no-visible-change rule |
 | T2-3 | 2.1 | — | value-noise dedup | — | — | dropped | codex/noise-dedup-16edff21-b85b (unused) | 5828 | — | on inspection the three copies are not one algorithm: two are GLSL chunks sharing only `hash`+`noise` (~200 B), map-fog.js is an imul value-noise in JS, environment.js is random speckle. Not worth an agent; a shared GLSL chunk can ride along with P3/P8 if those touch the shaders |
 | M7 | 2.2 | sonnet | hud.js, game-audio.js | dist/main.js, 2 new | M6 | running | codex/hud-audio-2811c280-cd13 | 5773 | — | sonnet; stacked on M6 (merge 1e29a23 over main d08b553); hud.js = toast/updateClassHud/updateUI/drawMap; game-audio.js = syncAudioState/awaken/audioAt/footstepCue/updateAudioWorld |
@@ -180,3 +180,4 @@ Blanket authorization: on 2026-09-15 the user said merges no longer need a per-g
 - 2026-09-15 — Gate 2.0: T2-1 merged (e264a4a). Tracker integrating.
 - 2026-09-15 — Gate 2.0 complete (tracker d08b553); main = d08b553. User granted blanket merge authorization. T2-6 verified and merging; M6 review clean (capture running); M7 registering stacked on M6.
 - 2026-09-15 — T2-6 merged (44fdf01) under blanket authorization. M7 started (sonnet) stacked on M6. M6 capture running.
+- 2026-09-15 — M6 merged (15bfa5e). Gate 2.1 complete (M6, T2-6). Tracker integrating.
