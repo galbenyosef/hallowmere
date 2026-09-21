@@ -1,3 +1,7 @@
+// 2026-09-21: the mode choice is gone. enterGame() runs straight from the loading screen into the
+// most recent journey (or a fresh Sorcerer one), ?mode=multiplayer joins the shared world, and
+// journeys no longer lock their character (canChangeCharacter / chooseDefaultCharacter below).
+//
 // The mode-choice, journey, session, main-menu and roster region moved verbatim out of
 // main.js (M9). The region's import-time statements -- the title screen and journeys menu,
 // setModeChoiceInert(true), the connection-back handler, and the pagehide/pageshow listeners --
@@ -41,20 +45,48 @@ import {LocalSession as LocalSessionImport} from './local-session.js';
 import {MultiplayerClient as MultiplayerClientImport} from './multiplayer-client.js';
 import {createAutosave as createAutosaveImport} from './journey-store.js';
 import {createJourney as createJourneyImport} from './journey-state.js';
-import {classFor,conceptFor} from './classes.js';
+import {classFor,conceptFor,DEFAULT_CHARACTER} from './classes.js';
 import {prepareCharacterPortraits} from './character-portraits.js';
 import {disposeActor} from './multiplayer-view.js';
 import {getRig} from './model-kit.js';
 export function createSessionLifecycle(ctx,{windowTarget=window,documentTarget=document,createTitleScreen=createTitleScreenImport,createJourneysMenu=createJourneysMenuImport,LocalSession=LocalSessionImport,MultiplayerClient=MultiplayerClientImport,createAutosave=createAutosaveImport,createJourney=createJourneyImport}={}){
  function setModeChoiceInert(inert){for(const child of $('game').children)if(child.id!=='loading')child.inert=inert;}
- function showModeChoice(){
-  setModeChoiceInert(true);
-  ctx.ready=false;ctx.sessionMode=null;ctx.mainMenuOpen=false;ctx.syncAudioState();
-  ctx.titleScreen.showModes();$('connection-overlay').hidden=true;
+ // Boot lands in play: the most recent journey continues, a first visit becomes a Sorcerer
+ // journey, ?preview= tours stay unsaved, and ?mode=multiplayer joins the shared world.
+ function enterGame(){
+  if(new URLSearchParams(globalThis.location?.search||'').get('mode')==='multiplayer'){startSession('multiplayer');return;}
+  if(ctx.previewMode){startSession('single-player');return;}
+  return enterSolo();
  }
- function chooseMode(mode){if(mode==='single-player'&&!ctx.previewMode)openJourneys();else startSession(mode);}
- function openJourneys(preferredId){
-  ctx.titleScreen.hide();setModeChoiceInert(true);ctx.ready=false;ctx.journeysMenu.show(preferredId);
+ async function enterSolo(){
+  if(!ctx.assetsReady||ctx.sessionMode)return;
+  ctx.titleScreen.showLoading('Opening your journey…','Entering Hallowmere');$('connection-overlay').hidden=true;
+  let records=[];
+  try{
+   records=await ctx.journeyStore.list();
+   if(ctx.sessionMode)return;
+   if(records.length){await continueJourney(records[0].id);return;}
+   const record=await ctx.journeyStore.create(createJourney(DEFAULT_CHARACTER));
+   try{ctx.activeJourney=record;startSession('single-player',record.data);attachAutosave(record);}
+   catch(error){stopJourneySession();await ctx.journeyStore.release(record.id).catch(()=>{});throw error;}
+  }catch(error){console.error(error);openJourneys(records[0]?.id,error.message);}
+ }
+ // Backs out of a session that never produced a snapshot (a pending or failed connection).
+ function leaveSession(){
+  if(ctx.lastSnapshot)return false;
+  ctx.sessionGeneration++;ctx.network?.close();ctx.network=null;ctx.releaseInput();
+  setModeChoiceInert(true);ctx.ready=false;ctx.sessionMode=null;ctx.mainMenuOpen=false;ctx.syncAudioState();
+  $('connection-overlay').hidden=true;return true;
+ }
+ // A session whose snapshot carries no class asks for the default once; the roster is the fallback.
+ function chooseDefaultCharacter(){
+  if(ctx.defaultCharacterRequested===ctx.sessionGeneration)return;
+  ctx.defaultCharacterRequested=ctx.sessionGeneration;
+  if(!ctx.network?.send('select-class',DEFAULT_CHARACTER))openRoster();
+ }
+ function canChangeCharacter(){return !!ctx.network?.connected&&!ctx.state.ended&&(ctx.sessionMode==='single-player'||ctx.safeHere());}
+ function openJourneys(preferredId,message){
+  ctx.titleScreen.hide();setModeChoiceInert(true);ctx.ready=false;ctx.journeysMenu.show(preferredId,{message});
  }
  function chooseJourneyCharacter(){ctx.creatingJourney=true;ctx.rosterPicker.show({journey:true});}
  function chooseCharacter(choice){
@@ -112,12 +144,8 @@ export function createSessionLifecycle(ctx,{windowTarget=window,documentTarget=d
   ctx.network=mode==='single-player'?new LocalSession({...callbacks,save}):new MultiplayerClient(callbacks);
   ctx.titleScreen.hide();ctx.clock.getDelta();ctx.network.start();ctx.awaken();
  }
- function returnToModeChoice(){
-  if(ctx.lastSnapshot)return;
-  ctx.sessionGeneration++;ctx.network?.close();ctx.network=null;ctx.releaseInput();showModeChoice();
- }
  function mainMenuSession(){
-  return {mode:ctx.sessionMode,canChangeCharacter:!ctx.activeJourney&&!!ctx.network?.connected&&!ctx.state.ended&&ctx.safeHere(),character:classFor(ctx.state).name,characterLocked:!!ctx.activeJourney};
+  return {mode:ctx.sessionMode,canChangeCharacter:canChangeCharacter(),character:classFor(ctx.state).name};
  }
  function openMainMenu(){
   if(!ctx.ready||!ctx.network?.connected||!ctx.lastSnapshot||ctx.state.ended||ctx.rosterPicker?.open)return;
@@ -148,17 +176,16 @@ export function createSessionLifecycle(ctx,{windowTarget=window,documentTarget=d
   for(const child of [...ctx.player.children])disposeActor(child);ctx.player.add(ctx.cloneModel(key));ctx.player.userData.characterKey=key;ctx.heroRig=getRig(ctx.player);
  }
  function openRoster(){
-  if(ctx.activeJourney){ctx.toast('This journey keeps its chosen character. Start a new journey to choose another.');return;}
   if(!ctx.ready||!ctx.network?.connected||!ctx.rosterPicker||ctx.rosterPicker.open||ctx.state.ended)return;
-  if(!ctx.safeHere()){if(ctx.mainMenuOpen)ctx.titleScreen.updateSession(mainMenuSession());else ctx.toast('Return to a sanctuary to change class.');return;}
+  if(!canChangeCharacter()){if(ctx.mainMenuOpen)ctx.titleScreen.updateSession(mainMenuSession());else ctx.toast('Return to a sanctuary to change class.');return;}
   if(ctx.mainMenuOpen)ctx.titleScreen.hide();
   if(ctx.mapExpanded)ctx.toggleMap();ctx.inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.currentNpc=null;ctx.paused=true;ctx.releaseInput();ctx.audio.pause(true,ctx.backgrounded);ctx.rosterPicker.show();
  }
- ctx.titleScreen=createTitleScreen($('loading'),{onBegin:chooseMode,onResume:resumeFromMainMenu,onChangeCharacter:openRoster});
- ctx.journeysMenu=createJourneysMenu({store:ctx.journeyStore,onNew:chooseJourneyCharacter,onContinue:continueJourney,onBack:showModeChoice});
+ ctx.titleScreen=createTitleScreen($('loading'),{onResume:resumeFromMainMenu,onChangeCharacter:openRoster});
+ ctx.journeysMenu=createJourneysMenu({store:ctx.journeyStore,onNew:chooseJourneyCharacter,onContinue:continueJourney,onBack:enterSolo});
  setModeChoiceInert(true);
- $('connection-back').onclick=returnToModeChoice;
+ $('connection-back').onclick=()=>{if(leaveSession())enterSolo();};
  windowTarget.addEventListener('pagehide',()=>{ctx.autosave?.emergency();ctx.autosave?.exit().catch(()=>{});ctx.network?.close();});
  windowTarget.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
- return {setModeChoiceInert,showModeChoice,chooseMode,openJourneys,chooseJourneyCharacter,chooseCharacter,beginJourney,continueJourney,attachAutosave,updateSaveStatus,saveAndExit,stopJourneySession,startSession,returnToModeChoice,mainMenuSession,openMainMenu,resumeFromMainMenu,closeRoster,dismissMainMenu,syncPlayerCharacter,openRoster};
+ return {setModeChoiceInert,enterGame,enterSolo,leaveSession,chooseDefaultCharacter,canChangeCharacter,openJourneys,chooseJourneyCharacter,chooseCharacter,beginJourney,continueJourney,attachAutosave,updateSaveStatus,saveAndExit,stopJourneySession,startSession,mainMenuSession,openMainMenu,resumeFromMainMenu,closeRoster,dismissMainMenu,syncPlayerCharacter,openRoster};
 }

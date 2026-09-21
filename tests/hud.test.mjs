@@ -97,7 +97,7 @@ test('updateClassHud writes name/caption/button state and ability icons, then sk
  const boltButton=doc.querySelector('[data-action="bolt"]');
  assert.equal(boltButton.querySelector('.ability-icon').innerHTML,icon('flame'));
  assert.equal(boltButton.querySelector('.ability-icon').style.color,'#ff902e'); // Igni's own color wins over classColor
- assert.equal(ctx.hudClass,conceptFor('geralt',undefined)+'|false');
+ assert.equal(ctx.hudClass,conceptFor('geralt',undefined));
  // Same class/journey key -> cached, no re-render (sentinel proves the early return fired).
  doc.getElementById('character-name').textContent='sentinel';
  updateClassHud();
@@ -170,14 +170,16 @@ test('drawMap forwards the expected fields to exploration-map and writes the map
 // 2811c280-cd13, confirmed byte-identical to the checked-out dist/hud.js via
 // `git show codex/hud-audio-2811c280-cd13:dist/hud.js` -- dist/hud.js is not
 // on main yet, so that branch stands in for "main" per this task's brief).
-// Untouched below; do not reformat. Kept permanently as the parity oracle.
+// Untouched below; do not reformat. Kept permanently as the parity oracle. One exception: the
+// world aria-label's class-change clause follows the 2026-09-21 copy change (journeys no longer
+// lock their character), so the oracle and dist/hud.js still print the same string.
 // ---------------------------------------------------------------------------
 function createReferenceHud(ctx){
  function updateClassHud(){
   const c=classFor(ctx.state),key=conceptFor(ctx.state.classId,ctx.state.appearanceId)+'|'+!!ctx.activeJourney;if(ctx.hudClass===key)return;ctx.hudClass=key;
   $('character-name').textContent=c.name;$('class-caption').textContent=c.name.toUpperCase();
   $('character-button').disabled=!!ctx.activeJourney;$('character-button').title=ctx.activeJourney?'This journey keeps its chosen character.':'Change character (C)';
-  $('world').setAttribute('aria-label','Village play area. Use W A S D to move, mouse to aim and attack, F to speak or collect loot, I for equipment, '+(ctx.activeJourney?'':'C to choose a class at a sanctuary, ')+'2 for your class skill, 1 to dodge, and 3 to heal.');
+  $('world').setAttribute('aria-label','Village play area. Use W A S D to move, mouse to aim and attack, F to speak or collect loot, I for equipment, C to change character, 2 for your class skill, 1 to dodge, and 3 to heal.');
   for(const [action,skill] of Object.entries(c.abilities)){const button=document.querySelector(`[data-action="${action}"]`);button.querySelector('.ability-name').textContent=skill.name;button.title=`${skill.name} · ${skill.cost} essence · ${skill.cooldown}s cooldown. ${skill.description}`;button.setAttribute('aria-label',button.title);const index=['attack','bolt','dodge','nova'].indexOf(action);if(index>=0&&classIconNames[c.id]){const mark=button.querySelector('.ability-icon');mark.innerHTML=icon(classIconNames[c.id][index]);mark.style.color=skill.color||classColor(ctx.state);}}
  }
  function updateUI(){if(!ctx.player)return;updateClassHud();$('health-liquid').style.height=`${ctx.state.hp/ctx.state.maxHp*100}%`;$('mana-liquid').style.height=`${ctx.state.mana/ctx.state.maxMana*100}%`;$('potion-count').textContent=ctx.state.potions;$('souls-counter').textContent=`${ctx.state.souls} SOULS`;$('experience-fill').style.width=`${ctx.state.souls%100}%`;$('level-label').textContent=`${classAppearance(ctx.state.classId,ctx.state.appearanceId)?.name||classFor(ctx.state).name} · LEVEL ${ctx.state.level}`;document.querySelector('.rank').textContent=String(ctx.state.level).padStart(2,'0');

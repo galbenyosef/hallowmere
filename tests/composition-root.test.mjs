@@ -83,7 +83,7 @@ function stubDocument(){
 }
 
 const SESSION_DEPS={
- createTitleScreen:()=>({showModes(){},hide(){},showMainMenu(){},updateSession(){},setProgress(){},showError(){}}),
+ createTitleScreen:()=>({showLoading(){},hide(){},showMainMenu(){},updateSession(){},setProgress(){},showError(){}}),
  createJourneysMenu:()=>({show(){},showConflict(){}}),
  LocalSession:class{start(){}close(){}},MultiplayerClient:class{start(){}close(){}},
  createAutosave:()=>({emergency(){},async exit(){},changed(){},async flush(){},stop(){}}),

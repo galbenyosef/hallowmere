@@ -6,6 +6,7 @@ import {World as SharedWorld} from '../dist/world.js';
 import {PORTALS} from '../dist/regions.js';
 import {refreshGates} from '../dist/region-campaign.js';
 import {FORAGE_PATCHES} from '../dist/foraging.js';
+import {isSanctuary} from '../dist/campaign.js';
 
 const flush=()=>new Promise(resolve=>queueMicrotask(resolve));
 function setup(t){const snapshots=[];const session=new LocalSession({seed:17,onSnapshot:(snapshot,changed)=>snapshots.push({snapshot,changed})});t.after(()=>session.close());session.start();return {session,snapshots,player:session.world.players.get(session.id)};}
@@ -68,4 +69,18 @@ test('published snapshots are detached from the running world',t=>{
  assert.notEqual(FORAGE_PATCHES.find(patch=>patch.id===published.forage[0].id).x,999);
  assert.equal(world.events.some(e=>e.type==='renderer-only'),false);
  assert.equal(player.loot.find(d=>d.id===published.loot[0].id).claimed,false);
+});
+
+// The local world pauses whenever a menu is open, so the pause menu's Change character works
+// anywhere; the shared server world keeps holding players to a sanctuary.
+test('a local world accepts a class change away from any sanctuary, unlike the shared world',async t=>{
+ const {session,player}=setup(t),world=session.world;
+ const enemy=world.enemies.find(e=>e.zone==='road');Object.assign(player,{x:enemy.x,z:enemy.z-1});
+ assert.equal(isSanctuary(player),false);
+ assert.equal(session.send('select-class',{classId:'ranger',appearanceId:'C02'}),true);await flush();
+ assert.equal(player.state.classId,'ranger');
+ const shared=new SharedWorld({seed:17}),other=shared.join().player;Object.assign(other,{x:player.x,z:player.z});
+ assert.equal(shared.local,false);
+ assert.equal(shared.command(other.id,{type:'select-class',classId:'ranger',appearanceId:'C02',seq:1,worldId:shared.id}),false);
+ assert.notEqual(other.state.classId,'ranger');
 });

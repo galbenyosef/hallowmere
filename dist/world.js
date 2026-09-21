@@ -19,8 +19,10 @@ const detach=v=>{if(!v||typeof v!=='object')return v;if(Array.isArray(v)){const 
  const out={};for(const k in v)out[k]=detach(v[k]);return out;};
 
 export class World {
- constructor({seed=randomSeed(),now=()=>Date.now()}={}){
-  this.now=now;this.players=new Map();this.time=0;this.tick=0;this.events=[];this.eventId=0;this.emptySince=now();this.reset(seed);
+ constructor({seed=randomSeed(),now=()=>Date.now(),local=false}={}){
+  // A local world belongs to one browser tab and pauses whenever a menu is open; the
+  // multiplayer server never sets this, so the shared world keeps its sanctuary rules.
+  this.now=now;this.local=local;this.players=new Map();this.time=0;this.tick=0;this.events=[];this.eventId=0;this.emptySince=now();this.reset(seed);
  }
  reset(seed=randomSeed()){
   this.id=randomUUID();this.seed=seed;this.shared={questAccepted:false,villageKills:0,roadKills:0,bossSpawned:false,victory:false,bossLootClaimed:false,completed:false};

@@ -38,6 +38,8 @@ export const CLASSES={
   nova:ability('Quen','shield',8,30,'Raise a protective sign that absorbs 45 damage for four seconds.',{shield:45,duration:4}),heal:draught}}
 };
 export const CLASS_LIST=Object.values(CLASSES);
+// The character a fresh journey (and a classless session) starts with; players change it in the pause menu.
+export const DEFAULT_CHARACTER={classId:'sorcerer',appearanceId:CLASSES.sorcerer.concept};
 // Compatibility for a session that has not chosen a class yet.
 const legacy={id:'warden',name:'Warden',role:'Oathbound',hp:140,mana:100,regen:7,speed:4.9,color:'#88cfdb',weapon:'Warden’s longsword',weaponType:'sword',focus:'Shield',abilities:{attack:ability('Cleave','melee',.48,0,'Sweep your blade.',{damage:28,range:2.9,arc:2.1}),bolt:ability('Emberbolt','projectile',1.2,18,'Hurl a firebolt.',{damage:46,range:35,speed:14,projectile:'ember',magic:true}),dodge:evade('Evade'),nova:ability('Cinder nova','burst',6,35,'Burn nearby enemies.',{damage:62,radius:4.6,root:.7,magic:true}),heal:draught}};
 export const classFor=state=>CLASSES[state?.classId]||legacy;

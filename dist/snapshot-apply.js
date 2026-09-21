@@ -3,6 +3,8 @@
 // first-snapshot key deletion before the Object.assign merge, ctx.switchMap ahead of that
 // merge, and the event watermark all sit exactly where they did in main.js. Not one statement
 // moved; see tests/snapshot-apply.test.mjs for the five scenarios that pin that order.
+// One later change (2026-09-21): the classless branch asks session-lifecycle for the default
+// character (ctx.chooseDefaultCharacter) instead of opening the roster; its position is unchanged.
 //
 // Free identifiers: $ (./dom.js, the restart-vote and inventory lookups), classFor
 // (./classes.js, the connection status line), mapFor (./regions.js), predictedPosition
@@ -58,7 +60,7 @@ export function createSnapshotApply(ctx,{disposeActor=disposeActorImport}={}){
   if(ctx.state.level>oldLevel&&!changed){ctx.toast(`Oath strengthened · Level ${ctx.state.level}`);ctx.audio.play('levelup',.65);}if(ctx.state.ended&&!wasDead){ctx.dismissMainMenu();ctx.audio.play('death-player',.8);ctx.releaseInput();if(ctx.mapExpanded)ctx.toggleMapForDeath();ctx.showModal('death');}
   if(wasDead&&!ctx.state.ended||changed){ctx.dismissMainMenu();ctx.inventoryPreviews.hide();$('modal-shade').hidden=true;ctx.modalKind='';ctx.paused=false;ctx.toggleMapForDeath();ctx.syncAudioState();ctx.player.rotation.z=0;ctx.player.position.y=0;}
   if(ctx.mainMenuOpen&&!ctx.rosterPicker?.open)ctx.titleScreen.updateSession(ctx.mainMenuSession());
-  if(!ctx.state.classId&&!ctx.rosterPicker?.open)ctx.openRoster();
+  if(!ctx.state.classId&&!ctx.rosterPicker?.open)ctx.chooseDefaultCharacter();
   if(ctx.modalKind==='npc'&&beforeServices!==JSON.stringify([ctx.state.gold,ctx.state.potions,ctx.state.forgeLevel,ctx.state.questAccepted,ctx.state.questRewarded,ctx.state.victory,ctx.state.bossLootClaimed,ctx.state.rookSupplies]))ctx.renderNpc();if(ctx.modalKind==='inventory'&&beforeInventory!==JSON.stringify([ctx.state.inventory,ctx.state.equipped]))ctx.renderInventory();if(ctx.modalKind==='inventory')updateInventoryResources($('modal-content').closest('.modal'),ctx.state,ctx.network.connected);ctx.updateUI();
  }
  return {applySnapshot};

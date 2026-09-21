@@ -54,7 +54,7 @@ Keep local asset URLs relative so the game works both at a domain root and under
 | Speak / collect loot / harvest plants | F or click its label |
 | Inventory, equipment, and food pouch | I |
 | Eat forage | Eat button in the Inventory pouch |
-| Choose class (in a sanctuary) | C or click your character name |
+| Change character (anywhere in solo; in a sanctuary in multiplayer) | C, your character name, or the pause menu |
 | Reveal loot and plant labels during combat | Hold Alt |
 | Journal / map / pause | J / M / Escape |
 
@@ -78,13 +78,14 @@ Your pouch and personal harvest timers survive death, respawn, and the normal 60
 
 ## Chosen roster
 
-Choose Sorcerer, Ranger, Reaver, Nightblade, Oathkeeper, or Plague Alchemist before
-entering the vigil. Each has a distinct model, weapon, combat kit, vitality,
+Every journey begins as the Sorcerer; switch to Ranger, Reaver, Nightblade,
+Oathkeeper, Plague Alchemist, or Geralt from the pause menu whenever you like.
+Each has a distinct model, weapon, combat kit, vitality,
 essence, and movement speed. Sorcerer offers its crystal staff and spellbook,
 plus the chosen Mire Witch, Bone Oracle, and Storm Hermit appearances.
 
-The selection screen explains every skill. Press **C** in a sanctuary to change
-class while preserving progress and upgrades. Health and essence percentages
+The character wheel explains every skill. Press **C** or use the pause menu to
+change character while preserving progress and upgrades; multiplayer requires a sanctuary. Health and essence percentages
 and existing cooldowns carry across. Models, abilities, and support effects are
 shared with other players; healing and protection can help nearby allies.
 The [roster notes](docs/character-selection.md) list the live skills. The original
@@ -128,13 +129,13 @@ Travel, checkpoints, cave discoveries, landmark waves, and rewards are server-au
 
 Regional playtime is a design target rather than a measured guarantee. Deterministic tests verify combat and traversal rules; a full player playthrough is still needed to calibrate the 15–20 minute first-visit target.
 
-## Choose a game mode
+## Entering the game
 
-After assets load, choose **Single Player** or **Multiplayer**, then select your character. The game never connects to multiplayer before that choice, even if this tab has a previous multiplayer session.
+After assets load, the game goes straight into single player: it continues your most recently saved journey, or on a first visit creates a new journey as the Sorcerer. There is no mode or character screen; change character from the pause menu (Escape) at any time. The game never connects to multiplayer unless the page is opened with `?mode=multiplayer`.
 
-Single Player runs the shared game simulation locally in your browser, with no multiplayer backend connection. Menus, character selection, and a hidden tab pause the local world. Starting a new vigil resets your solo adventure immediately. Reloading starts a fresh session and shows the mode choice again; solo progress is not saved. Page assets must still load from the website (there is no offline installation).
+Single player runs the shared game simulation locally in your browser, with no multiplayer backend connection. Menus, character selection, and a hidden tab pause the local world. Progress autosaves to the browser as a journey; **Save & exit** in the pause menu opens **Your journeys**, where you can continue, rename, delete, or start another journey. Page assets must still load from the website (there is no offline installation).
 
-Multiplayer joins the existing shared world and retains its reconnection behavior. While the initial connection is pending or fails, **Back to game modes** lets you choose solo instead. To change modes after entering a world, reload the page.
+Opening `/?mode=multiplayer` joins the existing shared world and retains its reconnection behavior. While the initial connection is pending or fails, **Play solo instead** returns to your journey. To change modes after entering a world, reload the page with or without the parameter.
 
 ## Cooperative multiplayer
 

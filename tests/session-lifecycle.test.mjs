@@ -51,7 +51,7 @@ function harness(t,{mode='single-player'}={}){
   async acquire(id){this.acquired.push(id);return {...this.record,id,recovered:this.recovered};},
   async release(id){this.released.push(id);}};
  const journeysMenu={shown:[],conflicts:[],show(id){this.shown.push(id);},showConflict(message,resume){this.conflicts.push([message,resume]);}};
- const titleScreen={sessions:[],showModes(){this.screen='modes';},hide(){this.screen='hidden';$('loading').hidden=true;},
+ const titleScreen={sessions:[],showLoading(message,title){this.screen='loading';this.loading={message,title};},hide(){this.screen='hidden';$('loading').hidden=true;},
   showMainMenu(session){this.screen='main-menu';this.sessions.push(session);$('loading').hidden=false;},
   updateSession(session){this.sessions.push(session);}};
  const rosterPicker={open:false,shown:[],resolved:[],show(options){this.shown.push(options);this.open=true;},resolve(result){this.resolved.push(result);this.open=false;}};
@@ -80,11 +80,11 @@ function harness(t,{mode='single-player'}={}){
 
 test('solo journey: create, save & exit, and continue move the store, the autosave, and the DOM together',async t=>{
  const {$,ctx,api,sessions,transports,autosaves,journeyStore,journeysMenu,titleScreen,rosterPicker,saveStatusNodes,exitButtons}=harness(t);
- // The factory's own import-time statements ran: the mode choice is inert and the menus exist.
+ // The factory's own import-time statements ran: the world is inert and the menus exist.
  assert.equal($('world').inert,true);assert.equal($('loading').inert,undefined);
  assert.equal(ctx.titleScreen,titleScreen);assert.equal(ctx.journeysMenu,journeysMenu);
 
- api.chooseMode('single-player');
+ api.openJourneys();
  assert.deepEqual(journeysMenu.shown,[undefined]);assert.equal(sessions.length,0);
  assert.equal(titleScreen.screen,'hidden');assert.equal(ctx.ready,false);
 
@@ -185,7 +185,7 @@ test('main menu to roster and back: cancelling the picker returns to the menu wi
  assert.equal($('world').inert,true);assert.equal($('loading').hidden,false);
  assert.equal(titleScreen.sessions.at(-1).mode,'multiplayer');
  assert.equal(titleScreen.sessions.at(-1).canChangeCharacter,true);
- assert.equal(titleScreen.sessions.at(-1).characterLocked,false);
+ assert.equal('characterLocked' in titleScreen.sessions.at(-1),false);
 
  api.openRoster();
  assert.deepEqual(rosterPicker.shown,[undefined]);assert.equal(titleScreen.screen,'hidden');
@@ -222,4 +222,18 @@ test('stopJourneySession clears the run, the timers, and every overlay the sessi
  assert.equal(ctx.dodgeTime,0);assert.equal(ctx.shake,0);assert.equal(ctx.resetMovement,true);
  assert.deepEqual(calls.filter(c=>c[0]==='inventoryPreviews.hide'),[['inventoryPreviews.hide']]);
  assert.deepEqual(calls.filter(c=>c[0]==='toggleMapForDeath'),[['toggleMapForDeath']]);
+});
+
+test('a journey can change character anywhere in solo, while multiplayer still needs a sanctuary',t=>{
+ const {ctx,api,rosterPicker,calls}=harness(t);
+ api.startSession('single-player');ctx.lastSnapshot={};ctx.activeJourney={id:'journey-1'};ctx.safeHere=()=>false;
+ assert.equal(api.canChangeCharacter(),true,'a journey no longer locks its character, and solo needs no sanctuary');
+ api.openRoster();assert.deepEqual(rosterPicker.shown,[undefined]);assert.equal(ctx.paused,true);
+ assert.equal(api.chooseCharacter({classId:'ranger'}),true);assert.deepEqual(ctx.network.sent,[['select-class',{classId:'ranger'}]]);
+ rosterPicker.open=false;api.closeRoster();assert.equal(ctx.paused,false);
+ api.stopJourneySession();
+ api.startSession('multiplayer');ctx.lastSnapshot={};
+ assert.equal(api.canChangeCharacter(),false);api.openRoster();
+ assert.equal(rosterPicker.shown.length,1);assert.deepEqual(calls.filter(c=>c[0]==='toast').at(-1),['toast','Return to a sanctuary to change class.']);
+ ctx.safeHere=()=>true;assert.equal(api.canChangeCharacter(),true);
 });

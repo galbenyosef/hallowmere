@@ -44,17 +44,19 @@ scenario is over. `*.canvas.png` is skipped in `--dir` mode (`--include-canvas` 
 
 | Scenario | Shows |
 | --- | --- |
-| `01-title` | Mode choice / title screen once assets have loaded. |
-| `02-journeys-menu` | Single-player journeys menu, empty "first journey" state on a fresh profile. |
-| `03-roster-picker` | Character chooser with portraits prepared and the confirm button enabled. |
-| `04-hud-spawn` | Solo session at the Ashwick spawn: HUD, quest panel, minimap, ability bar, world labels. |
+| `04-hud-spawn` | Solo session at the Ashwick spawn straight from loading: HUD, quest panel, minimap, ability bar, world labels. |
+| `02-journeys-menu` | Journeys menu reached through Save & exit, with the auto-created Sorcerer journey selected. |
+| `03-roster-picker` | Character chooser (New journey) with portraits prepared and the confirm button enabled. |
 | `05-pause` | Pause menu: resume, autosave notice, sound and visual settings. |
-| `07-connection-overlay` | Multiplayer with no backend reachable: the "Unable to connect" overlay. |
+| `07-connection-overlay` | `?mode=multiplayer` with no backend reachable: the "Unable to connect" overlay. |
 | `08-inventory` | Inventory: equipment slots, 3D portrait, attributes, satchel, pouch. |
 | `09-journal` | Journal: quest text and per-region progress. |
 | `10-help` | Controls: the full control table and guidance copy. |
 | `11-npc-dialogue` | Elder Rowan conversation after walking to him from the spawn. |
 | `13-map-expanded` | Expanded world map: exploration atlas, legend, menu rail. |
+
+`01-title` was retired on 2026-09-21 when the mode choice was removed and boot began landing in
+play; the noise-floor table below predates that change.
 
 `04-hud-spawn.canvas.png` is a second shot of `04-hud-spawn` with the WebGL canvas visible. It is for
 human eyeballing only and is never diffed — the 3D scene can never be byte-stable.
@@ -136,7 +138,7 @@ Notes from getting this to work on macOS, all of which the harness now handles:
   itself hidden (which the game treats as backgrounded and freezes).
 - **Never poll `window.hallowmere.getState()`.** Building that object raycasts every enemy; polling it a
   few times a second is by itself enough to stall the page. Every wait in the harness reads the DOM.
-- `07-connection-overlay` blocks `*multiplayer-config.json*` with `Network.setBlockedURLs`. That is a
+- `07-connection-overlay` loads `/?mode=multiplayer` and blocks `*multiplayer-config.json*` with `Network.setBlockedURLs`. That is a
   harness-side stand-in for "no backend configured"; nothing in `dist/` is modified.
 
 ## Observations from the refactor captures (2026-09-15)

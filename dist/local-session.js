@@ -7,14 +7,15 @@ export class LocalSession {
  constructor({onSnapshot,onWelcome,onStatus,onProgress,seed,save}){Object.assign(this,{onSnapshot,onWelcome,onStatus,onProgress,seed,save});this.connected=false;this.closed=false;this.pending=[];this.input={x:0,z:0,angle:0};this.seq=0;this.debt=0;this.lastEvent=0;}
  start(){
   if(this.closed||this.connected)return;
-  this.world=new World({seed:this.save?.seed??this.seed});this.id=this.world.join().player.id;
-  if(this.save){restoreJourney(this.world,this.id,this.save);this.characterLocked=true;this.save=null;}
+  this.world=new World({seed:this.save?.seed??this.seed,local:true});this.id=this.world.join().player.id;
+  if(this.save){restoreJourney(this.world,this.id,this.save);this.restored=true;this.save=null;}
   this.worldId=this.world.id;this.lastEvent=this.world.eventId;this.connected=true;
   this.onWelcome?.({id:this.id,worldId:this.worldId});this.publish();
  }
  send(type,data={}){
   if(!this.connected||this.closed)return false;
-  if(this.characterLocked&&(type==='select-class'||type==='restart'))return false;
+  // A journey is one continuous campaign: its character can change, its world never restarts.
+  if(this.restored&&type==='restart')return false;
   if(type==='restart'){this.world.reset();this.debt=0;this.input={x:0,z:0,angle:0};}
   else this.world.command(this.id,{type,...data,seq:++this.seq,worldId:this.world.id});
   if(type!=='input')this.onProgress?.(true);
