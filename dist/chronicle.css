@@ -257,6 +257,10 @@
 .pause-quick-actions { display:grid; }
 .pause-quick-actions button { display:flex;align-items:center;justify-content:center;gap:14px;width:100%;min-height:46px; }
 .pause-quick-actions kbd { font:9px var(--sans);border:1px solid #d4bd784d;background:none;padding:3px 5px;color:#c9bd9e; }
+.pause-quick-actions .pause-secondary { margin-top:10px;min-height:42px;border:1px solid #a38b5860;background:#0c1920cc;color:#e7dabb;font:400 14px var(--serif);letter-spacing:.5px;cursor:pointer; }
+.pause-quick-actions .pause-secondary:hover:not(:disabled) { border-color:#d8c185;background:#202e32; }
+.pause-quick-actions .pause-secondary:disabled { color:#9ba6a4;cursor:default;border-color:#64716d50;background:#0c1920a6; }
+.modal.pause-modal .pause-character-note { margin:8px 0 0;text-align:center;color:#8c9fa5;font:11px/1.6 var(--sans); }
 .pause-settings { margin-top:23px;padding-top:19px;border-top:1px solid var(--chronicle-line); }
 .pause-settings h3 { margin:0 0 9px;color:#d7c8a5;font:16px var(--serif); }
 .pause-setting { display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;padding:8px 0;border:0;border-bottom:1px solid #c6b58c1a;background:none;text-align:left;color:#c4d0d0;font:12px var(--sans); }

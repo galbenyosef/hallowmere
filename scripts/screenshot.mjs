@@ -180,17 +180,18 @@ export async function capture(ctx,name,{keepCanvas=ctx.keepCanvas}={}){
 }
 
 /* ---------- scenarios ---------- */
-const TITLE=`!!window.hallowmere&&document.getElementById('loading').dataset.screen==='modes'&&document.getElementById('mode-choice').hidden===false`;
+// Boot lands in play: the loading screen hides once the (auto-created) journey has started.
+const IN_GAME=`!!window.hallowmere&&document.getElementById('loading').hidden===true&&document.getElementById('modal-shade').hidden===true&&!document.querySelector('dialog[open]')`;
 // Probe the DOM, never window.hallowmere.getState(): building that object raycasts every enemy, and
 // polling it a few times a second is enough on its own to stall the page we are trying to photograph.
 const MODAL=kind=>`document.getElementById('modal-shade').hidden===false&&document.querySelector('.modal')?.dataset.menuKind===${JSON.stringify(kind)}`;
 
-async function load(ctx,{block=[]}={}){
+async function load(ctx,{block=[],path='/',until=IN_GAME,label='the game to enter play (assets to load and the journey to open)'}={}){
  await ctx.cdp.send('Network.setBlockedURLs',{urls:block},ctx.sessionId);
  const loaded=ctx.cdp.once('Page.loadEventFired',90000);
- await ctx.cdp.send('Page.navigate',{url:`${ctx.url}/`},ctx.sessionId);
+ await ctx.cdp.send('Page.navigate',{url:`${ctx.url}${path}`},ctx.sessionId);
  await loaded;
- await waitFor(ctx,TITLE,{timeout:180000,label:'the title screen (assets to finish loading)'});
+ await waitFor(ctx,until,{timeout:180000,label});
 }
 const CLOSED=`document.getElementById('modal-shade').hidden===true&&document.getElementById('loading').hidden===true&&document.querySelector('.map-panel')?.classList.contains('expanded')!==true&&!document.querySelector('dialog[open]')`;
 // Key events are occasionally swallowed (focus moves, an inventory preview), so open/close are retried.
@@ -228,19 +229,20 @@ async function closeModal(ctx){
 //  12-death            window.hallowmere exposes no way to force state.ended; dying for real is slow and non-deterministic.
 
 export const STAGES=[
- {name:'01-title',shows:'Mode choice / title screen once assets have loaded.',fresh:true,check:TITLE,
-  async run(ctx){await load(ctx);}},
- {name:'02-journeys-menu',shows:'Single-player journeys menu (empty "first journey" state on a fresh profile).',after:'01-title',check:`document.querySelector('dialog.journeys-dialog')?.open===true`,
-  async run(ctx){await click(ctx,'#single-player');await waitFor(ctx,`document.querySelector('dialog.journeys-dialog')?.open&&!!document.querySelector('.journeys-empty,.journey-detail')`,{label:'the journeys menu'});}},
- {name:'03-roster-picker',shows:'Character chooser with portraits prepared and the confirm button enabled.',after:'02-journeys-menu',check:`document.querySelector('dialog.roster-dialog')?.open===true`,
-  async run(ctx){await click(ctx,'.journeys-dialog [data-new]');await waitFor(ctx,`document.querySelector('dialog.roster-dialog')?.open&&document.querySelector('.roster-confirm')?.disabled===false`,{timeout:90000,label:'the roster picker'});}},
- {name:'04-hud-spawn',shows:'Solo session at the Ashwick spawn: full HUD, quest panel, minimap, ability bar.',after:'03-roster-picker',check:`document.getElementById('loading').hidden&&window.hallowmere.getState().modal===''&&!!window.hallowmere.getState().player`,
+ {name:'04-hud-spawn',shows:'Solo session at the Ashwick spawn straight from loading: full HUD, quest panel, minimap, ability bar.',fresh:true,check:`document.getElementById('loading').hidden&&window.hallowmere.getState().modal===''&&!!window.hallowmere.getState().player`,
   async run(ctx){
-   await click(ctx,'.roster-confirm');
-   await waitFor(ctx,`document.getElementById('loading').hidden&&window.hallowmere.getState().ready&&!!window.hallowmere.getState().player`,{timeout:90000,label:'the session to start'});
+   await load(ctx);
    // Past 14s of world time the onboarding guide has faded, which makes the HUD stable to diff.
    await waitFor(ctx,`window.hallowmere.getState().time>16&&document.getElementById('journey-save-indicator').hidden&&!document.getElementById('toast').classList.contains('visible')`,{timeout:90000,label:'the HUD to settle'});
   }},
+ {name:'02-journeys-menu',shows:'Journeys menu reached through Save & exit: the auto-created Sorcerer journey selected.',after:'04-hud-spawn',check:`document.querySelector('dialog.journeys-dialog')?.open===true`,
+  async run(ctx){
+   await openWith(ctx,'pause-button','pause','the pause menu');
+   await click(ctx,'[data-save-exit]');
+   await waitFor(ctx,`document.querySelector('dialog.journeys-dialog')?.open&&!!document.querySelector('.journey-detail')`,{timeout:45000,label:'the journeys menu'});
+  }},
+ {name:'03-roster-picker',shows:'Character chooser (New journey) with portraits prepared and the confirm button enabled.',after:'02-journeys-menu',check:`document.querySelector('dialog.roster-dialog')?.open===true`,
+  async run(ctx){await click(ctx,'.journeys-dialog [data-new]');await waitFor(ctx,`document.querySelector('dialog.roster-dialog')?.open&&document.querySelector('.roster-confirm')?.disabled===false`,{timeout:90000,label:'the roster picker'});}},
  {name:'05-pause',shows:'Escape pause menu: resume, autosave notice, sound and visual settings.',after:'04-hud-spawn',check:MODAL('pause'),
   async run(ctx){await openWith(ctx,'pause-button','pause','the pause menu');}},
  {name:'09-journal',shows:'Journal modal (J): quest text and per-region progress.',after:'04-hud-spawn',check:MODAL('journal'),
@@ -296,12 +298,10 @@ export const STAGES=[
    await waitFor(ctx,`[...document.querySelectorAll('#modal-content img')].every(img=>img.complete)`,{timeout:180000,label:'the inventory portraits'},240000).catch(()=>{});
    await sleep(800);
   }},
- {name:'07-connection-overlay',shows:'Multiplayer chosen with no backend reachable: the "Unable to connect" overlay.',fresh:true,check:`document.getElementById('connection-overlay').hidden===false`,
+ {name:'07-connection-overlay',shows:'?mode=multiplayer with no backend reachable: the "Unable to connect" overlay.',fresh:true,check:`document.getElementById('connection-overlay').hidden===false`,
   // A fresh load with ./multiplayer-config.json blocked at the network layer stands in for "no backend configured".
   async run(ctx){
-   await load(ctx,{block:['*multiplayer-config.json*']});
-   await click(ctx,'#multi-player');
-   await waitFor(ctx,`!document.getElementById('connection-overlay').hidden&&document.getElementById('connection-spinner').hidden`,{timeout:30000,label:'the failed connection overlay'});
+   await load(ctx,{block:['*multiplayer-config.json*'],path:'/?mode=multiplayer',until:`!document.getElementById('connection-overlay').hidden&&document.getElementById('connection-spinner').hidden`,label:'the failed connection overlay'});
   }}
 ];
 

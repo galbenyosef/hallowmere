@@ -64,9 +64,9 @@ function makeCtx(){
   updateSaveStatusCalls:0,updateSaveStatus(){ctx.updateSaveStatusCalls++;},
   saveAndExit(){},
   resumeFromMainMenuCalls:0,resumeFromMainMenu(){ctx.resumeFromMainMenuCalls++;},
-  openRoster(){},equipOwnedItem(){return{ok:true};},consumePouchItem(){return{ok:true};},
+  openRosterCalls:0,openRoster(){ctx.openRosterCalls++;},equipOwnedItem(){return{ok:true};},consumePouchItem(){return{ok:true};},
   awakenCalls:0,awaken(){ctx.awakenCalls++;},
-  safeHere:()=>true,
+  safeHere:()=>true,canChangeCharacter:()=>true,
  };
  return ctx;
 }
@@ -240,4 +240,41 @@ test('toggleMapForDeath collapses the map panel, clears its dialog attributes, a
  assert.deepEqual(panel.classList.removed,['expanded']);
  for(const attr of ['role','aria-modal','aria-labelledby'])assert.equal(panel.attrs[attr],undefined);
  assert.equal(doc.getElementById('map-button').attrs['aria-label'],'Expand map');
+});
+
+test('the pause card offers Change character, gated by ctx.canChangeCharacter, and its click opens the roster',t=>{
+ const doc=stubDocument();
+ installGlobals(t,{document:doc});
+ const ctx=makeCtx();
+ createModals(ctx).showModal('pause');
+ const content=doc.getElementById('modal-content');
+ assert.match(content.innerHTML,/<button type="button" class="pause-secondary" data-change-character aria-describedby="pause-character-note">Change character <kbd>C<\/kbd><\/button>/);
+ assert.match(content.innerHTML,/pause-character-note">Your equipment and progress travel with you\.</);
+ assert.doesNotMatch(content.innerHTML,/pause-journey/,'no journey, so no Save & exit');
+ // bindPauseMenu's click listener is the first one on modal-content; a click on the action reaches ctx.openRoster.
+ const click=content.listeners.find(([event])=>event==='click')[1];
+ click({target:{closest:selector=>selector==='[data-change-character]'?{}:null}});
+ assert.equal(ctx.openRosterCalls,1);
+ click({target:{closest:selector=>selector==='[data-resume-game]'?{}:null}});
+ assert.equal(ctx.openRosterCalls,1);
+ // Outside a sanctuary in multiplayer the button is disabled with the reason beside it.
+ const held=makeCtx();held.sessionMode='multiplayer';held.canChangeCharacter=()=>false;held.activeJourney={id:'journey-1'};
+ createModals(held).showModal('pause');
+ const heldContent=doc.getElementById('modal-content');
+ assert.match(heldContent.innerHTML,/data-change-character aria-describedby="pause-character-note" disabled>/);
+ assert.match(heldContent.innerHTML,/Return to a sanctuary to change character\./);
+ assert.match(heldContent.innerHTML,/pause-journey/,'a journey still gets Save & exit');
+});
+
+test('the help copy points solo players at the pause menu and multiplayer players at a sanctuary',t=>{
+ const doc=stubDocument();
+ installGlobals(t,{document:doc});
+ const solo=makeCtx();solo.activeJourney={id:'journey-1'};
+ createModals(solo).showModal('help');
+ const soloHelp=doc.getElementById('modal-content').innerHTML;
+ assert.match(soloHelp,/Press C or open the pause menu to change character\. Autosave is always on/);
+ assert.doesNotMatch(soloHelp,/keeps its chosen character/);
+ const multi=makeCtx();multi.sessionMode='multiplayer';
+ createModals(multi).showModal('help');
+ assert.match(doc.getElementById('modal-content').innerHTML,/Press C at a sanctuary to change class\./);
 });

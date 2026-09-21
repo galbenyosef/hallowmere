@@ -1,45 +1,22 @@
 // Presentation only: the running game session belongs to main.js.
-export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) {
+export function createTitleScreen(root, {onResume, onChangeCharacter}) {
  const q = id => root.querySelector(`#${id}`);
- const choices = [q('single-player'), q('multi-player')];
- let selectedMode = 'single-player';
-
- function selectMode(mode, focus = false) {
-  if (!['single-player', 'multiplayer'].includes(mode)) return;
-  selectedMode = mode;
-  choices.forEach((button, i) => {
-   const selected = i === (mode === 'single-player' ? 0 : 1);
-   button.dataset.highlighted = String(selected);
-   if (selected && focus) button.focus();
-  });
- }
  function show(screen) {
   root.hidden = false;
   root.dataset.screen = screen;
-  q('mode-choice').hidden = screen !== 'modes';
   q('main-menu-actions').hidden = screen !== 'main';
   q('loading-status').hidden = screen !== 'loading';
   q('loading-retry').hidden = true;
  }
- function updateSession({mode, canChangeCharacter, character,characterLocked=false}) {
+ function updateSession({mode, canChangeCharacter, character}) {
   q('menu-change-character').disabled = !canChangeCharacter;
-  q('menu-character-note').textContent = characterLocked?'This journey keeps its chosen character. Start another journey to play a different character.':canChangeCharacter
+  q('menu-character-note').textContent = canChangeCharacter
    ? `${character} · Your equipment and progress travel with you.`
    : 'Return to a sanctuary to change character.';
   q('loading-message').textContent = mode === 'multiplayer'
    ? 'The shared world keeps moving. Rest at a sanctuary to stay safe.'
    : 'Your adventure is paused. Pick up where you left off.';
  }
- choices.forEach((button, i) => {
-  const mode = i === 0 ? 'single-player' : 'multiplayer';
-  button.onpointerenter = () => selectMode(mode);
-  button.onfocus = () => selectMode(mode);
-  button.onclick = () => {
-   if (root.hidden || root.dataset.screen !== 'modes') return;
-   selectMode(mode);
-   onBegin(mode);
-  };
- });
  q('menu-resume').onclick = onResume;
  q('menu-change-character').onclick = onChangeCharacter;
  q('loading-retry').onclick = () => location.reload();
@@ -47,16 +24,6 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
   if (root.hidden) return;
   if (event.key === 'Escape' && root.dataset.screen === 'main') {
    event.preventDefault(); onResume(); return;
-  }
-  if (root.dataset.screen === 'modes' && choices.includes(event.target)) {
-   const focusedMode = event.target === choices[0] ? 'single-player' : 'multiplayer';
-   if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
-    event.preventDefault();
-    selectMode(event.key === 'Home' ? 'single-player' : event.key === 'End' ? 'multiplayer' : focusedMode === 'single-player' ? 'multiplayer' : 'single-player', true);
-   } else {
-    // Keep the highlight with keyboard focus; native buttons handle Enter/Space.
-    selectMode(focusedMode);
-   }
   }
   if (event.key === 'Tab') {
    const buttons = [...root.querySelectorAll('button:not(:disabled)')].filter(button => !button.closest('[hidden]') && button.tabIndex !== -1);
@@ -67,12 +34,11 @@ export function createTitleScreen(root, {onBegin, onResume, onChangeCharacter}) 
   }
  });
  return {
-  selectMode,
-  showModes() {
-   show('modes');
-   q('loading-title').textContent = 'Choose game mode';
-   q('loading-message').textContent = 'Play solo or join a multiplayer game.';
-   selectMode(selectedMode, true);
+  // The loading scene doubles as the interstitial between the journeys menu and play.
+  showLoading(message, title = 'Loading game') {
+   show('loading');
+   q('loading-title').textContent = title;
+   if (message) q('loading-message').textContent = message;
   },
   showMainMenu(session) {
    show('main');

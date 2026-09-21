@@ -258,3 +258,21 @@ test('loot and result events reach the pickup path, the roster picker and the to
  assert.equal(named(pick,'rosterPicker.resolve').length,1);
  assert.deepEqual(named(pick,'toast')[0][1],'Oath sworn');
 });
+
+// Boot auto-selects the default character; if the authority refuses it, the roster is the fallback.
+test('a refused class result with no class yet opens the roster, and nothing else does',()=>{
+ const roster={openRoster(){this.calls.push(['openRoster']);}};
+ const [refused,refusedEvent]=wire({...roster,state:{}});
+ refusedEvent({type:'result',operation:'class',ok:false,reason:'Choose an available character.'});
+ assert.equal(named(refused,'rosterPicker.resolve').length,1);
+ assert.equal(named(refused,'openRoster').length,1);
+ const [classed,classedEvent]=wire({...roster,state:{classId:'sorcerer'}});
+ classedEvent({type:'result',operation:'class',ok:false,reason:'Return to a sanctuary before changing class.'});
+ assert.equal(named(classed,'openRoster').length,0,'a failed change keeps the current class; no picker');
+ const [open,openEvent]=wire({...roster,state:{},rosterPicker:{open:true,resolve(){open.calls.push(['rosterPicker.resolve']);}}});
+ openEvent({type:'result',operation:'class',ok:false,reason:'Choose an available character.'});
+ assert.equal(named(open,'openRoster').length,0,'an open picker already shows the reason');
+ const [granted,grantedEvent]=wire({...roster,state:{classId:'sorcerer'}});
+ grantedEvent({type:'result',operation:'class',ok:true,message:'Oath sworn'});
+ assert.equal(named(granted,'openRoster').length,0);
+});

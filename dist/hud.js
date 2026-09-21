@@ -37,10 +37,10 @@ export function createHud(ctx,deps={}){
  function questSummaryCached(state){const sig=questDeps(state);if(sig!==questSig){questSig=sig;questCache=questSummary(state);}return questCache;}
  function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(ctx.toastTimer);ctx.toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2500);}
  function updateClassHud(){
-  const c=classFor(ctx.state),key=conceptFor(ctx.state.classId,ctx.state.appearanceId)+'|'+!!ctx.activeJourney;if(ctx.hudClass===key)return;ctx.hudClass=key;
+  const c=classFor(ctx.state),key=conceptFor(ctx.state.classId,ctx.state.appearanceId);if(ctx.hudClass===key)return;ctx.hudClass=key;
   $('character-name').textContent=c.name;$('class-caption').textContent=c.name.toUpperCase();
-  $('character-button').disabled=!!ctx.activeJourney;$('character-button').title=ctx.activeJourney?'This journey keeps its chosen character.':'Change character (C)';
-  $('world').setAttribute('aria-label','Village play area. Use W A S D to move, mouse to aim and attack, F to speak or collect loot, I for equipment, '+(ctx.activeJourney?'':'C to choose a class at a sanctuary, ')+'2 for your class skill, 1 to dodge, and 3 to heal.');
+  $('character-button').disabled=false;$('character-button').title='Change character (C)';
+  $('world').setAttribute('aria-label','Village play area. Use W A S D to move, mouse to aim and attack, F to speak or collect loot, I for equipment, C to change character, 2 for your class skill, 1 to dodge, and 3 to heal.');
   for(const [action,skill] of Object.entries(c.abilities)){const {button,abilityName}=abilityEl(action);abilityName.textContent=skill.name;button.title=`${skill.name} · ${skill.cost} essence · ${skill.cooldown}s cooldown. ${skill.description}`;button.setAttribute('aria-label',button.title);const index=['attack','bolt','dodge','nova'].indexOf(action);if(index>=0&&classIconNames[c.id]){const mark=button.querySelector('.ability-icon');mark.innerHTML=icon(classIconNames[c.id][index]);mark.style.color=skill.color||classColor(ctx.state);}}
  }
  function updateUI(){if(!ctx.player)return;updateClassHud();setStyle($('health-liquid'),'height',`${ctx.state.hp/ctx.state.maxHp*100}%`);setStyle($('mana-liquid'),'height',`${ctx.state.mana/ctx.state.maxMana*100}%`);setText($('potion-count'),ctx.state.potions);setText($('souls-counter'),`${ctx.state.souls} SOULS`);setStyle($('experience-fill'),'width',`${ctx.state.souls%100}%`);setText($('level-label'),`${classAppearance(ctx.state.classId,ctx.state.appearanceId)?.name||classFor(ctx.state).name} · LEVEL ${ctx.state.level}`);setText(rankElement(),String(ctx.state.level).padStart(2,'0'));

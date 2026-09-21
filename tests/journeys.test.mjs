@@ -29,14 +29,14 @@ test('journeys restore at the activated checkpoint with all-region progress and 
  p.state.gold=0;assert.equal(data.player.state.gold,137,'loading must detach the stored record');session.close();
 });
 
-test('journeys remain isolated and cannot change their character or restart their campaign',()=>{
+test('journeys remain isolated, can change their character, and never restart their campaign',()=>{
  const first=load(createJourney({classId:'ranger',appearanceId:'C02'}));
  const second=load(createJourney({classId:'reaver',appearanceId:'C03'}));
  first.world.players.get(first.id).state.gold=300;first.world.shared.victory=true;
  assert.equal(second.world.players.get(second.id).state.gold,0);assert.equal(second.world.shared.victory,false);
- assert.equal(first.send('select-class',{classId:'sorcerer'}),false);assert.equal(first.send('restart'),false);
- assert.equal(first.world.players.get(first.id).state.classId,'ranger');
- const saved=first.capture();assert.equal(validateJourney(saved),saved);
+ assert.equal(first.send('select-class',{classId:'sorcerer',appearanceId:'W07'}),true);assert.equal(first.send('restart'),false);
+ assert.equal(first.world.players.get(first.id).state.classId,'sorcerer');assert.equal(second.world.players.get(second.id).state.classId,'reaver');
+ const saved=first.capture();assert.equal(validateJourney(saved),saved);assert.equal(saved.player.state.classId,'sorcerer');
  saved.player.state.gold=1;assert.equal(first.world.players.get(first.id).state.gold,300);
  first.close();second.close();
 });

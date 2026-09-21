@@ -63,7 +63,7 @@ function harness(t,overrides={}){
   joystickPointer:null,joystickValue:{x:0,y:0},autosave:null,clock:{getDelta:record('getDelta')},
   audio:{play:record('play'),ready:true,muted:false,unlock:async()=>{},toggle:()=>true},
   exploration:{save:record('save')},life:{pending:null,interact:record('life.interact')},
-  safeHere:()=>true,updatePointer:record('updatePointer'),updateMouseTarget:record('updateMouseTarget'),
+  safeHere:()=>true,canChangeCharacter:()=>true,updatePointer:record('updatePointer'),updateMouseTarget:record('updateMouseTarget'),
   setDestination:record('setDestination'),nearestEnemy:()=>null,collectClickedLoot:record('collectClickedLoot'),
   interactRegion:record('interactRegion'),enterBuilding:record('enterBuilding'),interact:()=>({ok:true}),
   awaken:record('awaken'),toast:record('toast'),perform:record('perform'),showModal:record('showModal'),

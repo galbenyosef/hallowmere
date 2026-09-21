@@ -76,7 +76,7 @@ export function warmUpEffects(ctx){
  for(const item of disposables)item.dispose();
  combatEffects.update(9999);
  // clear() is the module's own sweep of every burst, projectile, zone and ward it holds. It is
- // exact here rather than destructive because init() runs this before showModeChoice(), so no
+ // exact here rather than destructive because init() runs this before enterGame(), so no
  // session has started and the only class effects alive are the throwaways above.
  classEffects.clear();
 }

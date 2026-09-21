@@ -63,7 +63,7 @@ async function init(){ctx.loadingFailed=false;try{
  await ctx.buildWorld();
  ctx.titleScreen.setProgress(92,'Preparing your calling…');await loadingFrame();
  await ctx.buildHero();warmUpEffects(ctx);
- ctx.clock=new T.Clock();ctx.assetsReady=true;ctx.updateUI();ctx.drawMap();ctx.titleScreen.setProgress(100);ctx.showModeChoice();ctx.renderer.setAnimationLoop(ctx.frame);
+ ctx.clock=new T.Clock();ctx.assetsReady=true;ctx.updateUI();ctx.drawMap();ctx.titleScreen.setProgress(100);ctx.enterGame();ctx.renderer.setAnimationLoop(ctx.frame);
  }catch(error){ctx.loadingFailed=true;console.error(error);ctx.titleScreen.showError();}}
 function perform(action){
  if(!ctx.ready||ctx.paused||ctx.rosterPicker?.open||ctx.backgrounded||ctx.state.ended||!ctx.network?.connected||!canUse(ctx.state,action))return false;

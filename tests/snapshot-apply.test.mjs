@@ -84,7 +84,7 @@ function makeCtx({stateSeed={ended:false,level:1},...overrides}={}){
   modalKind:'',paused:false,syncAudioState:rec('syncAudioState'),
   mainMenuOpen:false,rosterPicker:null,
   titleScreen:{updateSession:rec('titleScreen.updateSession')},mainMenuSession:()=>({live:true}),
-  openRoster:rec('openRoster'),renderNpc:rec('renderNpc'),renderInventory:rec('renderInventory'),updateUI:rec('updateUI')
+  chooseDefaultCharacter:rec('chooseDefaultCharacter'),renderNpc:rec('renderNpc'),renderInventory:rec('renderInventory'),updateUI:rec('updateUI')
  };
  return Object.assign(ctx,overrides);
 }
@@ -110,7 +110,7 @@ test('a snapshot whose players do not include you returns before anything reache
  // And nothing below it did.
  for(const name of ['exploration.setSession','exploration.reveal','environment.updateProgress','movementCorrection.reconcile',
   'multiplayerView.sync','selection.color.set','cameraTarget.set','updateEnemyBar','connectionStatus',
-  'networkEvent','updateUI','openRoster','dismissMainMenu'])
+  'networkEvent','updateUI','chooseDefaultCharacter','dismissMainMenu'])
   assert.equal(named(ctx,name).length,0,`${name} ran past the !me early return`);
  assert.deepEqual(named(ctx,'life.syncLoot').map(call=>call[1]),[[]],'only the first-snapshot teardown ran, never the snapshot loot');
  assert.equal(el('restart-vote').hidden,false,'the restart vote row was never touched');
@@ -133,7 +133,7 @@ test('the first snapshot clears the old state, resets class, appearance and base
  assert.equal(ctx.victoryShown,true,'victoryShown follows the merged bossLootClaimed');
  assert.equal(ctx.lastNetworkEvent,7,'the watermark jumps to the newest retained event');
  assert.equal(named(ctx,'networkEvent').length,0,'retained events predate this client');
- assert.equal(named(ctx,'openRoster').length,1,'no class yet, so the roster opens');
+ assert.equal(named(ctx,'chooseDefaultCharacter').length,1,'no class yet, so the default character is requested');
  // A later snapshot merges without deleting: client-only keys survive.
  ctx.state.clientOnly='keep';
  applySnapshot(snapshotFixture({state:{hp:38,maxHp:40,level:1,cooldowns:{}}}),false);

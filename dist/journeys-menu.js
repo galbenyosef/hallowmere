@@ -10,7 +10,7 @@ const checkpoint=s=>CHECKPOINTS.find(c=>c.id===s.checkpointId)?.name||'Ashwick';
 
 export function createJourneysMenu({store,onNew,onContinue,onBack}){
  const dialog=document.createElement('dialog');dialog.className='chronicle-shell journeys-dialog';dialog.setAttribute('aria-labelledby','journeys-title');
- dialog.innerHTML=`<aside class="chronicle-sidebar"><div class="chronicle-brand"><img src="./assets/menu/hallowmere-wordmark.png" alt="Hallowmere"><span>THE ASHEN VIGIL</span></div><nav aria-label="Journey menu"><button aria-current="page" type="button">Journeys</button><button data-back type="button">Back to main menu</button></nav><p class="chronicle-sidebar-note">A light against the dark.</p></aside>
+ dialog.innerHTML=`<aside class="chronicle-sidebar"><div class="chronicle-brand"><img src="./assets/menu/hallowmere-wordmark.png" alt="Hallowmere"><span>THE ASHEN VIGIL</span></div><nav aria-label="Journey menu"><button aria-current="page" type="button">Journeys</button><button data-back type="button">Back to game</button></nav><p class="chronicle-sidebar-note">A light against the dark.</p></aside>
  <div class="chronicle-main"><header class="chronicle-heading journeys-heading"><div><span class="eyebrow">SINGLE PLAYER</span><h2 id="journeys-title">Your journeys</h2><p>A character. A world. A story of your own.</p></div><button class="primary-button" data-new>New journey <span aria-hidden="true">+</span></button></header>
  <p class="journeys-status" role="status" aria-live="polite"></p><div class="journeys-content"></div><footer class="journeys-footer"><span>Autosave is always on. Continue at your last checkpoint.</span><span>Saved in this browser · Clearing site data removes journeys.</span></footer></div>`;
  const action=document.createElement('dialog');action.className='journey-action-dialog';action.setAttribute('aria-labelledby','journey-action-title');
@@ -63,7 +63,7 @@ export function createJourneysMenu({store,onNew,onContinue,onBack}){
    try{await onContinue(selected);close();}catch(error){busy=false;render();status(error.message,true);q('[data-continue]')?.focus();}
   }
  });
- return {get open(){return dialog.open;},show(preferredId){if(preferredId)selected=preferredId;if(!dialog.open)dialog.showModal();return refresh();},close,
+ return {get open(){return dialog.open;},async show(preferredId,{message}={}){if(preferredId)selected=preferredId;if(!dialog.open)dialog.showModal();await refresh();if(message&&dialog.open)status(message,true);},close,
   showConflict(message,onReturn){
    conflictOpen=true;action.innerHTML=`<span class="chronicle-label">YOUR JOURNEY</span><h2 id="journey-action-title">Journey open elsewhere</h2><p>${escape(message)}</p><div class="journey-action-buttons"><button class="primary-button" type="button">Return to journeys</button></div>`;
    const button=action.querySelector('button');button.onclick=()=>{conflictOpen=false;action.close();onReturn();};action.showModal();button.focus();

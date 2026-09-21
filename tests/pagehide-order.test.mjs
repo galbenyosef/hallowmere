@@ -85,7 +85,7 @@ function wireLikeMain(t){
  bindExplorationSaving({save(){}},{windowTarget,documentTarget});
  // main.js's wiring line for M9's region, where its import-time statements stood.
  Object.assign(ctx,createSessionLifecycle(ctx,{windowTarget,documentTarget,
-  createTitleScreen:()=>({showModes(){},hide(){},showMainMenu(){},updateSession(){}}),
+  createTitleScreen:()=>({showLoading(){},hide(){},showMainMenu(){},updateSession(){}}),
   createJourneysMenu:()=>({show(){},showConflict(){}}),
   LocalSession:class{start(){}close(){}},MultiplayerClient:class{start(){}close(){}},
   createAutosave:()=>autosave,createJourney:choice=>choice}));

@@ -58,7 +58,8 @@ export class JourneyStore {
    try{const emergency=JSON.parse(localStorage.getItem(recovery)||'null');
     if(emergency&&emergency.capturedAt>(record.data?.capturedAt||0)){
      validateJourney(emergency);
-     if(emergency.player.state.classId===record.summary.classId){record.previous=record.data;record.data=emergency;record.summary=journeySummary(emergency);record.savedAt=emergency.capturedAt;record.revision++;}
+     // The journal may carry a class change the committed record never saw; validateJourney vetted it.
+     record.previous=record.data;record.data=emergency;record.summary=journeySummary(emergency);record.savedAt=emergency.capturedAt;record.revision++;
     }
    }catch{/* Keep the committed save when the optional recovery journal is unavailable. */}
    try{validateJourney(record.data);record.recovered=false;}catch(error){
@@ -74,7 +75,6 @@ export class JourneyStore {
   validateJourney(data);
   return this.change(id,record=>{
    if(!record||record.owner!==this.owner||record.revision!==revision)throw new JourneyConflict('This journey changed in another tab. Return to Journeys and continue the latest save.');
-   if(record.summary.classId!==data.player.state.classId)throw Error('Each journey keeps its original character.');
    return {...record,revision:revision+1,previous:record.data,data,summary:journeySummary(data),savedAt:Date.now(),leaseUntil:Date.now()+LEASE_MS};
   });
  }

@@ -46,7 +46,7 @@
 <body>
 <span id="journey-save-indicator" class="journey-save-status" role="status" aria-live="polite" hidden></span>
 <div id="multiplayer-status" role="status" aria-live="polite" hidden></div>
-<div id="connection-overlay" hidden><div class="connection-card"><div class="connection-brand"><img src="./assets/menu/hallowmere-wordmark.png" alt="Hallowmere"><span>THE ASHEN VIGIL</span></div><span id="connection-spinner" class="connection-spinner" aria-hidden="true"></span><h2 id="connection-title">Loading game</h2><p id="connection-message" role="status" aria-live="polite">Connecting to game server…</p><button id="connection-retry" class="text-button" hidden>Retry connection</button><button id="connection-back" class="text-button">Back to game modes</button></div></div>
+<div id="connection-overlay" hidden><div class="connection-card"><div class="connection-brand"><img src="./assets/menu/hallowmere-wordmark.png" alt="Hallowmere"><span>THE ASHEN VIGIL</span></div><span id="connection-spinner" class="connection-spinner" aria-hidden="true"></span><h2 id="connection-title">Loading game</h2><p id="connection-message" role="status" aria-live="polite">Connecting to game server…</p><button id="connection-retry" class="text-button" hidden>Retry connection</button><button id="connection-back" class="text-button">Play solo instead</button></div></div>
 <div id="restart-vote" hidden><p id="restart-vote-text"></p><button id="restart-yes">Vote to restart</button><button id="restart-no">Vote to keep playing</button></div>
 <main id="game" aria-label="Hallowmere dark fantasy game">
  <canvas id="world" tabindex="0" aria-label="Village play area. Use W A S D to move, mouse to aim and attack, F to speak or collect loot, I for equipment, C to choose a class at a sanctuary, 2 for your class skill, 1 to dodge, and 3 to heal."></canvas>
@@ -94,16 +94,6 @@
   <div class="title-content">
    <h2 id="loading-title">Loading game</h2>
    <p id="loading-message" role="status" aria-live="polite">Loading game assets…</p>
-   <div id="mode-choice" hidden role="group" aria-label="Game mode">
-    <button id="single-player" class="mode-option" type="button" data-highlighted="true">
-     <span class="mode-art"><span class="mode-picture"><img src="./assets/menu/twin-paths-solo.webp" alt="" width="1672" height="941"></span><span class="mode-corners" aria-hidden="true"><i></i><i></i></span><span class="mode-selected" data-icon="spark" aria-hidden="true"></span></span>
-     <strong>Single player</strong><span class="mode-description">Play solo.</span>
-    </button>
-    <button id="multi-player" class="mode-option" type="button" data-highlighted="false">
-     <span class="mode-art"><span class="mode-picture"><img src="./assets/menu/twin-paths-party.webp" alt="" width="1448" height="1086"></span><span class="mode-corners" aria-hidden="true"><i></i><i></i></span><span class="mode-selected" data-icon="spark" aria-hidden="true"></span></span>
-     <strong>Multiplayer</strong><span class="mode-description">Join up to 8 adventurers.</span>
-    </button>
-   </div>
    <div id="main-menu-actions" hidden>
     <button id="menu-resume" class="title-primary">Resume game</button>
     <button id="menu-change-character" class="title-secondary" aria-describedby="menu-character-note">Change character</button>

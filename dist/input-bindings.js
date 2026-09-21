@@ -70,7 +70,7 @@ export function bindInput(ctx,{windowTarget=window,documentTarget=document}={}){
   ctx.mapExpanded=!ctx.mapExpanded;ctx.audio.play(ctx.mapExpanded?'ui-open':'ui-close',.5);
   const panel=documentTarget.querySelector('.map-panel');panel.classList.toggle('expanded',ctx.mapExpanded);
   $('map-button').setAttribute('aria-label',ctx.mapExpanded?'Close map':'Expand map');
-  if(ctx.mapExpanded){panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','map-title');updateMenuNavigation($('map-navigation'),'map',{canChangeCharacter:!ctx.activeJourney&&ctx.safeHere(),characterLocked:!!ctx.activeJourney});$('map-button').focus({preventScroll:true});}
+  if(ctx.mapExpanded){panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','map-title');updateMenuNavigation($('map-navigation'),'map',{canChangeCharacter:ctx.canChangeCharacter()});$('map-button').focus({preventScroll:true});}
   else{panel.removeAttribute('role');panel.removeAttribute('aria-modal');panel.removeAttribute('aria-labelledby');$('world').focus({preventScroll:true});}
   ctx.paused=ctx.mapExpanded;releaseInput();ctx.syncAudioState();ctx.drawMap();ctx.exploration.save();
  }

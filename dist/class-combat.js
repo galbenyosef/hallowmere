@@ -5,7 +5,7 @@ import {useAbility,ENEMY_TYPES,distance,withinArc,hasLineOfSight,pointBlocked} f
 import {isSanctuary,WORLD_BOUNDS,ITEM_TEMPLATES} from './campaign.js';
 
 export function selectClass(world,p,message){
- if(!isSanctuary(p)||p.state.ended){world.result(p,{ok:false,operation:'class',reason:'Return to a sanctuary before changing class.'});return false;}
+ if(!(world.local||isSanctuary(p))||p.state.ended){world.result(p,{ok:false,operation:'class',reason:'Return to a sanctuary before changing class.'});return false;}
  const oldClass=p.state.classId,oldAppearance=p.state.appearanceId;
  if(!applyClass(p.state,message.classId,message.appearanceId)){world.result(p,{ok:false,operation:'class',reason:'Choose an available character.'});return false;}
  p.state.inventory=p.state.inventory.map(item=>weaponForClass(item,p.state));

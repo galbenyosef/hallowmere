@@ -4,14 +4,17 @@ The selected September 13, 2026 direction uses two cinematic paths: a lone
 adventurer and a party approaching Ashwick. The menu logo is only the HALLOWMERE
 lettering, with the existing subtitle below it.
 
-Click Single player to open Journeys, or Multiplayer to proceed to character
-selection. Hovering highlights the card with gold corner brackets and a marker,
-without starting a session. Both cards are native buttons: Tab or arrow keys
-move keyboard focus, and Enter or Space activates the focused card directly.
-Loading progress reports the actual asset
-preparation stages. Connection and retry screens share the solo scene.
+Since September 21, 2026 the loading screen leads straight into play: the most
+recently saved journey continues, or a first visit begins a Sorcerer journey.
+There is no mode choice; `?mode=multiplayer` joins the shared world instead.
+Loading progress reports the actual asset preparation stages, and the same
+scene bridges the journeys menu and play ("Entering Hallowmere"). Connection
+and retry screens share the solo scene; the connection overlay's **Play solo
+instead** returns to the journey.
 
-The compact pause menu offers **Resume game** and
+The compact pause menu offers **Resume game**, **Change character** (the
+character wheel, available anywhere in single player and in sanctuaries in
+multiplayer), Save & exit for journeys, and
 settings for music, brightness, shadows, and camera shake. The main menu keeps
 the current session and offers **Resume game** and **Change character**. Closing
 or confirming character selection returns to that menu; Escape resumes play.
@@ -27,13 +30,14 @@ session navigation. Single-player now uses the persistent journeys described bel
 - `dist/main.js` owns session transitions, sanctuary restrictions, pause state,
   character selection, and reconnect focus.
 - `dist/title-screen.css` contains the responsive visual treatment and reduced
-  motion behavior. The previous mode-selection overrides were removed.
+  motion behavior. The mode-card styles left with the mode choice.
 - `dist/assets/menu/twin-paths-solo.webp` and `twin-paths-party.webp` are original
   ImageGen scene assets, generated using the selected Twin Paths concept and
   the game's low-poly dark-fantasy aesthetic. Their briefs specified moonlit
   village roads, amber lanterns, a lone sorcerer or three adventurers seen from
   behind, and no baked-in interface or text. The native outputs were converted
-  to WebP for delivery.
+  to WebP for delivery. Only the solo scene is used since the mode choice was
+  removed; the party scene remains in the repository for reference.
 - `dist/assets/menu/hallowmere-wordmark.png` is an ImageGen lettering asset
   derived from the approved HALLOWMERE branding. Its brief preserved the pale
   textured gothic lettering and excluded the app-icon tile, character,
@@ -87,12 +91,13 @@ blocked by automatic approval review because it could advance session state.
 
 ## Compact pause and initial character selection
 
-`dist/pause-menu.js` renders Resume game and accessible settings switches and
+`dist/pause-menu.js` renders Resume game, Change character, and accessible settings switches and
 slider. Resume and Escape close the pause card. The Return to game menu button
 was removed; `screenshots/compact-pause-menu/pause-no-return.png` captures the
 updated card. The brightness
 slider participates in the modal focus trap, and Escape also works from it.
-The pause card has no menu index or restart/character shortcuts.
+The pause card has no menu index or restart shortcut; Change character is its
+one shortcut and opens the existing character wheel.
 
 `dist/game-settings.js` stores music, brightness (75–135%), shadows, and camera
 shake in local storage, with safe defaults when storage is unavailable. Brightness
@@ -131,9 +136,12 @@ an authorized merge. The temporary layout fixture was removed after review.
 
 ## Browser-local journeys
 
-Single player opens **Your journeys** before starting a simulation. New journey
-uses the existing character wheel and creates an independent world. Each journey
-keeps its original character; sanctuary switching remains available in multiplayer.
+Loading continues the most recently saved journey, or creates a Sorcerer journey
+on a first visit; **Your journeys** opens from the pause menu's Save & exit, or
+when the latest journey cannot be opened. New journey
+uses the existing character wheel and creates an independent world. A journey's
+character can be changed at any time from the pause menu or with C, and its list
+entry shows the current class; sanctuary switching remains the rule in multiplayer.
 There is no fixed slot limit. Saves are listed most recently saved first, with a
 name, character portrait and class, level, last explored region, and playtime.
 The selected journey shows its objective, defeated guardians, and return checkpoint.
